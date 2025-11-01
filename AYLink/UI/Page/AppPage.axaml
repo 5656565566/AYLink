@@ -1,0 +1,141 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:local="using:AYLink.Utils.Localization"
+             x:Class="AYLink.UI.AppPage"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
+
+	<Grid RowDefinitions="Auto,*">
+		<!-- 顶部 CommandBar -->
+		<ui:CommandBar Grid.Row="0"
+                       DefaultLabelPosition="Right"
+                       Background="Transparent">
+
+			<!-- 靠左：搜索按钮 + 搜索框 -->
+			<ui:CommandBar.Content>
+				<StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+							Margin="8,0,0,0">
+					<ui:CommandBarButton x:Name="SearchAppBtn"
+                                         Label="{local:Tr AppPage_Search}">
+						<ui:CommandBarButton.IconSource>
+							<ui:SymbolIconSource Symbol="Find"/>
+						</ui:CommandBarButton.IconSource>
+					</ui:CommandBarButton>
+
+					<TextBox x:Name="SearchBox"
+                             Watermark="{local:Tr AppPage_SearchWatermark}"
+                             Width="200"
+                             VerticalAlignment="Center"
+                             Margin="8,0,0,0">
+						<TextBox.KeyBindings>
+							<KeyBinding Gesture="Enter"/>
+						</TextBox.KeyBindings>
+					</TextBox>
+				</StackPanel>
+			</ui:CommandBar.Content>
+
+			<!-- 靠右：先安装，再刷新 -->
+			<ui:CommandBar.PrimaryCommands>
+				<ui:CommandBarButton x:Name="InstallAppBtn"
+                                     Label="{local:Tr AppPage_InstallApp}">
+					<ui:CommandBarButton.IconSource>
+						<ui:SymbolIconSource Symbol="Add"/>
+					</ui:CommandBarButton.IconSource>
+				</ui:CommandBarButton>
+
+			</ui:CommandBar.PrimaryCommands>
+
+			<!-- 次要操作 -->
+			<ui:CommandBar.SecondaryCommands>
+				<ui:CommandBarButton Label="{local:Tr AppPage_RefreshApps}" x:Name="RefreshAppsBtn">
+					<ui:CommandBarButton.IconSource>
+						<ui:SymbolIconSource Symbol="Refresh"/>
+					</ui:CommandBarButton.IconSource>
+				</ui:CommandBarButton>
+
+				<ui:CommandBarSeparator/>
+			</ui:CommandBar.SecondaryCommands>
+		</ui:CommandBar>
+
+		<!-- 主内容（以下保持原样） -->
+		<Grid Grid.Row="1">
+			<!-- 未选中设备提示 -->
+			<Border x:Name="Tip"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Margin="12"
+                    IsVisible="True">
+				<StackPanel Spacing="12"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Opacity="0.6">
+					<TextBlock Text="{local:Tr AppPage_NoDeviceSelected}"
+                               HorizontalAlignment="Center"
+                               Theme="{StaticResource SubtitleTextBlockStyle}"/>
+					<TextBlock Text="{local:Tr AppPage_GoToHomeToSelectDevice}"
+                               HorizontalAlignment="Center"
+                               Theme="{StaticResource BodyTextBlockStyle}"/>
+				</StackPanel>
+			</Border>
+
+			<!-- 应用列表 -->
+			<Border x:Name="AppListContainer"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Margin="12"
+                    Padding="0"
+                    IsVisible="False">
+				<Grid RowDefinitions="Auto,*">
+					<!-- 表头 -->
+					<Border Grid.Row="0"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="0,0,0,1"
+                            Padding="12,8">
+						<Grid ColumnDefinitions="*,*">
+							<TextBlock Grid.Column="0" Text="{local:Tr AppPage_AppNameHeader}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+							<TextBlock Grid.Column="1" Text="{local:Tr AppPage_PackageNameHeader}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+						</Grid>
+					</Border>
+
+					<!-- 数据表 -->
+					<DataGrid x:Name="AppDataGrid"
+                              Grid.Row="1"
+                              AutoGenerateColumns="False"
+                              CanUserSortColumns="True"
+                              GridLinesVisibility="Horizontal"
+                              HeadersVisibility="None"
+                              Background="Transparent"
+                              BorderThickness="0"
+							  IsReadOnly="True">
+						<DataGrid.Columns>
+							<DataGridTextColumn Binding="{Binding Name}"      Width="*"/>
+							<DataGridTextColumn Binding="{Binding PackageName}" Width="*"/>
+
+						</DataGrid.Columns>
+
+						<DataGrid.ContextFlyout>
+							<MenuFlyout>
+								<MenuItem Header="{local:Tr AppPage_CtxLaunch}"      x:Name="CtxLaunch"/>
+								<MenuItem Header="{local:Tr AppPage_CtxNewLaunch}"   x:Name="CtxNewLaunch"/>
+								<Separator/>
+								<MenuItem Header="{local:Tr AppPage_CtxDownload}"    x:Name="CtxDownload"/>
+								<MenuItem Header="{local:Tr AppPage_CtxCopyPackage}" x:Name="CtxCopyPackage"/>
+								<MenuItem Header="{local:Tr AppPage_CtxUninstall}"   x:Name="CtxUninstall"/>
+								<MenuItem Header="{local:Tr AppPage_CtxAppInfo}"     x:Name="CtxAppInfo"/>
+								<MenuItem Header="{local:Tr AppPage_CtxTip}"         x:Name="CtxTip"/>
+							</MenuFlyout>
+						</DataGrid.ContextFlyout>
+					</DataGrid>
+				</Grid>
+			</Border>
+		</Grid>
+	</Grid>
+</UserControl>

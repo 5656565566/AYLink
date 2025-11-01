@@ -1,0 +1,181 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="using:AYLink.Utils.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="AYLink.UI.AppSettingView">
+
+	<!-- 整体样式定义 -->
+	<UserControl.Styles>
+		<!-- 为分组标题定义一个样式 -->
+		<Style Selector="TextBlock.h2">
+			<Setter Property="FontSize" Value="18"/>
+			<Setter Property="FontWeight" Value="Medium"/>
+			<Setter Property="Margin" Value="0,20,0,10"/>
+		</Style>
+		<Style Selector="TextBlock.h3">
+			<Setter Property="FontSize" Value="16"/>
+			<Setter Property="FontWeight" Value="Medium"/>
+			<Setter Property="Margin" Value="0,20,0,10"/>
+		</Style>
+		<!-- 为设置项的说明文字定义一个样式 -->
+		<Style Selector="TextBlock.Description">
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="Opacity" Value="0.7"/>
+			<Setter Property="Margin" Value="0,0,0,10"/>
+		</Style>
+	</UserControl.Styles>
+
+	<!-- 使用ScrollViewer确保内容超出屏幕时可以滚动 -->
+	<ScrollViewer>
+		<StackPanel Margin="20">
+
+			<!-- 通用设置 -->
+			<TextBlock Text="{local:Tr AppSettings_General}" Classes="h2"/>
+
+			<!-- 开机自启设置 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0">
+					<TextBlock Text="{local:Tr AppSettings_AutoStart}"/>
+					<TextBlock Text="{local:Tr AppSettings_AutoStart_Description}" Classes="Description"/>
+				</StackPanel>
+				<!-- ToggleSwitch 用于布尔类型的开关设置 -->
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding IsAutoStartEnabled}" VerticalAlignment="Center" IsEnabled="False"/>
+			</Grid>
+
+			<!-- 语言选择设置 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0">
+					<TextBlock Text="{local:Tr AppSettings_Language}"/>
+					<TextBlock Text="{local:Tr AppSettings_Language_Description}" Classes="Description"/>
+				</StackPanel>
+				<!-- ComboBox 用于从列表中选择一项 -->
+				<ComboBox Grid.Column="1" MinWidth="150"
+                          x:Name="LanguagesComboBox"
+                          VerticalAlignment="Center">
+					<ComboBox.ItemTemplate>
+						<DataTemplate>
+							<TextBlock Text="{Binding DisplayName}" />
+						</DataTemplate>
+					</ComboBox.ItemTemplate>
+				</ComboBox>
+			</Grid>
+
+
+			<!-- 音频输出设备选择 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0">
+					<TextBlock Text="{local:Tr AppSettings_AudioOutputDevice}"/>
+					<TextBlock Text="{local:Tr AppSettings_AudioOutputDevice_Description}" Classes="Description"/>
+				</StackPanel>
+				<ComboBox Grid.Column="1" MinWidth="230"
+				          x:Name="AudioOutputDeviceComboBox"
+				          VerticalAlignment="Center">
+					<ComboBox.ItemTemplate>
+						<DataTemplate>
+							<TextBlock Text="{Binding Name}" />
+						</DataTemplate>
+					</ComboBox.ItemTemplate>
+				</ComboBox>
+			</Grid>
+
+			<!-- 输出音量调整 -->
+			<Grid ColumnDefinitions="*,Auto,Auto" Margin="0,5" VerticalAlignment="Center">
+				<!-- 左侧的说明文字 -->
+				<StackPanel Grid.Column="0">
+					<TextBlock Text="{local:Tr AppSettings_OutputVolume}"/>
+					<TextBlock Text="{local:Tr AppSettings_OutputVolume_Description}" Classes="Description"/>
+				</StackPanel>
+
+				<!-- 中间的拖拽条 -->
+				<Slider Grid.Column="1" MinWidth="180"
+						Minimum="0"
+						Maximum="150"
+						x:Name="VolumeSlider"
+				Value="{Binding OutputVolume}"
+				VerticalAlignment="Center"/>
+
+				<!-- 右侧用于显示数字的TextBlock -->
+				<TextBlock Grid.Column="2"
+						   Text="{Binding #VolumeSlider.Value, StringFormat={}{0:F0}}%"
+						   MinWidth="30"
+						   Margin="10,0,0,0"
+						   VerticalAlignment="Center"
+						   HorizontalAlignment="Right"/>
+			</Grid>
+
+
+			<!-- 外观设置 -->
+			<TextBlock Text="{local:Tr AppSettings_Appearance}" Classes="h2"/>
+
+			<!-- 主题模式设置 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0">
+					<TextBlock Text="{local:Tr AppSettings_ThemeMode}"/>
+					<TextBlock Text="{local:Tr AppSettings_ThemeMode_Description}" Classes="Description"/>
+				</StackPanel>
+				<ComboBox Grid.Column="1" MinWidth="150"
+						  x:Name="ThemeModeComboBox"
+                          VerticalAlignment="Center"
+						  DisplayMemberBinding="{Binding Value}"/>
+			</Grid>
+
+			<!-- 颜色设置 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0">
+					<TextBlock Text="{local:Tr AppSettings_AccentColor}"/>
+					<TextBlock Text="{local:Tr AppSettings_AccentColor_Description}" Classes="Description"/>
+				</StackPanel>
+
+				<ColorPicker Grid.Column="1"
+					x:Name="AccentColorPicker"
+					VerticalAlignment="Center"
+					IsHexInputVisible="True"
+					IsHitTestVisible="True"
+				    IsColorSpectrumSliderVisible="True"
+					IsAlphaEnabled="False"/>
+			</Grid>
+
+			<TextBlock Text="{local:Tr AppSettings_Device}" Classes="h2"/>
+
+			<TextBlock Text="{local:Tr AppSettings_ComponentVersion}" Classes="h3"/>
+
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<TextBlock Text="FFmpeg" VerticalAlignment="Center"/>
+				<TextBlock Text="7.1.1" Opacity="0.7" VerticalAlignment="Center" Grid.Column="1"/>
+			</Grid>
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<TextBlock Text="scrcpy-server" VerticalAlignment="Center"/>
+				<TextBlock Text="3.3.3" Opacity="0.7" VerticalAlignment="Center" Grid.Column="1"/>
+			</Grid>
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<TextBlock Text="adb" VerticalAlignment="Center"/>
+				<TextBlock Name="adbVersion" Text="36.0.1-13811061" Opacity="0.7" VerticalAlignment="Center" Grid.Column="1"/>
+			</Grid>
+
+			<!-- 关于 -->
+			<TextBlock Text="{local:Tr AppSettings_About}" Classes="h2"/>
+
+			<!-- 应用版本信息 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<TextBlock Text="{local:Tr AppSettings_AppVersion}" VerticalAlignment="Center"/>
+				<TextBlock Text="0.0.4-a" Opacity="0.7" VerticalAlignment="Center" Grid.Column="1"/>
+			</Grid>
+
+			<!-- 检查更新按钮 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<TextBlock Text="{local:Tr AppSettings_CheckForUpdates}" VerticalAlignment="Center"/>
+				<!-- Button 用于执行一个操作 -->
+				<Button Content="{local:Tr AppSettings_CheckNow}" Command="{Binding CheckForUpdatesCommand}" Grid.Column="1"/>
+			</Grid>
+
+			<!-- 恢复默认设置 -->
+			<Button Content="{local:Tr AppSettings_ResetToDefaults}"
+                    Command="{Binding ResetToDefaultsCommand}"
+                    HorizontalAlignment="Left"
+                    Margin="0,30,0,0"/>
+
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>

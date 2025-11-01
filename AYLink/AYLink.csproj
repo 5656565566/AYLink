@@ -1,0 +1,117 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RootNamespace>AYLink</RootNamespace>
+    <VersionPrefix>0.0.4.0</VersionPrefix>
+    <Authors>5656565566</Authors>
+    <Product>aster_android_link</Product>
+    <AssemblyTitle>安易连</AssemblyTitle>
+    <AssemblyProduct>安易连</AssemblyProduct>
+    <Copyright>Copyright © Floral Linkage 2025</Copyright>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	<ApplicationIcon>logo.ico</ApplicationIcon>
+	<AssemblyName>AYLink</AssemblyName>
+    
+	<RuntimeIdentifiers>win-x64;linux-x64;osx-x64;win-arm64;osx-arm64</RuntimeIdentifiers>
+    
+	<Platforms>AnyCPU</Platforms>
+    
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DefineConstants>$(DefineConstants);</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <DefineConstants>$(DefineConstants);</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <SelfContained>true</SelfContained>
+
+    <PublishReadyToRun>false</PublishReadyToRun>
+
+    <PublishSingleFile>true</PublishSingleFile>
+
+    <PublishTrimmed>true</PublishTrimmed>
+
+    <TrimMode>copyused</TrimMode>
+
+    <ILLinkTreatWarningsAsErrors>false</ILLinkTreatWarningsAsErrors>
+
+    <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="logo.ico" />
+  </ItemGroup>
+    <ItemGroup>
+    <None Remove="logo.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AdvancedSharpAdbClient" Version="3.4.14" />
+    <PackageReference Include="Avalonia" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.2">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FFmpeg.AutoGen" Version="7.1.1" />
+    <PackageReference Include="FluentAvaloniaUI" Version="2.4.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="NLog" Version="6.0.2" />
+    <PackageReference Include="ppy.SDL3-CS" Version="2025.703.0" />
+  </ItemGroup>
+ 
+	<ItemGroup Condition="'$(RuntimeIdentifier)'=='win-x64' or '$(Configuration)'=='Debug'">
+	  <None Update="ADB\win-x64\adb.exe">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="ADB\win-x64\AdbWinApi.dll">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="ADB\win-x64\AdbWinUsbApi.dll">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="FFMPEG\win-x64\avcodec-61.dll">
+		<Link>avcodec-61.dll</Link>
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="FFMPEG\win-x64\avutil-59.dll">
+		<Link>avutil-59.dll</Link>
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="FFMPEG\win-x64\swresample-5.dll">
+		<Link>swresample-5.dll</Link>
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="FFMPEG\win-x64\swscale-8.dll">
+		<Link>swscale-8.dll</Link>
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
+  <ItemGroup>
+    <None Update="Language\en-US.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Language\ja-JP.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Language\zh-TW.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Language\zh-CN.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Scrcpy\scrcpy-server">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

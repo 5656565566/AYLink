@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+			 xmlns:local="using:AYLink.Utils.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AYLink.UI.ShellPage"
+             Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
+
+	<UserControl.Styles>
+		<Style Selector="TextBox#TerminalOutput">
+			<Setter Property="Template">
+				<ControlTemplate>
+					<Border BorderThickness="0"
+							CornerRadius="{TemplateBinding CornerRadius}">
+
+						<ScrollViewer Padding="{TemplateBinding Padding}">
+
+							<TextPresenter Name="PART_TextPresenter"
+										   Text="{TemplateBinding Text, Mode=TwoWay}"
+										   CaretBrush="{TemplateBinding CaretBrush}"
+										   SelectionBrush="{TemplateBinding SelectionBrush}"
+										   SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+										   TextAlignment="{TemplateBinding TextAlignment}"
+										   TextWrapping="{TemplateBinding TextWrapping}"
+										   SelectionStart="{TemplateBinding SelectionStart, Mode=TwoWay}"
+										   SelectionEnd="{TemplateBinding SelectionEnd, Mode=TwoWay}" />
+						</ScrollViewer>
+					</Border>
+				</ControlTemplate>
+			</Setter>
+
+		</Style>
+	</UserControl.Styles>
+
+	<Grid>
+		<Image x:Name="BackgroundImage"
+               Stretch="UniformToFill"
+               IsVisible="False"
+               Opacity="0.6"/>
+
+		<Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Margin="12">
+			<Grid RowDefinitions="*,Auto">
+				<ScrollViewer Grid.Row="0"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Auto">
+					<TextBox x:Name="TerminalOutput"
+							 FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+							 Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+							 FontSize="15"
+							 Padding="8"
+							 TextWrapping="Wrap"
+							 IsReadOnly="True"
+							 AcceptsReturn="True"
+							 CaretBrush="Transparent"
+							 BorderThickness="0"
+							 Background="Transparent"
+							 ScrollViewer.VerticalScrollBarVisibility="Auto"
+							 ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+				</ScrollViewer>
+
+				<Border Grid.Row="1"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="0,1,0,0"
+                        Padding="8">
+					<Grid ColumnDefinitions="Auto,*">
+						<TextBlock Grid.Column="0"
+                                   Text="$ "
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                   FontSize="15"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,4,0"/>
+						<TextBox x:Name="TerminalInput"
+                                 Grid.Column="1"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Watermark="{local:Tr ShellPage_TerminalInput}"
+                                 FontFamily="Cascadia Code, Consolas, Monaco, monospace"
+                                 Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                 FontSize="15"
+                                 AcceptsReturn="False"
+                                 VerticalContentAlignment="Center"
+                                 KeyDown="TerminalInput_KeyDown"/>
+					</Grid>
+				</Border>
+			</Grid>
+		</Border>
+	</Grid>
+</UserControl>

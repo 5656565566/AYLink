@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:local="using:AYLink.Utils.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AYLink.UI.FilePage">
+
+	<Grid ColumnDefinitions="*,*">
+		<!-- 左侧面板 -->
+		<DockPanel Grid.Column="0">
+			<!-- 左侧工具栏 -->
+			<Grid ColumnDefinitions="Auto, *, Auto" DockPanel.Dock="Top" Margin="4,4,4,0" ColumnSpacing="8">
+				<ComboBox Name="LeftSourceComboBox"
+						  MinWidth="150"
+						  Grid.Column="0"
+						  PlaceholderText="{local:Tr FilePage_SelectSourcePlaceholder}"
+						  SelectionChanged="SourceComboBox_SelectionChanged"/>
+				<TextBox Name="LeftPathTextBox"
+						  Grid.Column="1"
+						  Watermark="/"/>
+				<Button Name="LeftRefreshButton"
+						Grid.Column="2"
+						Click="RefreshButton_Click">
+					<ui:SymbolIcon Symbol="Refresh" />
+				</Button>
+			</Grid>
+
+			<!-- 左侧文件树 -->
+			<Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="0,1,1,0" Margin="0,4,0,0">
+				<TreeView Name="LeftTreeView" Margin="4" DragDrop.AllowDrop="True">
+					<TreeView.ItemTemplate>
+						<TreeDataTemplate>
+							<StackPanel Orientation="Horizontal" Spacing="4"
+										DragDrop.AllowDrop="True"
+										PointerPressed="Item_PointerPressed">
+								<ui:SymbolIcon Symbol="{Binding Icon}" />
+								<TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Name}"/>
+								<!-- <TextBlock Text="{Binding Size}"/> -->
+							</StackPanel>
+						</TreeDataTemplate>
+					</TreeView.ItemTemplate>
+					<TreeView.ContextFlyout>
+						<MenuFlyout>
+							<MenuItem Header="{local:Tr FilePage_CtxOpen}" x:Name="LeftCtxOpen"/>
+							<MenuItem Header="{local:Tr FilePage_CtxOpenCurrentFolder}" x:Name="LeftCtxOpenPath"/>
+							<MenuItem Header="{local:Tr FilePage_CtxUploadToDevice}" x:Name="LeftCtxUpload"/>
+						</MenuFlyout>
+					</TreeView.ContextFlyout>
+				</TreeView>
+			</Border>
+		</DockPanel>
+
+		<!-- 右侧面板 -->
+		<DockPanel Grid.Column="1">
+			<!-- 右侧工具栏 -->
+			<Grid ColumnDefinitions="Auto, *, Auto" DockPanel.Dock="Top" Margin="4,4,4,0" ColumnSpacing="8">
+				<ComboBox Name="RightSourceComboBox"
+						  Grid.Column="0"
+						  MinWidth="150"
+						  PlaceholderText="{local:Tr FilePage_SelectSourcePlaceholder}"
+						  SelectionChanged="SourceComboBox_SelectionChanged"/>
+				<TextBox Name="RightPathTextBox"
+						  Grid.Column="1"
+						  Watermark="/"/>
+				<Button Name="RightRefreshButton"
+						Grid.Column="2"
+						Click="RefreshButton_Click">
+					<ui:SymbolIcon Symbol="Refresh" />
+				</Button>
+			</Grid>
+
+			<!-- 右侧文件树 -->
+			<Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Margin="0,4,0,0">
+				<TreeView Name="RightTreeView" Margin="4" DragDrop.AllowDrop="True">
+					<TreeView.ItemTemplate>
+						<TreeDataTemplate>
+							<StackPanel Orientation="Horizontal" Spacing="4"
+										DragDrop.AllowDrop="True"
+										PointerPressed="Item_PointerPressed">
+								<ui:SymbolIcon Symbol="{Binding Icon}" />
+								<TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Name}"/>
+								<!-- <TextBlock Text="{Binding Size}"/> -->
+							</StackPanel>
+						</TreeDataTemplate>
+					</TreeView.ItemTemplate>
+					<TreeView.ContextFlyout>
+						<MenuFlyout>
+							<MenuItem Header="{local:Tr FilePage_CtxOpen}" x:Name="RightCtxOpen" IsEnabled="False"/>
+							<MenuItem Header="{local:Tr FilePage_CtxCopyToLocal}" x:Name="RightCtxUpload"/>
+						</MenuFlyout>
+					</TreeView.ContextFlyout>
+				</TreeView>
+			</Border>
+		</DockPanel>
+	</Grid>
+</UserControl>

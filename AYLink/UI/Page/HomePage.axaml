@@ -1,0 +1,133 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:local="using:AYLink.Utils.Localization"
+             mc:Ignorable="d"
+             d:DesignWidth="800"
+             d:DesignHeight="450"
+             x:Class="AYLink.UI.HomePage"
+             Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
+
+	<Grid RowDefinitions="Auto,*" >
+		<ui:CommandBar Grid.Row="0" DefaultLabelPosition="Right" Background="Transparent">
+			<!-- 主要操作 -->
+			<ui:CommandBar.PrimaryCommands>
+				<ui:CommandBarButton Label="{local:Tr HomePage_AddDevice}" x:Name="AddDeviceButton">
+					<ui:CommandBarButton.IconSource>
+						<ui:SymbolIconSource Symbol="Add"/>
+					</ui:CommandBarButton.IconSource>
+				</ui:CommandBarButton>
+			</ui:CommandBar.PrimaryCommands>
+
+			<!-- 分组表格 -->
+			<ui:CommandBar.Content>
+				<StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsEnabled="False">
+					<TextBlock Text="{local:Tr HomePage_DeviceGroup}"
+                               VerticalAlignment="Center"
+                               Theme="{StaticResource BodyStrongTextBlockStyle}"
+							   Padding="8 10"/>
+					<ComboBox Width="180" SelectedIndex="0" Margin="10 10">
+						<ComboBoxItem Content="{local:Tr HomePage_Group_AllDevices}"/>
+						<ComboBoxItem Content="{local:Tr HomePage_Group_Default}"/>
+						<ComboBoxItem Content="{local:Tr HomePage_Group_1}"/>
+					</ComboBox>
+				</StackPanel>
+			</ui:CommandBar.Content>
+
+			<!-- 次要操作 -->
+			<ui:CommandBar.SecondaryCommands>
+				<ui:CommandBarButton Label="{local:Tr HomePage_RefreshDevices}" Name="Refresh">
+					<ui:CommandBarButton.IconSource>
+						<ui:SymbolIconSource Symbol="Refresh"/>
+					</ui:CommandBarButton.IconSource>
+				</ui:CommandBarButton>
+				<ui:CommandBarButton Label="{local:Tr HomePage_DeleteDevice}" IsEnabled="False">
+					<ui:CommandBarButton.IconSource>
+						<ui:SymbolIconSource Symbol="Delete"/>
+					</ui:CommandBarButton.IconSource>
+				</ui:CommandBarButton>
+				<ui:CommandBarButton Label="{local:Tr HomePage_RunScript}" IsEnabled="False">
+					<ui:CommandBarButton.IconSource>
+						<ui:SymbolIconSource Symbol="Code"/>
+					</ui:CommandBarButton.IconSource>
+				</ui:CommandBarButton>
+
+				<ui:CommandBarSeparator/>
+
+				<ui:CommandBarButton Label="{local:Tr HomePage_SyncControl}" IsEnabled="False">
+					<ui:CommandBarButton.IconSource>
+						<ui:SymbolIconSource Symbol="Sync"/>
+					</ui:CommandBarButton.IconSource>
+				</ui:CommandBarButton>
+				<ui:CommandBarButton Label="{local:Tr HomePage_AddGroup}" IsEnabled="False">
+					<ui:CommandBarButton.IconSource>
+						<ui:SymbolIconSource Symbol="Add"/>
+					</ui:CommandBarButton.IconSource>
+				</ui:CommandBarButton>
+				<ui:CommandBarButton Label="{local:Tr HomePage_DeleteGroup}" IsEnabled="False">
+					<ui:CommandBarButton.IconSource>
+						<ui:SymbolIconSource Symbol="Delete"/>
+					</ui:CommandBarButton.IconSource>
+				</ui:CommandBarButton>
+			</ui:CommandBar.SecondaryCommands>
+		</ui:CommandBar>
+
+		<Border Grid.Row="1"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Margin="2">
+
+			<StackPanel Spacing="12"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Opacity="0.6"
+						Name="Tip"
+						IsVisible="True">
+				<TextBlock Text="{local:Tr HomePage_NoDevicesAvailable}"
+                           HorizontalAlignment="Center"
+                           Theme="{StaticResource SubtitleTextBlockStyle}"/>
+				<TextBlock Text="{local:Tr HomePage_AddDeviceTip}"
+                           HorizontalAlignment="Center"
+                           Theme="{StaticResource BodyTextBlockStyle}"/>
+			</StackPanel>
+		</Border>
+
+		<Border Grid.Row="1"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Margin="12"
+                Padding="0"
+				Name="DeviceList"
+			    IsVisible="False">
+
+			<Grid RowDefinitions="Auto, *">
+				<!-- 列表头 -->
+				<Border Grid.Row="0"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="16,8">
+					<Grid ColumnDefinitions="3*, 1.5*, Auto">
+						<TextBlock Grid.Column="0" Text="{local:Tr HomePage_Header_DeviceInfo}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+						<TextBlock Grid.Column="1" Text="{local:Tr HomePage_Header_ConnectionType}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+						<TextBlock Grid.Column="2" Text="{local:Tr HomePage_Header_Actions}" HorizontalAlignment="Right" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+					</Grid>
+				</Border>
+
+				<!-- 设备列表 为了动态生成 直接用代码了（（ -->
+				<ListBox Grid.Row="1"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         Background="Transparent"
+                         BorderThickness="0"
+						 Name="DeviceListBox">
+
+				</ListBox>
+			</Grid>
+		</Border>
+	</Grid>
+</UserControl>

@@ -1,0 +1,344 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:local="using:AYLink.Utils.Localization"
+			 xmlns:converters="using:AYLink.Utils.BindingConverter"
+             mc:Ignorable="d"
+             x:Class="AYLink.UI.DeviceSettingView">
+
+	<UserControl.Resources>
+		<converters:StringToNullableNumber x:Key="StringToNullableNumber"/>
+	</UserControl.Resources>
+	
+	<UserControl.Styles>
+		<Style Selector="TextBlock.h2">
+			<Setter Property="FontSize" Value="18"/>
+			<Setter Property="FontWeight" Value="Medium"/>
+			<Setter Property="Margin" Value="0,25,0,10"/>
+		</Style>
+		<Style Selector="TextBlock.Description">
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="Opacity" Value="0.7"/>
+			<Setter Property="Margin" Value="0,2,0,10"/>
+		</Style>
+		<Style Selector="TextBox">
+			<Setter Property="MinWidth" Value="180"/>
+		</Style>
+		<Style Selector="ComboBox">
+			<Setter Property="MinWidth" Value="180"/>
+		</Style>
+	</UserControl.Styles>
+
+	<ScrollViewer>
+		<StackPanel Margin="20">
+
+			<!-- 1. 核心设置 -->
+			<TextBlock Text="{local:Tr DeviceSettings_Core}" Classes="h2"/>
+
+			<!-- 启用视频 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_EnableVideo}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_EnableVideo_Description}" Classes="Description"/>
+				</StackPanel>
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding Video}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 启用音频 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_EnableAudio}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_EnableAudio_Description}" Classes="Description"/>
+				</StackPanel>
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding Audio}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 启用设备控制 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_EnableControl}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_EnableControl_Description}" Classes="Description"/>
+				</StackPanel>
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding Control}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 流媒体质量 -->
+			<TextBlock Text="{local:Tr DeviceSettings_StreamQuality}" Classes="h2"/>
+
+			<!-- 视频编解码器 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_VideoCodec}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_VideoCodec_Description}" Classes="Description"/>
+				</StackPanel>
+				<ComboBox Grid.Column="1" SelectedItem="{Binding VideoCodec}" VerticalAlignment="Center">
+					<system:String>h264</system:String>
+					<system:String>h265</system:String>
+					<system:String>av1</system:String>
+				</ComboBox>
+			</Grid>
+
+			<!-- 最大分辨率 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_MaxSize}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_MaxSize_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding MaxSize, Converter={StaticResource StringToNullableNumber}}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 视频比特率 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_VideoBitrate}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_VideoBitrate_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding VideoBitRate, Converter={StaticResource StringToNullableNumber}}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 最大帧率 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_MaxFps}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_MaxFps_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding MaxFps, Converter={StaticResource StringToNullableNumber}}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 音频编解码器 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_AudioCodec}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_AudioCodec_Description}" Classes="Description"/>
+				</StackPanel>
+				<ComboBox Grid.Column="1" SelectedItem="{Binding AudioCodec}" VerticalAlignment="Center">
+					<system:String>opus</system:String>
+					<system:String>aac</system:String>
+					<system:String>flac</system:String>
+					<system:String>raw</system:String>
+				</ComboBox>
+			</Grid>
+
+			<!-- 音频比特率 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_AudioBitrate}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_AudioBitrate_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding AudioBitRate, Converter={StaticResource StringToNullableNumber}}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 输入源 -->
+			<TextBlock Text="{local:Tr DeviceSettings_InputSource}" Classes="h2"/>
+
+			<!-- 视频源 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_VideoSource}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_VideoSource_Description}" Classes="Description"/>
+				</StackPanel>
+				<ComboBox Grid.Column="1" SelectedItem="{Binding VideoSource}" VerticalAlignment="Center">
+					<system:String>display</system:String>
+					<system:String>camera</system:String>
+				</ComboBox>
+			</Grid>
+
+			<!-- 音频源 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_AudioSource}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_AudioSource_Description}" Classes="Description"/>
+				</StackPanel>
+				<ComboBox Grid.Column="1" SelectedItem="{Binding AudioSource}" VerticalAlignment="Center">
+					<system:String>output</system:String>
+					<system:String>mic</system:String>
+				</ComboBox>
+			</Grid>
+
+			<!-- 电源与交互 -->
+			<TextBlock Text="{local:Tr DeviceSettings_PowerAndInteraction}" Classes="h2"/>
+
+			<!-- 保持设备唤醒 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_StayAwake}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_StayAwake_Description}" Classes="Description"/>
+				</StackPanel>
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding StayAwake}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 显示触摸操作 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_ShowTouches}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_ShowTouches_Description}" Classes="Description"/>
+				</StackPanel>
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowTouches}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 连接时点亮屏幕 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_PowerOn}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_PowerOn_Description}" Classes="Description"/>
+				</StackPanel>
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding PowerOn}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 断开时关闭屏幕 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_PowerOffOnClose}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_PowerOffOnClose_Description}" Classes="Description"/>
+				</StackPanel>
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding PowerOffOnClose}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 无操作自动息屏 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_ScreenOffTimeout}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_ScreenOffTimeout_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding ScreenOffTimeout, Converter={StaticResource StringToNullableNumber}}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 摄像头专属设置 -->
+			<TextBlock Text="{local:Tr DeviceSettings_CameraSettings}" Classes="h2"/>
+			<TextBlock Text="{local:Tr DeviceSettings_CameraSettings_Hint}" FontSize="12" Opacity="0.7" Margin="0,-5,0,10"/>
+
+			<!-- 摄像头朝向 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_CameraFacing}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_CameraFacing_Description}" Classes="Description"/>
+				</StackPanel>
+				<ComboBox Grid.Column="1" SelectedItem="{Binding CameraFacing}" VerticalAlignment="Center">
+					<system:String>front</system:String>
+					<system:String>back</system:String>
+					<system:String>external</system:String>
+				</ComboBox>
+			</Grid>
+
+			<!-- 摄像头ID -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_CameraId}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_CameraId_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding CameraId}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 摄像头分辨率 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_CameraSize}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_CameraSize_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding CameraSize}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 摄像头帧率 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_CameraFps}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_CameraFps_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding CameraFps}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 摄像头高速模式 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_CameraHighSpeed}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_CameraHighSpeed_Description}" Classes="Description"/>
+				</StackPanel>
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding CameraHighSpeed}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 高级设置 -->
+			<TextBlock Text="{local:Tr DeviceSettings_Advanced}" Classes="h2"/>
+
+			<!-- 音频转发到扬声器 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_AudioForwarding}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_AudioForwarding_Description}" Classes="Description"/>
+				</StackPanel>
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding AudioDup}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 虚拟显示器关闭行为 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_VdDestroyContent}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_VdDestroyContent_Description}" Classes="Description"/>
+				</StackPanel>
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding VdDestroyContent}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 虚拟显示器启用系统主题 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_VdSystemDecorations}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_VdSystemDecorations_Description}" Classes="Description"/>
+				</StackPanel>
+				<ToggleSwitch Grid.Column="1" IsChecked="{Binding VdSystemDecorations}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 新的显示器参数 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_NewDisplay}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_NewDisplay_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding NewDisplay}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 指定视频编码器 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_VideoEncoderName}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_VideoEncoderName_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding VideoEncoder}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 指定音频编码器 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_AudioEncoderName}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_AudioEncoderName_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding AudioEncoder}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<!-- 编码器高级选项 -->
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0" VerticalAlignment="Center">
+					<TextBlock Text="{local:Tr DeviceSettings_CodecOptions}"/>
+					<TextBlock Text="{local:Tr DeviceSettings_CodecOptions_Description}" Classes="Description"/>
+				</StackPanel>
+				<TextBox Grid.Column="1" Text="{Binding CodecOptions}" VerticalAlignment="Center"/>
+			</Grid>
+
+			<Grid>
+
+				<!-- 回到主页 -->
+				<Button x:Name="BackToHomeButton"
+						Content="{local:Tr DeviceSettings_BackToHome}"
+						HorizontalAlignment="Left"
+						Margin="0,20,0,20"/>
+
+				<!-- 恢复默认设置 -->
+				<Button x:Name="ResetToDefaultsButton"
+						Content="{local:Tr DeviceSettings_ResetToDefaults}"
+						HorizontalAlignment="Right"
+						Margin="0,20,0,20"/>
+
+			</Grid>
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>
