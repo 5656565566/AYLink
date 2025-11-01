@@ -1,0 +1,49 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:local="using:AYLink.Utils.Localization"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="AYLink.UI.MainWindow"
+        Icon="avares://AYLink/logo.ico"
+        Title="安易连">
+
+	<Grid>
+		<ui:NavigationView x:Name="NavView" PaneDisplayMode="Left" >
+
+			<ui:NavigationView.MenuItems>
+				<ui:NavigationViewItem x:Name="HomeNavItem" Content="{local:Tr MainWindow_Nav_Home}" Tag="HomePage" Margin="1.1">
+					<ui:NavigationViewItem.IconSource>
+						<ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Home}"/>
+					</ui:NavigationViewItem.IconSource>
+				</ui:NavigationViewItem>
+				<ui:NavigationViewItem x:Name="FileNavItem" Content="{local:Tr MainWindow_Nav_File}" Tag="FilePage" Margin="1.1">
+					<ui:NavigationViewItem.IconSource>
+						<ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Folder}"/>
+					</ui:NavigationViewItem.IconSource>
+				</ui:NavigationViewItem>
+				<ui:NavigationViewItem x:Name="ScreenNavItem" Content="{local:Tr MainWindow_Nav_Screen}" Tag="ScreenPage" Margin="1.1">
+					<ui:NavigationViewItem.IconSource>
+						<ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Play}"/>
+					</ui:NavigationViewItem.IconSource>
+				</ui:NavigationViewItem>
+				<ui:NavigationViewItem x:Name="AppNavItem" Content="{local:Tr MainWindow_Nav_App}" Tag="AppPage" Margin="1.1">
+					<ui:NavigationViewItem.IconSource>
+						<ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Repair}"/>
+					</ui:NavigationViewItem.IconSource>
+				</ui:NavigationViewItem>
+				<ui:NavigationViewItem x:Name="ShellNavItem" Content="{local:Tr MainWindow_Nav_Shell}" Tag="ShellPage" Margin="1.1">
+					<ui:NavigationViewItem.IconSource>
+						<ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Code}"/>
+					</ui:NavigationViewItem.IconSource>
+				</ui:NavigationViewItem>
+			</ui:NavigationView.MenuItems>
+
+			<ui:Frame x:Name="ContentFrame"/>
+
+		</ui:NavigationView>
+
+	</Grid>
+
+</Window>

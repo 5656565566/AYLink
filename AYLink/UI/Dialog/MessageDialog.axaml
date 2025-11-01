@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="120"
+             x:Class="AYLink.UI.MessageDialog">
+
+	<Grid ColumnDefinitions="Auto,*" MinWidth="300" Margin="0,12,0,0">
+
+		<Border Grid.Column="0"
+                x:Name="IconBackground"
+                Width="40"
+                Height="40"
+                CornerRadius="20"
+                Margin="0,0,16,0"
+                VerticalAlignment="Top">
+			<Viewbox Width="20" Height="20">
+				<ui:SymbolIcon x:Name="DialogIcon" />
+			</Viewbox>
+		</Border>
+
+		<TextBlock Grid.Column="1"
+                   x:Name="MessageTextBlock"
+                   VerticalAlignment="Center"
+                   TextWrapping="Wrap"
+                   Theme="{StaticResource BodyTextBlockStyle}" />
+	</Grid>
+</UserControl>

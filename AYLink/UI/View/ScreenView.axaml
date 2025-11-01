@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:local="using:AYLink.Utils.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AYLink.UI.ScreenView">
+
+	<Grid ColumnDefinitions="*,Auto">
+		<!-- 串流界面 -->
+		<Border Grid.Column="0">
+			<Grid>
+				<!-- 背景图片 -->
+				<Image x:Name="BackgroundImage"
+					   IsHitTestVisible="False"
+					   Stretch="UniformToFill"
+					   Opacity="0.6"/>
+
+				<!-- 视频内容 -->
+				<Viewbox Stretch="Uniform">
+					<Image x:Name="VideoImage"/>
+				</Viewbox>
+
+				<Button x:Name="ExpandBtn"
+					Width="40" Height="40"
+					ToolTip.Tip="{local:Tr ScreenView_Expand}"
+					HorizontalAlignment="Right"
+					VerticalAlignment="Top"
+					Margin="10"
+					Opacity="0.6"
+					IsVisible="False">
+
+					<ui:SymbolIcon Symbol="{x:Static ui:Symbol.ChevronLeft}"/>
+				</Button>
+
+			</Grid>
+
+		</Border>
+
+		<Grid Grid.Column="1">
+
+			<Border x:Name="Sidebar"
+					Background="{DynamicResource SolidBackgroundFillColorBase}"
+					BorderBrush="{DynamicResource CardStrokeColorDefault}"
+					BorderThickness="1,0,0,0">
+				<StackPanel VerticalAlignment="Center" HorizontalAlignment="Right" Margin="4" Spacing="4">
+
+					<Button x:Name="CollapseBtn" Width="40" Height="40" ToolTip.Tip="{local:Tr ScreenView_Collapse}">
+						<ui:SymbolIcon Symbol="{x:Static ui:Symbol.ChevronRight}"/>
+					</Button>
+
+					<!-- 自定义 按钮区 -->
+
+					<Button x:Name="PowerBtn" Width="40" Height="40" ToolTip.Tip="{local:Tr ScreenView_Power}">
+						<ui:SymbolIcon Symbol="{x:Static ui:Symbol.Play}"/>
+					</Button>
+					<Button x:Name="VolumeUpBtn" Width="40" Height="40" ToolTip.Tip="{local:Tr ScreenView_VolumeUp}">
+						<ui:SymbolIcon Symbol="{x:Static ui:Symbol.Add}"/>
+					</Button>
+					<Button x:Name="VolumeDownBtn" Width="40" Height="40" ToolTip.Tip="{local:Tr ScreenView_VolumeDown}">
+						<ui:SymbolIcon Symbol="{x:Static ui:Symbol.Remove}"/>
+					</Button>
+					<Button x:Name="MuteBtn" Width="40" Height="40" ToolTip.Tip="{local:Tr ScreenView_Mute}">
+						<ui:SymbolIcon Symbol="{x:Static ui:Symbol.Mute}"/>
+					</Button>
+					<Button x:Name="ScreenOnBtn" Width="40" Height="40" ToolTip.Tip="{local:Tr ScreenView_ScreenOn}">
+						<ui:SymbolIcon Symbol="{x:Static ui:Symbol.Star}"/>
+					</Button>
+					<Button x:Name="ScreenOffBtn" Width="40" Height="40" ToolTip.Tip="{local:Tr ScreenView_ScreenOff}">
+						<ui:SymbolIcon Symbol="{x:Static ui:Symbol.StarOff}"/>
+					</Button>
+					<Button x:Name="BackBtn" Width="40" Height="40" ToolTip.Tip="{local:Tr ScreenView_Back}">
+						<ui:SymbolIcon Symbol="{x:Static ui:Symbol.Back}"/>
+					</Button>
+					<Button x:Name="HomeBtn" Width="40" Height="40" ToolTip.Tip="{local:Tr ScreenView_Home}">
+						<ui:SymbolIcon Symbol="{x:Static ui:Symbol.Home}"/>
+					</Button>
+					<Button x:Name="MenuBtn" Width="40" Height="40" ToolTip.Tip="{local:Tr ScreenView_Menu}">
+						<ui:SymbolIcon Symbol="{x:Static ui:Symbol.List}"/>
+					</Button>
+				</StackPanel>
+			</Border>
+
+		</Grid>
+	</Grid>
+</UserControl>

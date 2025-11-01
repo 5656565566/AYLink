@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AYLink.UI.AddDeviceDialog">
+
+	<StackPanel Spacing="12" Margin="12" MinWidth="320">
+		<TextBlock Text="通过网络调试 (Wi-Fi) 连接设备"/>
+
+		<TextBox Name="IpAddressTextBox"
+                 Watermark="IP 地址 (例如: 192.168.1.100)"/>
+
+		<TextBox Name="PortTextBox"
+                 Watermark="端口号 (可选, 默认为 5555)"/>
+
+		<TextBox Name="PairPortTextBox"
+				Watermark="配对端口 (可选，安卓 无限调试配对 流程)"/>
+
+		<TextBox Name="PairCodeTextBox"
+				Watermark="配对码（可选）"/>
+	</StackPanel>
+</UserControl>

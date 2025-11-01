@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AYLink.UI.ProgressDialog"
+             xmlns:ui="using:FluentAvalonia.UI.Controls">
+	<Grid>
+		<!-- 整个内容垂直 + 水平居中 -->
+		<Border Classes="Card"
+                Width="220"
+                Padding="10,10">
+			<Grid RowDefinitions="Auto,Auto,Auto"
+                  HorizontalAlignment="Center">
+
+				<!-- 行为提示文字 -->
+				<TextBlock x:Name="MessageTextBlock"
+                           Grid.Row="0"
+                           Text="正在处理..."
+                           FontSize="18"
+                           HorizontalAlignment="Center"/>
+
+				<!-- 转圈模式 -->
+				<Viewbox x:Name="IndeterminateArea"
+                         Grid.Row="1">
+					<ui:ProgressRing IsIndeterminate="True"
+                                     IsActive="True"/>
+				</Viewbox>
+
+				<Viewbox Grid.Row="1"
+						 x:Name="DeterminateArea"
+						 IsVisible="False">
+				    <!-- 百分比进度条模式 -->
+				    <Grid>
+					    <ui:ProgressRing x:Name="DeterminateRing"
+                                         IsActive="True"
+                                         IsIndeterminate="False"/>
+					    <TextBlock x:Name="PercentText"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="8"
+                                   FontWeight="Bold"
+                                   Text="0%"/>
+				    </Grid>
+				</Viewbox>
+
+				<!-- 步骤提示 -->
+				<TextBlock x:Name="StepTextBlock"
+                           Grid.Row="2"
+                           HorizontalAlignment="Center"
+                           FontSize="14"
+                           Foreground="Gray"
+                           Text=""/>
+			</Grid>
+		</Border>
+	</Grid>
+</UserControl>
