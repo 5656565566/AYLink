@@ -42,7 +42,7 @@ This project relies on the following core third-party components:
 | Component | Description and Reference |
 | :--- | :--- |
 | **ADB** | [AYLink/ADB/README.md](AYLink/ADB/README.md) |
-| **FFmpeg** | [AYLink/FFmpeg/README.md](AYLink/FFmpeg/README.md) |
+| **FFmpeg** | [AYLink/FFMPEG/README.md](AYLink/FFMPEG/README.md) |
 | **Scrcpy** | [AYLink/Scrcpy/README.md](AYLink/Scrcpy/README.md) |
 
 For other detailed project dependencies, please refer to the [AYLink/AYLink.csproj](AYLink/AYLink.csproj) file.

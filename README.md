@@ -44,7 +44,7 @@
 | 组件 | 说明和参考 |
 | :--- | :--- |
 | **ADB** | [AYLink/ADB/README.md](AYLink/ADB/README.md) |
-| **FFmpeg** | [AYLink/FFmpeg/README.md](AYLink/FFmpeg/README.md) |
+| **FFmpeg** | [AYLink/FFMPEG/README.md](AYLink/FFMPEG/README.md) |
 | **Scrcpy** | [AYLink/Scrcpy/README.md](AYLink/Scrcpy/README.md) |
 
 其他详细的项目依赖，请参考 [AYLink/AYLink.csproj](AYLink/AYLink.csproj) 文件
