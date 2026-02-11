@@ -66,52 +66,56 @@ public partial class ScreenView : UserControl
     {
         if (_deviceModel!.AdbClient == null) return;
 
-        var server = new ScrcpyTool(_deviceModel);
-        var displays = server.GetResolutions();
-
-        var deviceConfig = configManager.LoadConfig<DeviceConfig>(HashHelper.ToMd5Hash(_deviceModel.Serial));
-
-        if (_deviceModel.ServerOptions == null)
+        try
         {
-            _deviceModel.ServerOptions = new ServerOptions()
+            var server = new ScrcpyTool(_deviceModel);
+            var displays = server.GetResolutions();
+
+            var deviceConfig = configManager.LoadConfig<DeviceConfig>(HashHelper.ToMd5Hash(_deviceModel.Serial));
+
+            _deviceModel.ServerOptions ??= new ServerOptions()
             {
                 DisplayId = displayNum,
             };
-        }
 
-        deviceConfig.ApplyConfig(_deviceModel.ServerOptions);
+            deviceConfig.ApplyConfig(_deviceModel.ServerOptions);
 
-        if (displays.Count == 0 || _appName != null || _deviceModel.ServerOptions.DisplayId == -1)
-        {
-            if (string.IsNullOrEmpty(_deviceModel.ServerOptions.NewDisplay))
+            if (displays.Count == 0 || _appName != null || _deviceModel.ServerOptions.DisplayId == -1)
             {
-                _deviceModel.ServerOptions.NewDisplay = " "; // Ä¬ÈÏ¸úËæÖ÷ÆÁÄ»
+                if (string.IsNullOrEmpty(_deviceModel.ServerOptions.NewDisplay))
+                {
+                    _deviceModel.ServerOptions.NewDisplay = " "; // Ä¬ÈÏ¸úËæÖ÷ÆÁÄ»
+                }
+            }
+            else
+            {
+                _deviceModel.ServerOptions.NewDisplay = null;
+                var displayId = displays.Keys.ToArray()[displayNum ?? 0];
+                _deviceModel.ServerOptions.DisplayId = displayId;
+                _screenSize = new Size(displays[displayId].height, displays[displayId].width);
+            }
+
+            var ports = await server.DeployServerAsync();
+
+            await Task.Delay(2000);
+            _scrcpyClient!.Connect(ports);
+
+            _deviceModel.ServerOptions = null;
+
+            if (_appName != null)
+            {
+                var keyMsg = new ControlMsg
+                {
+                    Type = ControlMsgType.StartApp,
+                    Data = _appName
+                };
+                _scrcpyClient?.SendControlCommand(keyMsg.Serialize());
             }
         }
-        else
+        catch
         {
-            _deviceModel.ServerOptions.NewDisplay = null;
-            var displayId = displays.Keys.ToArray()[displayNum ?? 0];
-            _deviceModel.ServerOptions.DisplayId = displayId;
-            _screenSize = new Size(displays[displayId].height, displays[displayId].width);
         }
-
-        var ports = await server.DeployServerAsync();
-
-        await Task.Delay(2000);
-        _scrcpyClient!.Connect(ports);
-
-        _deviceModel.ServerOptions = null;
-
-        if (_appName != null)
-        {
-            var keyMsg = new ControlMsg
-            {
-                Type = ControlMsgType.StartApp,
-                Data = _appName
-            };
-            _scrcpyClient?.SendControlCommand(keyMsg.Serialize());
-        }
+ 
     }
 
     private void CollapseBtn_Click(object? sender, RoutedEventArgs e)

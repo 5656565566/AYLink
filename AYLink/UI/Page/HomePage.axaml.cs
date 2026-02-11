@@ -76,7 +76,7 @@ public partial class HomePage : UserControl
 
             if (!string.IsNullOrEmpty(pairPort) && !string.IsNullOrEmpty(pairCode))
             {
-                bool pairSuccess = AdbManager.PairWifiDevice(ip, pairIntPort, pairCode);
+                bool pairSuccess = await AdbManager.PairWifiDevice(ip, pairIntPort, pairCode);
                 if (!pairSuccess)
                 {
                     await DialogHelper.MessageShowAsync(L.Tr("HomePage_Dialog_Failure_Title"), L.Tr("HomePage_Dialog_Failure_Pairing"));
@@ -84,7 +84,7 @@ public partial class HomePage : UserControl
                 }
             }
 
-            var deviceModel = adbManager.ConnectDevice(ip, port);
+            var deviceModel = await adbManager.ConnectDevice(ip, port);
             if (deviceModel == null)
             {
                 await DialogHelper.MessageShowAsync(L.Tr("HomePage_Dialog_Failure_Title"), L.Tr("HomePage_Dialog_Failure_Connection"));

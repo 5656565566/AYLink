@@ -71,12 +71,15 @@
  
 	<ItemGroup Condition="'$(RuntimeIdentifier)'=='win-x64' or '$(Configuration)'=='Debug'">
 	  <None Update="ADB\win-x64\adb.exe">
+		<Link>ADB\adb.exe</Link>
 		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	  <None Update="ADB\win-x64\AdbWinApi.dll">
+		<Link>ADB\AdbWinApi.dll</Link>
 		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	  <None Update="ADB\win-x64\AdbWinUsbApi.dll">
+		<Link>ADB\AdbWinUsbApi.dll</Link>
 		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	  <None Update="FFmpeg\win-x64\avcodec-61.dll">

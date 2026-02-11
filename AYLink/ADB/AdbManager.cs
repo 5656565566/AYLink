@@ -1,14 +1,12 @@
 ﻿using AdvancedSharpAdbClient;
 using AdvancedSharpAdbClient.Models;
 using AYLink.UIModel;
-using AYLink.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace AYLink.ADB;
@@ -45,6 +43,24 @@ public sealed class AdbManager
 
         // 根据操作系统确定 adb 可执行文件的名称
         string adbFileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "adb.exe" : "adb";
+
+        // 如果是 Linux 平台 尝试在包管理器安装的路径寻找 adb
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            string[] linuxSystemPaths = ["/usr/bin/adb", "/usr/local/bin/adb"];
+            foreach (var sysPath in linuxSystemPaths)
+            {
+                if (File.Exists(sysPath))
+                {
+                    var result = _adbServer.StartServer(sysPath, restartServerIfNewer: false);
+                    if (result == StartServerResult.Started)
+                    {
+                        Debug.WriteLine($"已从 Linux 系统路径启动: {sysPath}");
+                        return true;
+                    }
+                }
+            }
+        }
 
         // 尝试使用本地 "ADB" 目录下的 adb
         string localAdbPath = Path.Combine("ADB", adbFileName);
@@ -110,13 +126,13 @@ public sealed class AdbManager
     /// <param name="pairingPort">设备上显示的配对端口</param>
     /// <param name="pairingCode">设备上显示的配对码</param>
     /// <returns>如果配对成功返回 true，否则返回 false</returns>
-    public static bool PairWifiDevice(string ipAddress, int pairingPort, string pairingCode)
+    public static async Task<bool> PairWifiDevice(string ipAddress, int pairingPort, string pairingCode)
     {
         try
         {
             var adbClient = new AdbClient();
             Debug.WriteLine($"正在尝试配对设备: {ipAddress}:{pairingPort}...");
-            adbClient.Pair(ipAddress, pairingPort, pairingCode);
+            await adbClient.PairAsync(ipAddress, pairingPort, pairingCode);
             Debug.WriteLine("配对成功！现在请使用连接端口进行连接。");
             return true;
         }
@@ -133,7 +149,7 @@ public sealed class AdbManager
     /// <param name="host">设备的主机名或 IP 地址。</param>
     /// <param name="port">设备的端口号。</param>
     /// <returns>成功连接则返回 DeviceModel，否则返回 null。</returns>
-    public DeviceModel? ConnectDevice(string host, int port)
+    public async Task<DeviceModel?> ConnectDevice(string host, int port)
     {
         string deviceSerial = $"{host}:{port}";
 
@@ -148,7 +164,7 @@ public sealed class AdbManager
         try
         {
             var adbClient = new AdbClient();
-            adbClient.Connect(host, port);
+            await adbClient.ConnectAsync(host, port);
             var deviceData = adbClient.GetDevices().FirstOrDefault(d => d.Serial == deviceSerial);
             if (deviceData != null)
             {
