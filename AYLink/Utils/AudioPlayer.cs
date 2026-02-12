@@ -57,7 +57,7 @@ public sealed unsafe class AudioPlayer : IDisposable
     }
 
     /// <summary>
-    /// 配置要使用的音频播放设备。支持运行时热切换。
+    /// 配置要使用的音频播放设备 支持运行时热切换
     /// </summary>
     public void ConfigureAudioDevice(string? deviceName = null)
     {
@@ -95,10 +95,13 @@ public sealed unsafe class AudioPlayer : IDisposable
                 Debug.WriteLine($"Failed to open audio device: {SDL_GetError()}");
                 _audioDevice = oldDevice;
                 _masterAudioStream = oldMasterStream;
-                return; // 切换失败，提前退出
+                return; // 切换失败 提前退出
             }
 
-            _masterAudioStream = SDL_CreateAudioStream(&spec, &spec);
+            SDL_AudioSpec deviceSpec;
+            SDL_GetAudioDeviceFormat(_audioDevice, &deviceSpec, null); // 自适应设备播放格式
+
+            _masterAudioStream = SDL_CreateAudioStream(&spec, &deviceSpec);
             if (_masterAudioStream == null)
             {
                 SDL_CloseAudioDevice(_audioDevice);
@@ -124,14 +127,14 @@ public sealed unsafe class AudioPlayer : IDisposable
                 SDL_CloseAudioDevice(oldDevice);
             }
 
-            // --- 仅在第一次配置时启动混音线程 ---
+            // 仅在第一次配置时启动混音线程
             if (_mixerThread == null)
             {
                 _mixerThread = new Thread(MixerLoop) { IsBackground = true, Name = "AudioMixerThread" };
                 _mixerThread.Start();
             }
 
-            // --- 激活新设备 ---
+            // 激活新设备
             SDL_ResumeAudioDevice(_audioDevice);
             Debug.WriteLine("Audio device configured/switched successfully.");
         }
@@ -139,12 +142,12 @@ public sealed unsafe class AudioPlayer : IDisposable
 
 
     /// <summary>
-    /// 混音器主循环，在专用线程上运行。
+    /// 混音器主循环 在专用线程上运行
     /// </summary>
     private void MixerLoop()
     {
         int bytesPerSample = TARGET_CHANNELS * 2; // S16LE = 2 bytes
-        // 缓冲20毫秒的数据量，以减少延迟
+        // 缓冲20毫秒的数据量 以减少延迟
         int bufferSize = (TARGET_SAMPLE_RATE * bytesPerSample * 20) / 1000;
 
         byte[] sourceBuffer = new byte[bufferSize];
@@ -153,18 +156,48 @@ public sealed unsafe class AudioPlayer : IDisposable
 
         while (!_shutdownRequested)
         {
+            bool shouldWait = false;
+            lock (_deviceLock)
+            {
+                if (_masterAudioStream != null)
+                {
+                    // 检查主流中当前积压的字节数
+                    int queuedBytes = SDL_GetAudioStreamQueued(_masterAudioStream);
+
+                    // 如果积压的数据超过 3 个缓冲区大小（约60ms）则暂停推送进行背压
+                    // 迫使混音循环与音频硬件的播放速率同步
+                    // 防止新增音频源导致的播放错误
+                    if (queuedBytes > bufferSize * 3)
+                    {
+                        shouldWait = true;
+                    }
+                }
+            }
+
+            if (shouldWait)
+            {
+                Thread.Sleep(5); // 等待一小段时间让设备消耗数据
+                continue;
+            }
+
             Array.Clear(mixBufferFloat, 0, mixBufferFloat.Length);
             bool hasActiveSources = false;
 
-            // 遍历所有音源，获取转换后的数据并混合
+            // 遍历所有音源 获取转换后的数据并混合
             foreach (var source in _sources.Values)
             {
+                // 这里传递 sourceBuffer 后 source 内部会写入数据
+                // 必须依靠返回的 bytesRead 来决定混合多少数据
                 int bytesRead = source.GetConvertedData(sourceBuffer);
+
                 if (bytesRead > 0)
                 {
                     hasActiveSources = true;
                     // 将 S16LE 字节数据叠加到浮点混音缓冲区
-                    for (int i = 0; i < bytesRead / 2; i++)
+                    // 确保只处理完整的样本（2字节对齐）防止奇数长度导致的错位
+                    int samplesToProcess = bytesRead / 2;
+
+                    for (int i = 0; i < samplesToProcess; i++)
                     {
                         short sample = (short)(sourceBuffer[i * 2] | (sourceBuffer[i * 2 + 1] << 8));
                         // 应用音源音量和全局音量
@@ -187,7 +220,7 @@ public sealed unsafe class AudioPlayer : IDisposable
 
                 lock (_deviceLock)
                 {
-                    // 在推送前检查流是否有效（可能在切换过程中为null）
+                    // 在推送前检查流是否有效
                     if (_masterAudioStream != null && !_shutdownRequested)
                     {
                         fixed (byte* p = finalBuffer)
@@ -197,18 +230,21 @@ public sealed unsafe class AudioPlayer : IDisposable
                     }
                 }
             }
-
-            // 使用更精确的延迟来减少CPU占用
-            Thread.Sleep(10);
+            else
+            {
+                // 无音频播放直接休眠节省 cpu 按理说驱动应该不会休眠吧 如果休了那就后面加空音频
+                Thread.Sleep(5);
+            }
+            Thread.Sleep(2);
         }
     }
 
     /// <summary>
-    /// 为一个新的音频流做好播放准备。
+    /// 为一个新的音频流做好播放准备
     /// </summary>
-    /// <param name="inputSampleRate">输入音频的采样率。</param>
-    /// <param name="inputChannels">输入音频的声道数。</param>
-    /// <returns>一个代表此音频流的唯一ID。</returns>
+    /// <param name="inputSampleRate">输入音频的采样率</param>
+    /// <param name="inputChannels">输入音频的声道数</param>
+    /// <returns>一个代表此音频流的唯一ID</returns>
     public int StreamPlayStart(int inputSampleRate, int inputChannels)
     {
         if (_audioDevice == 0)
@@ -231,10 +267,10 @@ public sealed unsafe class AudioPlayer : IDisposable
     }
 
     /// <summary>
-    /// 将 PCM 音频数据推送到指定的播放流中。
+    /// 将 PCM 音频数据推送到指定的播放流中
     /// </summary>
-    /// <param name="streamId">由 StreamPlayStart 返回的流ID。</param>
-    /// <param name="pcmBytes">PCM 格式的字节数组 (S16LE)。</param>
+    /// <param name="streamId">由 StreamPlayStart 返回的流ID</param>
+    /// <param name="pcmBytes">PCM 格式的字节数组 (S16LE)</param>
     public void StreamPush(int streamId, byte[] pcmBytes)
     {
         if (_sources.TryGetValue(streamId, out var source))
@@ -248,9 +284,9 @@ public sealed unsafe class AudioPlayer : IDisposable
     }
 
     /// <summary>
-    /// 停止并移除一个流式播放源。
+    /// 停止并移除一个流式播放源
     /// </summary>
-    /// <param name="streamId">要停止的流ID。</param>
+    /// <param name="streamId">要停止的流ID</param>
     public void StopStream(int streamId)
     {
         if (_sources.TryRemove(streamId, out var source))
@@ -280,10 +316,10 @@ public sealed unsafe class AudioPlayer : IDisposable
     }
 
     /// <summary>
-    /// 设置指定流的音量。
+    /// 设置指定流的音量
     /// </summary>
-    /// <param name="streamId">流ID。</param>
-    /// <param name="volume">音量值 (0.0f - 1.0f+)。</param>
+    /// <param name="streamId">流ID</param>
+    /// <param name="volume">音量值 (0.0f - 1.0f+)</param>
     public void SetStreamVolume(int streamId, float volume)
     {
         if (_sources.TryGetValue(streamId, out var source))
@@ -295,7 +331,7 @@ public sealed unsafe class AudioPlayer : IDisposable
     /// <summary>
     /// 设置全局音量。
     /// </summary>
-    /// <param name="volume">音量值 (0.0f - 1.0f+)。</param>
+    /// <param name="volume">音量值 (0.0f - 1.0f+)</param>
     public void SetGlobalVolume(float volume)
     {
         _globalVolume = Math.Max(0.0f, volume);

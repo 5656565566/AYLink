@@ -146,6 +146,7 @@
   "AppSettings_AccentColor_Description": "选择一个你喜欢的颜色",
   "AppSettings_AudioOutputDevice": "音频输出设备选择",
   "AppSettings_AudioOutputDevice_Description": "选择用于输出音频的设备",
+  "AppSettings_AudioDevice_SystemDefault": "跟随系统",
   "AppSettings_AudioOutputDevice_Title": "虚拟设备说明",
   "AppSettings_AudioOutputDevice_Tip": "如需使用虚拟输出设备，请设置输入格式为",
   "AppSettings_AudioOutputDevice_Message": "16 位，48000 HZ，双声道",

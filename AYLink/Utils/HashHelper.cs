@@ -15,10 +15,8 @@ internal class HashHelper
     public static string ToMd5Hash(string input)
     {
         if (string.IsNullOrEmpty(input)) return string.Empty;
-
-        using var md5 = MD5.Create();
         var bytes = Encoding.UTF8.GetBytes(input);
-        var hash = md5.ComputeHash(bytes);
+        var hash = MD5.HashData(bytes);
 
         var sb = new StringBuilder(16);
         foreach (var b in hash)

@@ -53,11 +53,20 @@ public partial class AppSettingView : UserControl
         LanguagesComboBox.SelectedItem = availableLanguages.FirstOrDefault(lang => lang.Culture == currentCultureName);
         LanguagesComboBox.SelectionChanged += LanguagesComboBox_SelectionChanged;
 
+        // ÒôÆµ²¥·ÅÑ¡Ôñ¿ò
         var devicesTuple = AudioPlayer.GetPlaybackDevices();
         List<AudioDevice> devices = [.. devicesTuple.Select(d => new AudioDevice { Name = d.Name, InstanceID = d.InstanceID })];
+        var systemDefaultDevice = new AudioDevice
+        {
+            Name = L.Tr("AppSettings_AudioDevice_SystemDefault"),
+            InstanceID = 0
+        };
+        devices.Insert(0, systemDefaultDevice);
+
         AudioOutputDeviceComboBox.ItemsSource = devices;
         AudioOutputDeviceComboBox.SelectedItem = devices.FirstOrDefault(d => d.Name == appConfig.AudioOutputDevice);
         AudioOutputDeviceComboBox.SelectionChanged += OnAudioDeviceSelectionChanged;
+
 
         VolumeSlider.AddHandler(PointerReleasedEvent, OnVolumeSliderReleased, RoutingStrategies.Tunnel);
         VolumeSlider.Value = appConfig.GlobalVolume;
@@ -80,7 +89,12 @@ public partial class AppSettingView : UserControl
                 await DialogHelper.MessageShowAsync(L.Tr("AppSettings_AudioOutputDevice_Title"), $"{L.Tr("AppSettings_AudioOutputDevice_Tip")}\n{L.Tr("AppSettings_AudioOutputDevice_Message")}");
             }
 
-            _audioPlayer.ConfigureAudioDevice(selectedDevice.Name);
+            if (selectedDevice.InstanceID == 0)
+            {
+                appConfig.AudioOutputDevice = null;
+                _audioPlayer.ConfigureAudioDevice(null);
+            }
+            _audioPlayer.ConfigureAudioDevice(appConfig.AudioOutputDevice);
             _configManager.SaveConfig("appConfig", appConfig);
         }
     }
