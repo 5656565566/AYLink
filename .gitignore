@@ -472,13 +472,3 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/python,node,visualstudiocode,jetbrains,macos,windows,linux
 
 *.user
-/AYLink/ADB/AdbWinApi.dll
-/AYLink/ADB/AdbWinUsbApi.dll
-/AYLink/ADB/adb.exe
-
-/AYLink/FFMPEG/avcodec-61.dll
-/AYLink/FFMPEG/avutil-59.dll
-/AYLink/FFMPEG/swresample-5.dll
-/AYLink/FFMPEG/swscale-8.dll
-
-/AYLink/Scrcpy/scrcpy-server
