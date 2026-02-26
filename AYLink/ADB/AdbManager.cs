@@ -178,7 +178,7 @@ public sealed class AdbManager
             }
             else
             {
-                Debug.WriteLine($"无法在连接后找到设备: {deviceSerial}请检查设备连接和开发者选项");
+                Debug.WriteLine($"无法在连接后找到设备: {deviceSerial} 请检查设备连接和开发者选项");
                 return null;
             }
         }

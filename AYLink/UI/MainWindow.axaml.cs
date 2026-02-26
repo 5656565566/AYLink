@@ -57,18 +57,13 @@ public partial class MainWindow : Window
         adbManager.KillServer();
     }
 
-    private async void MainWindow_Loaded(object? sender, EventArgs e)
+    private void MainWindow_Loaded(object? sender, EventArgs e)
     {
         NavView.SelectedItem = HomeNavItem;
         NavView.SettingsItem.BindLocalizedContent("MainWindow_Settings");
 
         DialogHelper.GetProgressShow(L.Tr("MainWindow_Load"), L.Tr("MainWindow_Load_ADB"));
         DialogHelper.ShowProgress();
-
-        if (!_player.IsAudioDeviceAvailable)
-        {
-            await DialogHelper.MessageShowAsync(L.Tr("MainWindow_Warning"), L.Tr("MainWindow_Warning_NoDevices"));
-        }
 
         _ = Task.Run(() =>
         {
@@ -90,6 +85,14 @@ public partial class MainWindow : Window
             else
             {
                 DialogHelper.CloseProgress();
+
+                if (!_player.IsAudioDeviceAvailable)
+                {
+                    Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+                    {
+                        await DialogHelper.MessageShowAsync(L.Tr("MainWindow_Warning"), L.Tr("MainWindow_Warning_NoDevices"));
+                    });
+                }
             }
         });
     }
