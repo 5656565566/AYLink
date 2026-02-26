@@ -1,10 +1,7 @@
-﻿using AYLink.ADB;
-using AYLink.UI;
+﻿using AYLink.UI;
 using FluentAvalonia.UI.Controls;
 using System;
-using System.Reflection.Metadata;
 using System.Threading.Tasks;
-using Tmds.DBus.Protocol;
 
 namespace AYLink.Utils;
 
@@ -13,14 +10,14 @@ public static class DialogHelper
     private static ContentDialog? _progressDialog;
 
     /// <summary>
-    /// 显示一个可配置的消息对话框。
+    /// 显示一个可配置的消息对话框
     /// </summary>
-    /// <param name="title">对话框的标题。</param>
-    /// <param name="message">要显示的消息。</param>
-    /// <param name="primaryButton">主按钮的文本 (例如 "确定")。</param>
-    /// <param name="secondaryButton">次按钮的文本 (例如 "取消", 可选)。</param>
-    /// <param name="icon">对话框中显示的图标类型。</param>
-    /// <returns>返回用户的选择结果 (Primary 或 Secondary)。</returns>
+    /// <param name="title">对话框的标题</param>
+    /// <param name="message">要显示的消息</param>
+    /// <param name="primaryButton">主按钮的文本 (例如 "确定")</param>
+    /// <param name="secondaryButton">次按钮的文本 (例如 "取消", 可选)</param>
+    /// <param name="icon">对话框中显示的图标类型</param>
+    /// <returns>返回用户的选择结果 (Primary 或 Secondary)</returns>
     public static async Task<ContentDialogResult> MessageShowAsync(
         string title,
         string message,
@@ -48,7 +45,7 @@ public static class DialogHelper
     }
 
     /// <summary>
-    /// 弹出进度对话框。
+    /// 弹出进度对话框
     /// </summary>
     /// <param name="title">窗口标题</param>
     /// <param name="message">提示文字</param>

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using AYLink.UI.Themes;
 using AYLink.Utils;
 using AYLink.Utils.Localization;
@@ -10,7 +11,7 @@ using SDL;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace AYLink.UI;
 
@@ -62,11 +63,13 @@ public partial class AppSettingView : UserControl
             InstanceID = 0
         };
         devices.Insert(0, systemDefaultDevice);
-
         AudioOutputDeviceComboBox.ItemsSource = devices;
         AudioOutputDeviceComboBox.SelectedItem = devices.FirstOrDefault(d => d.Name == appConfig.AudioOutputDevice);
+        if (AudioOutputDeviceComboBox.SelectedItem == null)
+        {
+            AudioOutputDeviceComboBox.SelectedItem = systemDefaultDevice;
+        }
         AudioOutputDeviceComboBox.SelectionChanged += OnAudioDeviceSelectionChanged;
-
 
         VolumeSlider.AddHandler(PointerReleasedEvent, OnVolumeSliderReleased, RoutingStrategies.Tunnel);
         VolumeSlider.Value = appConfig.GlobalVolume;
@@ -74,6 +77,10 @@ public partial class AppSettingView : UserControl
         _audioPlayer.SetGlobalVolume(volume);
 
         Loaded += AppSettingView_Loaded;
+
+        scrcpyServer.Text = appConfig.ScrcpyServer;
+        adb.Text = appConfig.Adb;
+        FFmpegBin.Text = appConfig.FFmpegBin;
     }
 
 
@@ -132,8 +139,6 @@ public partial class AppSettingView : UserControl
     /// <summary>
     /// 主题改变
     /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
     private void ThemeModeComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (ThemeModeComboBox.SelectedItem is KeyValuePair<ThemeMode, string> selectedPair)
@@ -153,6 +158,72 @@ public partial class AppSettingView : UserControl
         {
             ThemeMode selectedMode = selectedPair.Key;
             ThemeManager.SetTheme(selectedMode, _currentAccentColor);
+        }
+    }
+
+    private async void SelectScrcpyServerBtn_Click(object? sender, RoutedEventArgs e)
+    {
+        var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+        if (storage == null) return;
+
+        var result = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = L.Tr("AppSettings_ScrcpyServerTip"),
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Java Archive") { Patterns = ["*.jar", "*.*"] }
+            ]
+        });
+
+        if (result.Count > 0)
+        {
+            appConfig.ScrcpyServer = result[0].Path.LocalPath;
+            _configManager.SaveConfig("appConfig", appConfig);
+            scrcpyServer.Text = appConfig.ScrcpyServer;
+        }
+    }
+
+    private async void SelectAdbBtn_Click(object? sender, RoutedEventArgs e)
+    {
+        var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+        if (storage == null) return;
+
+        var filter = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? new[] { new FilePickerFileType("ADB Executable") { Patterns = ["adb.exe"] } }
+            : null;
+
+        var result = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = L.Tr("AppSettings_AdbTip"),
+            AllowMultiple = false,
+            FileTypeFilter = filter
+        });
+
+        if (result.Count > 0)
+        {
+            appConfig.Adb = result[0].Path.LocalPath;
+            _configManager.SaveConfig("appConfig", appConfig);
+            adb.Text = appConfig.Adb;
+        }
+    }
+
+    private async void SelectFFmpegBtn_Click(object? sender, RoutedEventArgs e)
+    {
+        var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+        if (storage == null) return;
+
+        var result = await storage.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = L.Tr("AppSettings_FFmpegBinTip"),
+            AllowMultiple = false
+        });
+
+        if (result.Count > 0)
+        {
+            appConfig.FFmpegBin = result[0].Path.LocalPath;
+            _configManager.SaveConfig("appConfig", appConfig);
+            FFmpegBin.Text = appConfig.FFmpegBin;
         }
     }
 }

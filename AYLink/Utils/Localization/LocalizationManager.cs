@@ -49,9 +49,9 @@ public class LocalizationManager : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// 扫描语言文件夹，列出所有可用的语言。
+    /// 扫描语言文件夹 列出所有可用的语言
     /// </summary>
-    /// <returns>一个包含所有可用语言信息的列表。</returns>
+    /// <returns>一个包含所有可用语言信息的列表</returns>
     public List<LanguageInfo> ListAvailableLanguages()
     {
         var languages = new List<LanguageInfo>();

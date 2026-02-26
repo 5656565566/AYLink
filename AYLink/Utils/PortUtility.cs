@@ -7,7 +7,7 @@ namespace AYLink.Utils;
 
 internal class PortUtility
 {
-    // 查询端口是否被占用，并查看占用程序
+    // 查询端口是否被占用 并查看占用程序
     public static bool IsPortInUse(int port)
     {
         IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();

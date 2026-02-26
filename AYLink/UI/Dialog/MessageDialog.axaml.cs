@@ -9,7 +9,7 @@ namespace AYLink.UI;
 public partial class MessageDialog : UserControl
 {
     /// <summary>
-    /// 定义消息对话框可以显示的图标类型。
+    /// 定义消息对话框可以显示的图标类型
     /// </summary>
     public enum MessageDialogIcon
     {
@@ -26,10 +26,10 @@ public partial class MessageDialog : UserControl
     }
 
     /// <summary>
-    /// 配置对话框的内容和图标。
+    /// 配置对话框的内容和图标
     /// </summary>
-    /// <param name="message">要显示的消息文本。</param>
-    /// <param name="icon">要显示的图标类型。</param>
+    /// <param name="message">要显示的消息文本</param>
+    /// <param name="icon">要显示的图标类型</param>
     public void Configure(string message, MessageDialogIcon icon)
     {
         MessageTextBlock.Text = message;

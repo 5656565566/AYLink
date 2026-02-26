@@ -98,7 +98,7 @@
 
 				<!-- 右侧用于显示数字的TextBlock -->
 				<TextBlock Grid.Column="2"
-						   Text="{Binding #VolumeSlider.Value, StringFormat={}{0:F0}}%"
+						   Text="{Binding #VolumeSlider.Value, StringFormat={}{0:F0} %}"
 						   MinWidth="30"
 						   Margin="10,0,0,0"
 						   VerticalAlignment="Center"
@@ -137,7 +137,58 @@
 					IsAlphaEnabled="False"/>
 			</Grid>
 
-			<TextBlock Text="{local:Tr AppSettings_Device}" Classes="h2"/>
+			<!-- <TextBlock Text="{local:Tr AppSettings_Device}" Classes="h2"/> -->
+
+			<TextBlock Text="{local:Tr AppSettings_Component}" Classes="h3"/>
+			
+			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
+				<StackPanel Grid.Column="0">
+					<!-- 标题 -->
+					<TextBlock Text="{local:Tr AppSettings_ScrcpyVersion}"/>
+					<!-- 介绍/描述 -->
+					<TextBlock Text="{local:Tr AppSettings_ScrcpyVersion_Description}" Classes="Description"/>
+				</StackPanel>
+    
+				<!-- 右侧显示版本号的文本框 -->
+				<TextBox Grid.Column="1"
+						 Name="scrcpyVersion" 
+						 VerticalAlignment="Center"
+						 MinWidth="150"
+						 TextAlignment="Right"/>
+			</Grid>
+
+			<!-- Scrcpy 文件选择 -->
+			<TextBlock Text="{local:Tr AppSettings_ScrcpyServer}"/>
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBox Name="scrcpyServer"
+						 Watermark="{local:Tr AppSettings_SelectScrcpyServer}" 
+						 VerticalAlignment="Center"/>
+				<Button Grid.Column="1" Content="..." 
+						Click="SelectScrcpyServerBtn_Click"
+						Margin="5,0,0,0"/>
+			</Grid>
+
+			<!-- Adb 文件选择 -->
+			<TextBlock Text="{local:Tr AppSettings_Adb}"/>
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBox Name="adb"
+						 Watermark="{local:Tr AppSettings_SelectAdb}"
+						 VerticalAlignment="Center"/>
+				<Button Grid.Column="1" Content="..." 
+						Click="SelectAdbBtn_Click"
+						Margin="5,0,0,0"/>
+			</Grid>
+
+			<!-- FFmpeg 文件夹选择 -->
+			<TextBlock Text="{local:Tr AppSettings_FFmpegBin}"/>
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBox Name="FFmpegBin"
+						 Watermark="{local:Tr AppSettings_SelectFFmpegBin}" 
+						 VerticalAlignment="Center"/>
+				<Button Grid.Column="1" Content="..."
+						Click="SelectFFmpegBtn_Click"
+						Margin="5,0,0,0"/>
+			</Grid>
 
 			<TextBlock Text="{local:Tr AppSettings_ComponentVersion}" Classes="h3"/>
 

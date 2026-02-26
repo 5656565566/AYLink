@@ -10,7 +10,7 @@ using System.Reflection;
 namespace AYLink.UI.Themes;
 
 /// <summary>
-/// 一个用于管理背景图片的单例类。
+/// 一个用于管理背景图片的单例类
 /// </summary>
 public sealed class BackgroundImageManager
 {
@@ -24,7 +24,7 @@ public sealed class BackgroundImageManager
     private readonly Random _random = new();
 
     /// <summary>
-    /// 私有变量，用于存储当前正在显示的图片路径。
+    /// 私有变量 用于存储当前正在显示的图片路径
     /// </summary>
     private string? _currentImagePath;
 
@@ -40,10 +40,10 @@ public sealed class BackgroundImageManager
     }
 
     /// <summary>
-    /// 注册一个 Avalonia Image 控件以进行背景管理。
-    /// 如果已有背景图正在显示，则会立即应用到此控件上。
+    /// 注册一个 Avalonia Image 控件以进行背景管理
+    /// 如果已有背景图正在显示 则会立即应用到此控件上
     /// </summary>
-    /// <param name="imageControl">要注册的 Image 控件。</param>
+    /// <param name="imageControl">要注册的 Image 控件</param>
     public void RegisterImageComponent(Image imageControl)
     {
         if (imageControl == null || _registeredImages.Contains(imageControl))
@@ -53,7 +53,7 @@ public sealed class BackgroundImageManager
 
         _registeredImages.Add(imageControl);
 
-        // 如果当前有背景图正在显示，则立即为新注册的控件设置它
+        // 如果当前有背景图正在显示 则立即为新注册的控件设置它
         if (!string.IsNullOrEmpty(_currentImagePath) && File.Exists(_currentImagePath))
         {
             // 使用 Dispatcher 确保在 UI 线程上操作
@@ -66,7 +66,7 @@ public sealed class BackgroundImageManager
                 }
                 catch
                 {
-                    // 如果加载失败，确保控件不可见
+                    // 如果加载失败 确保控件不可见
                     imageControl.Source = null;
                     imageControl.IsVisible = false;
                 }
@@ -75,9 +75,9 @@ public sealed class BackgroundImageManager
     }
 
     /// <summary>
-    /// 取消一个 Image 控件的注册，使其不再受管理器控制。
+    /// 取消一个 Image 控件的注册 使其不再受管理器控制
     /// </summary>
-    /// <param name="imageControl">要取消注册的 Image 控件。</param>
+    /// <param name="imageControl">要取消注册的 Image 控件</param>
     public void UnregisterImageComponent(Image imageControl)
     {
         if (imageControl != null)
@@ -87,10 +87,10 @@ public sealed class BackgroundImageManager
     }
 
     /// <summary>
-    /// 新增一张背景图片。
-    /// 图片将被复制到 "bg" 目录下，并以数字序号重命名。
+    /// 新增一张背景图片
+    /// 图片将被复制到 "bg" 目录下 并以数字序号重命名
     /// </summary>
-    /// <param name="sourceImagePath">源图片的文件路径。</param>
+    /// <param name="sourceImagePath">源图片的文件路径</param>
     public void AddBackgroundImage(string sourceImagePath)
     {
         if (!File.Exists(sourceImagePath)) return;
@@ -117,18 +117,18 @@ public sealed class BackgroundImageManager
     }
 
     /// <summary>
-    /// 列出 "bg" 目录中所有的背景图片文件路径。
+    /// 列出 "bg" 目录中所有的背景图片文件路径
     /// </summary>
-    /// <returns>一个包含所有背景图片完整路径的列表。</returns>
+    /// <returns>一个包含所有背景图片完整路径的列表</returns>
     public List<string> ListBackgroundImages()
     {
         return [.. Directory.GetFiles(_bgDirectory)];
     }
 
     /// <summary>
-    /// 为所有已注册的 Image 控件设置指定的背景图片。
+    /// 为所有已注册的 Image 控件设置指定的背景图片
     /// </summary>
-    /// <param name="imagePath">要设置为背景的图片文件路径。</param>
+    /// <param name="imagePath">要设置为背景的图片文件路径</param>
     public void SetBackgroundImage(string imagePath)
     {
         if (string.IsNullOrEmpty(imagePath) || !File.Exists(imagePath))
@@ -158,7 +158,7 @@ public sealed class BackgroundImageManager
     }
 
     /// <summary>
-    /// 从 "bg" 目录中随机选择一张图片，并设置为所有已注册控件的背景。
+    /// 从 "bg" 目录中随机选择一张图片 并设置为所有已注册控件的背景
     /// </summary>
     public void SetRandomBackgroundImage()
     {
@@ -175,10 +175,10 @@ public sealed class BackgroundImageManager
     }
 
     /// <summary>
-    /// 从 "bg" 目录中删除指定的背景图片。
-    /// 如果删除的是当前显示的图片，则清除所有背景。
+    /// 从 "bg" 目录中删除指定的背景图片
+    /// 如果删除的是当前显示的图片 则清除所有背景
     /// </summary>
-    /// <param name="imagePath">要删除的背景图片的文件路径。</param>
+    /// <param name="imagePath">要删除的背景图片的文件路径</param>
     public void DeleteBackgroundImage(string imagePath)
     {
         if (!File.Exists(imagePath)) return;
@@ -187,7 +187,7 @@ public sealed class BackgroundImageManager
         {
             File.Delete(imagePath);
 
-            // 如果删除的是当前正在显示的图片，则清除背景
+            // 如果删除的是当前正在显示的图片 则清除背景
             if (imagePath == _currentImagePath)
             {
                 ClearBackgroundImage();
@@ -200,7 +200,7 @@ public sealed class BackgroundImageManager
     }
 
     /// <summary>
-    /// 为所有已注册的 Image 控件移除背景图片，并设置其为不可见。
+    /// 为所有已注册的 Image 控件移除背景图片 并设置其为不可见
     /// </summary>
     public void ClearBackgroundImage()
     {

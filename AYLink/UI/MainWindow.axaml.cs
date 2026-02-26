@@ -60,6 +60,7 @@ public partial class MainWindow : Window
     private async void MainWindow_Loaded(object? sender, EventArgs e)
     {
         NavView.SelectedItem = HomeNavItem;
+        NavView.SettingsItem.BindLocalizedContent("MainWindow_Settings");
 
         DialogHelper.GetProgressShow(L.Tr("MainWindow_Load"), L.Tr("MainWindow_Load_ADB"));
         DialogHelper.ShowProgress();

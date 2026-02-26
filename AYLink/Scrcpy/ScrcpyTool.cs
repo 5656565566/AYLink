@@ -18,11 +18,18 @@ internal class ScrcpyTool(DeviceModel deviceModel)
 {
     private readonly DeviceModel _deviceModel = deviceModel;
     private readonly AudioPlayer _player = AudioPlayer.Instance;
+    private readonly ConfigManager _configManager = ConfigManager.Instance;
+
     public async void PushScrcpyServer()
     {
         DeviceData device = _deviceModel.DeviceData;
+        Config appConfig = _configManager.LoadConfig<Config>("appConfig");
+        string scrcpyPath = string.IsNullOrWhiteSpace(appConfig.ScrcpyServer)
+            ? @"Scrcpy/scrcpy-server"
+            : appConfig.ScrcpyServer;
 
-        if (!File.Exists(@"Scrcpy/scrcpy-server"))
+
+        if (!File.Exists(scrcpyPath))
         {
             throw new FileNotFoundException("Scrcpy server JAR file not found");
         }
@@ -33,7 +40,7 @@ internal class ScrcpyTool(DeviceModel deviceModel)
             var fileMode = UnixFileMode.UserRead | UnixFileMode.UserWrite |
                 UnixFileMode.GroupRead | UnixFileMode.OtherRead;
 
-            await using FileStream stream = File.OpenRead(@"Scrcpy/scrcpy-server");
+            await using FileStream stream = File.OpenRead(scrcpyPath);
             await syncService.PushAsync(
                 stream,
                 "/data/local/tmp/scrcpy-server",
@@ -196,7 +203,7 @@ internal class ScrcpyTool(DeviceModel deviceModel)
                     }
                     else
                     {
-                        Trace.WriteLine("无法获取设备分辨率信息，ADB命令返回空结果");
+                        Trace.WriteLine("无法获取设备分辨率信息 ADB命令返回空结果");
                     }
                 }
             }

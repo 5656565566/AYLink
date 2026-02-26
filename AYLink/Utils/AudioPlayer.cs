@@ -12,7 +12,7 @@ namespace AYLink.Utils;
 
 /// <summary>
 /// 一个支持多音源混音和音频设备热切换的音频播放器
-/// 它管理一个音频设备，并将所有活动的音频源混合在一起进行播放
+/// 它管理一个音频设备 并将所有活动的音频源混合在一起进行播放
 /// </summary>
 public sealed unsafe class AudioPlayer : IDisposable
 {
@@ -296,7 +296,7 @@ public sealed unsafe class AudioPlayer : IDisposable
     }
 
     /// <summary>
-    /// 停止所有流的播放。
+    /// 停止所有流的播放
     /// </summary>
     public void StopAllStreams()
     {
@@ -329,7 +329,7 @@ public sealed unsafe class AudioPlayer : IDisposable
     }
 
     /// <summary>
-    /// 设置全局音量。
+    /// 设置全局音量
     /// </summary>
     /// <param name="volume">音量值 (0.0f - 1.0f+)</param>
     public void SetGlobalVolume(float volume)
@@ -401,7 +401,7 @@ public sealed unsafe class AudioPlayer : IDisposable
                 }
             }
 
-            // 即使在析构函数中，也要确保SDL被正确关闭
+            // 即使在析构函数中 也要确保SDL被正确关闭
             SDL_QuitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO);
             SDL_Quit();
 

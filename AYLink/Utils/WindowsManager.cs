@@ -10,7 +10,7 @@ using Avalonia.Threading;
 namespace AYLink.Utils;
 
 /// <summary>
-/// 窗口管理器，负责管理应用程序中所有窗口的注册、注销、查找和关闭
+/// 窗口管理器 负责管理应用程序中所有窗口的注册、注销、查找和关闭
 /// </summary>
 internal sealed class WindowsManager
 {
@@ -32,11 +32,11 @@ internal sealed class WindowsManager
     private readonly List<Window> _managedWindows = []; // 被管理的窗口列表
     private readonly object _lock = new();
 
-    // 存储最后已知的指针位置，用于按需查询
+    // 存储最后已知的指针位置 用于按需查询
     private Point? _lastKnownPointerScreenPosition;
 
     /// <summary>
-    /// 获取当前所有被管理窗口的只读列表。
+    /// 获取当前所有被管理窗口的只读列表
     /// </summary>
     public IReadOnlyList<Window> ManagedWindows
     {
@@ -50,7 +50,7 @@ internal sealed class WindowsManager
     }
 
     /// <summary>
-    /// 获取当前被管理窗口的数量。
+    /// 获取当前被管理窗口的数量
     /// </summary>
     public int WindowCount
     {
@@ -64,11 +64,11 @@ internal sealed class WindowsManager
     }
 
     /// <summary>
-    /// 创建指定类型的新窗口，注册它，并可选择性地配置它
+    /// 创建指定类型的新窗口 注册它 并可选择性地配置它
     /// </summary>
     /// <typeparam name="TWindow">要创建的窗口类型</typeparam>
-    /// <param name="configure">一个可选的Action，用于在注册前配置窗口</param>
-    /// <returns>新创建并注册的窗口。</returns>
+    /// <param name="configure">一个可选的Action 用于在注册前配置窗口</param>
+    /// <returns>新创建并注册的窗口</returns>
     public TWindow CreateWindow<TWindow>(Action<TWindow>? configure = null) where TWindow : Window, new()
     {
         var window = new TWindow();
@@ -78,10 +78,10 @@ internal sealed class WindowsManager
     }
 
     /// <summary>
-    /// 创建指定类型的新窗口，注册它，并显示它。
+    /// 创建指定类型的新窗口 注册它 并显示它
     /// </summary>
     /// <typeparam name="TWindow">要创建的窗口类型</typeparam>
-    /// <param name="configure">一个可选的Action，用于在注册和显示前配置窗口</param>
+    /// <param name="configure">一个可选的Action 用于在注册和显示前配置窗口</param>
     /// <returns>新创建、注册并显示的窗口</returns>
     public TWindow CreateAndShowWindow<TWindow>(Action<TWindow>? configure = null) where TWindow : Window, new()
     {
@@ -91,7 +91,7 @@ internal sealed class WindowsManager
     }
 
     /// <summary>
-    /// 向管理器注册一个已存在的窗口。管理器将订阅其 Closed 事件
+    /// 向管理器注册一个已存在的窗口管理器将订阅其 Closed 事件
     /// </summary>
     /// <param name="window">要注册的窗口</param>
     public void RegisterWindow(Window window)
@@ -110,7 +110,7 @@ internal sealed class WindowsManager
     }
 
     /// <summary>
-    /// 从管理器注销一个窗口。管理器将取消订阅其事件
+    /// 从管理器注销一个窗口管理器将取消订阅其事件
     /// </summary>
     /// <param name="window">要注销的窗口</param>
     public void UnregisterWindow(Window window)
@@ -128,9 +128,9 @@ internal sealed class WindowsManager
     }
 
     /// <summary>
-    /// 关闭所有被管理的窗口，可以选择排除应用程序的主窗口
+    /// 关闭所有被管理的窗口 可以选择排除应用程序的主窗口
     /// </summary>
-    /// <param name="excludeMainWindow">如果为 true，则不会关闭应用程序的主窗口</param>
+    /// <param name="excludeMainWindow">如果为 true 则不会关闭应用程序的主窗口</param>
     public void CloseAllWindows(bool excludeMainWindow = true)
     {
         List<Window> windowsToClose;
@@ -162,9 +162,9 @@ internal sealed class WindowsManager
     }
 
     /// <summary>
-    /// 根据最后已知的指针位置，获取指针当前所在位置最上面的窗口
+    /// 根据最后已知的指针位置 获取指针当前所在位置最上面的窗口
     /// </summary>
-    /// <returns>窗口，如果未找到则返回 null</returns>
+    /// <returns>窗口 如果未找到则返回 null</returns>
     public Window? GetWindowUnderPointer()
     {
         if (!Dispatcher.UIThread.CheckAccess())
@@ -187,7 +187,7 @@ internal sealed class WindowsManager
     /// <summary>
     /// 获取指针当前所在位置的窗口和具体控件
     /// </summary>
-    /// <returns>包含窗口和控件的元组，如果未找到则返回 (null, null)</returns>
+    /// <returns>包含窗口和控件的元组 如果未找到则返回 (null, null)</returns>
     public (Window? Window, Control? Control) GetWindowAndControlUnderPointer()
     {
         if (!Dispatcher.UIThread.CheckAccess())
@@ -229,9 +229,9 @@ internal sealed class WindowsManager
     }
 
     /// <summary>
-    /// 获取指针最后已知的屏幕位置。当指针在任何被管理窗口上移动时，此位置会持续更新
+    /// 获取指针最后已知的屏幕位置当指针在任何被管理窗口上移动时 此位置会持续更新
     /// </summary>
-    /// <returns>最后已知的指针位置，可能为 null</returns>
+    /// <returns>最后已知的指针位置 可能为 null</returns>
     public Point? GetLastKnownPointerScreenPosition()
     {
         return _lastKnownPointerScreenPosition;
@@ -255,14 +255,14 @@ internal sealed class WindowsManager
     {
         if (sender is Window window)
         {
-            // 获取相对于窗口的位置，然后转换为屏幕坐标
+            // 获取相对于窗口的位置 然后转换为屏幕坐标
             var positionInWindow = e.GetPosition(window);
             _lastKnownPointerScreenPosition = window.PointToScreen(positionInWindow).ToPoint(1); // ToPoint(1) 用于与设备无关的像素 ToPoint(1)
         }
     }
 
     /// <summary>
-    /// 处理应用程序退出事件，关闭所有被管理的窗口
+    /// 处理应用程序退出事件 关闭所有被管理的窗口
     /// </summary>
     private void OnApplicationExit(object? sender, Avalonia.Controls.ApplicationLifetimes.ControlledApplicationLifetimeExitEventArgs e)
     {
@@ -274,7 +274,7 @@ internal sealed class WindowsManager
     /// 判断一个窗口是否是应用程序的主窗口
     /// </summary>
     /// <param name="window">要检查的窗口</param>
-    /// <returns>如果是主窗口则为 true，否则为 false</returns>
+    /// <returns>如果是主窗口则为 true 否则为 false</returns>
     private static bool IsMainWindow(Window window)
     {
         return Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop &&
@@ -286,12 +286,12 @@ internal sealed class WindowsManager
     /// </summary>
     /// <param name="window">要检查的窗口</param>
     /// <param name="screenPoint">点的屏幕坐标</param>
-    /// <returns>如果点在窗口边界内则为 true，否则为 false</returns>
+    /// <returns>如果点在窗口边界内则为 true 否则为 false</returns>
     private static bool IsPointInWindow(Window window, Point screenPoint)
     {
         try
         {
-            // 使用 window.Bounds，它是与设备无关的像素
+            // 使用 window.Bounds 它是与设备无关的像素
             // 将 window.Position (PixelPoint) 转换为 Point 以构建 Rect
             var windowScreenPosition = window.PointToScreen(new Point(0, 0));
             var windowBounds = new Rect(windowScreenPosition.X, windowScreenPosition.Y, window.Bounds.Width, window.Bounds.Height);
@@ -305,10 +305,10 @@ internal sealed class WindowsManager
     }
 
     /// <summary>
-    /// 在窗口上执行命中测试，以查找最后已知指针位置正下方的控件
+    /// 在窗口上执行命中测试 以查找最后已知指针位置正下方的控件
     /// </summary>
     /// <param name="window">要执行命中测试的窗口</param>
-    /// <returns>给定窗口内指针下方的控件，如果未找到则返回 null</returns>
+    /// <returns>给定窗口内指针下方的控件 如果未找到则返回 null</returns>
     private Control? GetControlUnderPointer(Window window)
     {
         if (_lastKnownPointerScreenPosition == null) return null;

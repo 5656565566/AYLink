@@ -92,6 +92,7 @@ public partial class HomePage : UserControl
             else
             {
                 await DialogHelper.MessageShowAsync(L.Tr("HomePage_Dialog_Success_Title"), L.Tr("HomePage_Dialog_Success_Connection"));
+                await RefreshDevices();
             }
         }
     }

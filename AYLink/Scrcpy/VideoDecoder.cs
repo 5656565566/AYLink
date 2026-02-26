@@ -245,7 +245,6 @@ public unsafe class VideoDecoder : IDisposable
                 int packetSize = BitConverter.ToInt32([.. sizeBytes.Reverse()], 0);
                 long pts = BitConverter.ToInt64([.. ptsBytes.Reverse()], 0);
 
-                // --- 正常数据包处理 ---
                 if (packetSize <= 0 || packetSize > 2 * 1024 * 1024)
                 {
                     Debug.WriteLine($"Skipping packet with invalid size: {packetSize}");
@@ -259,7 +258,6 @@ public unsafe class VideoDecoder : IDisposable
 
                 byte[] frameBuffer = ReceiveExact(packetSize);
 
-                // 处理正常数据包
                 if (ffmpeg.av_new_packet(packet, packetSize) < 0)
                 {
                     Debug.WriteLine("Failed to allocate new packet buffer.");
@@ -303,12 +301,12 @@ public unsafe class VideoDecoder : IDisposable
         int ret = ffmpeg.avcodec_send_packet(_codecContext, packet);
         if (ret < 0)
         {
-            // 对于 flushing，发送 null packet 后会返回 EOF 是正常的
+            // 对于 flushing 发送 null packet 后会返回 EOF 是正常的
             if (ret != ffmpeg.AVERROR_EOF && ret != ffmpeg.AVERROR(ffmpeg.EAGAIN))
             {
                 Debug.WriteLine($"Failed to send packet to decoder: {ret}");
             }
-            // 即便发送失败，也尝试去接收帧，因为解码器内部可能还有缓存的帧
+            // 即便发送失败 也尝试去接收帧 因为解码器内部可能还有缓存的帧
         }
 
         while (true)
@@ -321,7 +319,7 @@ public unsafe class VideoDecoder : IDisposable
             if (ret < 0)
             {
                 Debug.WriteLine($"Failed to receive frame from decoder: {ret}");
-                break; // 出现错误，跳出循环
+                break; // 出现错误 跳出循环
             }
 
             try
@@ -340,8 +338,8 @@ public unsafe class VideoDecoder : IDisposable
     }
 
     /// <summary>
-    /// 从解码后的AVFrame高效更新UI上的WriteableBitmap。
-    /// 这个方法应该在解码线程中被调用。
+    /// 从解码后的AVFrame高效更新UI上的WriteableBitmap
+    /// 这个方法应该在解码线程中被调用
     /// </summary>
     /// <param name="frame">来自FFmpeg解码器的AVFrame指针</param>
     public unsafe void UpdateBitmapFromFrame(AVFrame* frame)
@@ -350,7 +348,7 @@ public unsafe class VideoDecoder : IDisposable
         int height = frame->height;
         var pix_fmt = (AVPixelFormat)frame->format;
 
-        if (width <= 0 || height <= 0) return; // 无效帧，直接忽略
+        if (width <= 0 || height <= 0) return; // 无效帧 直接忽略
 
         if (_writeableBitmap == null || width != _lastWidth || height != _lastHeight || pix_fmt != _lastPixFmt)
         {

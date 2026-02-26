@@ -58,7 +58,7 @@ internal unsafe class AudioSource : IDisposable
     }
 
     /// <summary>
-    /// 更新此音源的最后活动时间戳。
+    /// 更新此音源的最后活动时间戳
     /// </summary>
     public void UpdateActivity()
     {
@@ -99,7 +99,7 @@ internal unsafe class AudioSource : IDisposable
             int targetBytes = (_bytesPerSecond * TARGET_LATENCY_MS) / 1000;
             int bytesToDiscard = availableBytes - targetBytes;
 
-            Debug.WriteLine($"音源 {Id} 延迟过高 ({(float)availableBytes / _bytesPerSecond * 1000:F0}ms)。正在丢弃 {(float)bytesToDiscard / _bytesPerSecond * 1000:F0}ms ");
+            Debug.WriteLine($"音源 {Id} 延迟过高 ({(float)availableBytes / _bytesPerSecond * 1000:F0}ms)正在丢弃 {(float)bytesToDiscard / _bytesPerSecond * 1000:F0}ms ");
 
             // 丢弃掉多余的部分
             const int discardBufferSize = 4096;

@@ -7,9 +7,9 @@ using Avalonia.Threading;
 namespace AYLink.Utils;
 
 /// <summary>
-/// 管理在 UI 线程上运行的后台循环事件。
-/// 支持同步和异步任务，任务运行时不会阻塞 UI 线程。
-/// 使用 Avalonia.Threading.DispatcherTimer。
+/// 管理在 UI 线程上运行的后台循环事件
+/// 支持同步和异步任务 任务运行时不会阻塞 UI 线程
+/// 使用 Avalonia.Threading.DispatcherTimer
 /// </summary>
 public sealed class BackgroundEventManager : IDisposable
 {
@@ -22,7 +22,7 @@ public sealed class BackgroundEventManager : IDisposable
     public BackgroundEventManager() { }
 
     /// <summary>
-    /// 添加一个在 UI 线程上循环执行的同步事件。
+    /// 添加一个在 UI 线程上循环执行的同步事件
     /// </summary>
     /// <param name="eventName">事件的唯一名称</param>
     /// <param name="action">要执行的同步动作（将在 UI 线程上运行）</param>
@@ -43,8 +43,8 @@ public sealed class BackgroundEventManager : IDisposable
     }
 
     /// <summary>
-    /// (新增) 添加一个在 UI 线程上循环执行的异步事件。
-    /// 任务本身会通过 await 执行，不会阻塞 UI 线程。
+    /// (新增) 添加一个在 UI 线程上循环执行的异步事件
+    /// 任务本身会通过 await 执行 不会阻塞 UI 线程
     /// </summary>
     /// <param name="eventName">事件的唯一名称</param>
     /// <param name="asyncAction">要执行的异步动作（将在 UI 线程上运行）</param>
@@ -58,21 +58,21 @@ public sealed class BackgroundEventManager : IDisposable
     }
 
     /// <summary>
-    /// 内部核心方法，用于添加事件
+    /// 内部核心方法 用于添加事件
     /// </summary>
     private void AddEventInternal(string eventName, Func<Task> action, int intervalMilliseconds)
     {
         if (string.IsNullOrEmpty(eventName))
-            throw new ArgumentException("事件名称不能为空。", nameof(eventName));
+            throw new ArgumentException("事件名称不能为空", nameof(eventName));
 
         if (intervalMilliseconds <= 0)
-            throw new ArgumentException("时间间隔必须大于 0。", nameof(intervalMilliseconds));
+            throw new ArgumentException("时间间隔必须大于 0", nameof(intervalMilliseconds));
 
         lock (_lock)
         {
             if (_events.ContainsKey(eventName))
             {
-                // 如果已存在同名事件，先将其移除
+                // 如果已存在同名事件 先将其移除
                 RemoveEvent(eventName);
             }
 
@@ -81,7 +81,7 @@ public sealed class BackgroundEventManager : IDisposable
                 Interval = TimeSpan.FromMilliseconds(intervalMilliseconds)
             };
 
-            // 将 Tick 事件处理器改为 async void，以便在其中使用 await
+            // 将 Tick 事件处理器改为 async void 以便在其中使用 await
             timer.Tick += async (sender, e) =>
             {
                 try
@@ -89,7 +89,7 @@ public sealed class BackgroundEventManager : IDisposable
                     // 只有在运行状态下才执行动作
                     if (_isRunning)
                     {
-                        // 使用 await 执行任务，这不会阻塞UI线程
+                        // 使用 await 执行任务 这不会阻塞UI线程
                         await action();
                     }
                 }
@@ -102,7 +102,7 @@ public sealed class BackgroundEventManager : IDisposable
             // 将新的 DispatcherTimer 和动作存入字典
             _events[eventName] = (timer, action);
 
-            // 如果管理器当前处于运行状态，则立即启动新添加的计时器
+            // 如果管理器当前处于运行状态 则立即启动新添加的计时器
             if (_isRunning)
             {
                 timer.Start();

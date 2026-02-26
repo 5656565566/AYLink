@@ -19,8 +19,44 @@
 
 				<!-- 视频内容 -->
 				<Viewbox Stretch="Uniform">
-					<Image x:Name="VideoImage"/>
-				</Viewbox>
+        			<Grid>
+           			<!-- 视频流 -->
+            			<Image x:Name="VideoImage"/>
+
+            			<!-- 按键映射 -->
+            			<ItemsControl x:Name="MappingOverlay" 
+              				ItemsSource="{Binding Mappings}"
+              				IsHitTestVisible="False"> <!-- 编辑模式才允许点击 -->
+    					<ItemsControl.ItemTemplate>
+        						<DataTemplate>
+
+										<!-- 按键视觉实体 -->
+										<Border Width="44" Height="44" 
+											CornerRadius="22"
+											BorderThickness="2">
+									
+										<!-- 使用伪状态或绑定来改变颜色 -->
+										<Border.Styles>
+											<Style Selector="Border">
+												<!-- 半透明 -->
+												<Setter Property="Background" Value="#40000000"/>
+												<Setter Property="BorderBrush" Value="#80FFFFFF"/>
+												<Setter Property="Opacity" Value="0.6"/>
+											</Style>
+											<!-- 当对应的物理按键被按下时高亮 (通过 ViewModel 属性控制) -->
+											<Style Selector="Border[Tag=True]"> 
+												<Setter Property="Background" Value="#A0FFD700"/> <!-- 金色 -->
+												<Setter Property="BorderBrush" Value="White"/>
+												<Setter Property="Opacity" Value="1.0"/>
+												<Setter Property="RenderTransform" Value="scale(1.1)"/>
+											</Style>
+										</Border.Styles>
+									</Border>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+        			</Grid>
+    			</Viewbox>
 
 				<Button x:Name="ExpandBtn"
 					Width="40" Height="40"

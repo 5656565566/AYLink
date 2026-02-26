@@ -14,7 +14,7 @@ internal class FileSystemHelper
     /// <summary>
     /// 打开一个文件或目录
     /// </summary>
-    /// <param name="path">要打开的文件或目录的完整路径。</param>
+    /// <param name="path">要打开的文件或目录的完整路径</param>
     public static void Open(string path)
     {
         if (string.IsNullOrEmpty(path))

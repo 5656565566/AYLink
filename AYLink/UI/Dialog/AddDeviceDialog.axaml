@@ -12,7 +12,7 @@
                  Watermark="端口号 (可选, 默认为 5555)"/>
 
 		<TextBox Name="PairPortTextBox"
-				Watermark="配对端口 (可选，安卓 无限调试配对 流程)"/>
+				Watermark="配对端口 (可选 安卓 无限调试配对 流程)"/>
 
 		<TextBox Name="PairCodeTextBox"
 				Watermark="配对码（可选）"/>

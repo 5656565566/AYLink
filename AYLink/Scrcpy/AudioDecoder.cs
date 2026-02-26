@@ -99,7 +99,7 @@ public unsafe class AudioDecoder : IDisposable
             if (_codecContext == null)
                 throw new Exception("Failed to allocate codec context");
 
-            if (_currentCodec == AudioCodec.AAC) // 必须为 aac 做 extradata 配置 ！！！（教训，别信ai文档
+            if (_currentCodec == AudioCodec.AAC) // 必须为 aac 做 extradata 配置 ！！！（教训 别信ai文档
             {
                 byte[] configHeader = ReceiveExact(12);
 

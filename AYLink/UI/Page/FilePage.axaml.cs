@@ -65,14 +65,14 @@ public partial class FilePage : UserControl
         LocalizationManager.Instance.PropertyChanged += OnLanguageChanged;
     }
 
-    // [新增] 当语言发生变化时，刷新UI上的文本
+    // [新增] 当语言发生变化时 刷新UI上的文本
     private void OnLanguageChanged(object? sender, PropertyChangedEventArgs e)
     {
         // 保存当前选择的键
         var leftKey = (LeftSourceComboBox.SelectedItem as FileSourceItem)?.Key;
         var rightKey = (RightSourceComboBox.SelectedItem as FileSourceItem)?.Key;
 
-        // 重新初始化数据源，这会使用新的语言
+        // 重新初始化数据源 这会使用新的语言
         InitializeSources();
 
         // 恢复之前的选择
@@ -204,7 +204,7 @@ public partial class FilePage : UserControl
     // [核心修改]
     private void InitializeSources()
     {
-        // 使用 FileSourceItem 对象列表，而不是字符串列表
+        // 使用 FileSourceItem 对象列表 而不是字符串列表
         var leftSources = new ObservableCollection<FileSourceItem>
         {
             new("FilePage_Source_LocalHome", L.Tr("FilePage_Source_LocalHome")),

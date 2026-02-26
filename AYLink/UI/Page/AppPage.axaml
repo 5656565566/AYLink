@@ -14,7 +14,7 @@
                        DefaultLabelPosition="Right"
                        Background="Transparent">
 
-			<!-- 靠左：搜索按钮 + 搜索框 -->
+			<!-- 靠左 搜索按钮 + 搜索框 -->
 			<ui:CommandBar.Content>
 				<StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center"
@@ -38,7 +38,7 @@
 				</StackPanel>
 			</ui:CommandBar.Content>
 
-			<!-- 靠右：先安装，再刷新 -->
+			<!-- 靠右先安装 再刷新 -->
 			<ui:CommandBar.PrimaryCommands>
 				<ui:CommandBarButton x:Name="InstallAppBtn"
                                      Label="{local:Tr AppPage_InstallApp}">
@@ -61,7 +61,7 @@
 			</ui:CommandBar.SecondaryCommands>
 		</ui:CommandBar>
 
-		<!-- 主内容（以下保持原样） -->
+		<!-- 主内容 -->
 		<Grid Grid.Row="1">
 			<!-- 未选中设备提示 -->
 			<Border x:Name="Tip"

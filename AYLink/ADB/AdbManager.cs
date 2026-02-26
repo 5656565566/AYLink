@@ -125,7 +125,7 @@ public sealed class AdbManager
     /// <param name="ipAddress">设备上显示的 IP 地址</param>
     /// <param name="pairingPort">设备上显示的配对端口</param>
     /// <param name="pairingCode">设备上显示的配对码</param>
-    /// <returns>如果配对成功返回 true，否则返回 false</returns>
+    /// <returns>如果配对成功返回 true 否则返回 false</returns>
     public static async Task<bool> PairWifiDevice(string ipAddress, int pairingPort, string pairingCode)
     {
         try
@@ -133,7 +133,7 @@ public sealed class AdbManager
             var adbClient = new AdbClient();
             Debug.WriteLine($"正在尝试配对设备: {ipAddress}:{pairingPort}...");
             await adbClient.PairAsync(ipAddress, pairingPort, pairingCode);
-            Debug.WriteLine("配对成功！现在请使用连接端口进行连接。");
+            Debug.WriteLine("配对成功！现在请使用连接端口进行连接");
             return true;
         }
         catch (Exception ex)
@@ -144,11 +144,11 @@ public sealed class AdbManager
     }
 
     /// <summary>
-    /// 使用指定的主机和端口连接到一个新设备。
+    /// 使用指定的主机和端口连接到一个新设备
     /// </summary>
-    /// <param name="host">设备的主机名或 IP 地址。</param>
-    /// <param name="port">设备的端口号。</param>
-    /// <returns>成功连接则返回 DeviceModel，否则返回 null。</returns>
+    /// <param name="host">设备的主机名或 IP 地址</param>
+    /// <param name="port">设备的端口号</param>
+    /// <returns>成功连接则返回 DeviceModel 否则返回 null</returns>
     public async Task<DeviceModel?> ConnectDevice(string host, int port)
     {
         string deviceSerial = $"{host}:{port}";
@@ -178,7 +178,7 @@ public sealed class AdbManager
             }
             else
             {
-                Debug.WriteLine($"无法在连接后找到设备: {deviceSerial}。请检查设备连接和开发者选项。");
+                Debug.WriteLine($"无法在连接后找到设备: {deviceSerial}请检查设备连接和开发者选项");
                 return null;
             }
         }
@@ -190,8 +190,8 @@ public sealed class AdbManager
     }
 
     /// <summary>
-    /// 刷新已连接的设备列表。此方法会获取当前所有通过 ADB 连接的设备，
-    /// 并将任何尚未在内部字典中的新设备添加进去。
+    /// 刷新已连接的设备列表此方法会获取当前所有通过 ADB 连接的设备 
+    /// 并将任何尚未在内部字典中的新设备添加进去
     /// </summary>
     public async Task RefreshConnectedDevices()
     {
@@ -221,7 +221,7 @@ public sealed class AdbManager
                     continue;
                 }
 
-                // 如果设备不在字典中，则添加它
+                // 如果设备不在字典中 则添加它
                 if (!_connectedDevices.TryGetValue(deviceData.Serial, out DeviceModel? value))
                 {
                     var deviceModel = new DeviceModel(deviceData, _adbClient)
@@ -258,7 +258,7 @@ public sealed class AdbManager
         {
             // 从字典中移除
             _connectedDevices.Remove(serial);
-            Debug.WriteLine($"设备 {serial} 已断开。");
+            Debug.WriteLine($"设备 {serial} 已断开");
         }
     }
 
@@ -272,11 +272,11 @@ public sealed class AdbManager
     }
 
     /// <summary>
-    /// 检查设备是否真实在线并可操作。
-    /// 这比简单地检查设备是否在连接列表中更为可靠，因为它会尝试与设备进行一次真实的通信。
+    /// 检查设备是否真实在线并可操作
+    /// 这比简单地检查设备是否在连接列表中更为可靠 因为它会尝试与设备进行一次真实的通信
     /// </summary>
-    /// <param name="serial">要检查的设备的序列号。</param>
-    /// <returns>如果设备在线并能成功执行命令，则返回 true；否则返回 false。</returns>
+    /// <param name="serial">要检查的设备的序列号</param>
+    /// <returns>如果设备在线并能成功执行命令 则返回 true；否则返回 false</returns>
     public bool IsDeviceTrulyOnline(string serial)
     {
         if (!_connectedDevices.TryGetValue(serial, out var deviceModel) || !deviceModel.IsConnected)
@@ -292,7 +292,7 @@ public sealed class AdbManager
         catch (Exception ex)
         {
 
-            Debug.WriteLine($"设备 {serial} 检查失败，判定为离线: {ex.Message}");
+            Debug.WriteLine($"设备 {serial} 检查失败 判定为离线: {ex.Message}");
             deviceModel.IsConnected = false;
 
             return false;
@@ -303,7 +303,7 @@ public sealed class AdbManager
     /// 根据序列号获取特定设备的信息
     /// </summary>
     /// <param name="serial">设备的序列号</param>
-    /// <returns>找到的设备模型，否则为 null</returns>
+    /// <returns>找到的设备模型 否则为 null</returns>
     public DeviceModel? GetDeviceBySerial(string serial)
     {
         _connectedDevices.TryGetValue(serial, out var deviceModel);
