@@ -6,6 +6,7 @@
 - **许可证**: LGPLv3
 - **状态**: 未修改的官方二进制文件
 - **源码下载地址**: https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz
+- **win-x64运行库来自**: https://github.com/BtbN/FFmpeg-Builds/
 
 推荐的编译参数 依照协议你可以自行替换 也可以使用包管理器安装
 ```bash

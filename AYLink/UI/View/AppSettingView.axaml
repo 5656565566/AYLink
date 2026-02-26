@@ -211,7 +211,7 @@
 			<!-- 应用版本信息 -->
 			<Grid ColumnDefinitions="*,Auto" Margin="0,5">
 				<TextBlock Text="{local:Tr AppSettings_AppVersion}" VerticalAlignment="Center"/>
-				<TextBlock Text="0.0.4-a" Opacity="0.7" VerticalAlignment="Center" Grid.Column="1"/>
+				<TextBlock Text="0.0.6-a" Opacity="0.7" VerticalAlignment="Center" Grid.Column="1"/>
 			</Grid>
 
 			<!-- 检查更新按钮 -->
