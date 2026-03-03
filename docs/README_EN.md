@@ -27,7 +27,7 @@ On Linux and macOS, you can use a package manager and environment variables to s
 
 ### UI Showcase (Dark Mode)
 
-![alt text](img/1.png)![alt text](img/2.png)![alt text](img/3.png)
+![alt text](screenshot/1.png)![alt text](screenshot/2.png)![alt text](screenshot/3.png)
 
 ### Custom Background Instructions
 
