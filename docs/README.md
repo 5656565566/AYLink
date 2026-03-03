@@ -27,9 +27,9 @@
 
 ### UI 界面展示（暗色模式）
 
-![alt text](img/1.png)
-![alt text](img/2.png)
-![alt text](img/3.png)
+![alt text](screenshot/1.png)
+![alt text](screenshot/2.png)
+![alt text](screenshot/3.png)
 
 ### 自定义背景说明
 
