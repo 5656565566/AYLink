@@ -1,4 +1,4 @@
-﻿using AYLink.Scrcpy;
+using AYLink.Scrcpy;
 using Avalonia;
 using Newtonsoft.Json;
 using System;

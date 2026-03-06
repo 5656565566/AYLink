@@ -1,4 +1,4 @@
-﻿using AYLink.UI.Themes;
+using AYLink.UI.Themes;
 using AYLink.Utils.Localization;
 using Avalonia;
 using Avalonia.Controls;

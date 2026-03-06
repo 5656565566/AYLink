@@ -9,15 +9,15 @@ namespace AYLink.UI;
 public partial class MessageDialog : UserControl
 {
     /// <summary>
-    /// ¶¨ÒåÏûÏ¢¶Ô»°¿ò¿ÉÒÔÏÔÊ¾µÄÍ¼±êÀàĞÍ
+    /// ï­˜Û·ïº»ï®’ïºµï»³ïºµÛ±ï­˜ïº¿ï­¨ïºïºŸï®¨ïºŸïº­ïº»ïº¿ïºµïº¿ï®Œïºï­–ïº¥ïº±ïº™ïºï»¡ï­ºï»“ïº·ïº±
     /// </summary>
     public enum MessageDialogIcon
     {
-        None,         // ²»ÏÔÊ¾Í¼±ê
-        Information,  // ĞÅÏ¢
-        Success,      // ³É¹¦
-        Warning,      // ¾¯¸æ
-        Error         // ´íÎó
+        None,         // ïºï­¨ïºµïº¿ï®Œïºïº±ïº™ïºï»¡
+        Information,  // ïº·ïº§ïºµÛ±
+        Success,      // ïºïº­ïº—Ûµ
+        Warning,      // ïºïºïº•ï®”
+        Error         // ïº‘ï»¥ïº³ï®©
     }
 
     public MessageDialog()
@@ -26,10 +26,10 @@ public partial class MessageDialog : UserControl
     }
 
     /// <summary>
-    /// ÅäÖÃ¶Ô»°¿òµÄÄÚÈİºÍÍ¼±ê
+    /// ïº§ï»›ï»…ïº£ï­˜ïº¿ï­¨ïºïºŸï®¨ï­–ïº¥ïº¥ï»Œïº«ï»ï­¦ïº±ïº±ïº™ïºï»¡
     /// </summary>
-    /// <param name="message">ÒªÏÔÊ¾µÄÏûÏ¢ÎÄ±¾</param>
-    /// <param name="icon">ÒªÏÔÊ¾µÄÍ¼±êÀàĞÍ</param>
+    /// <param name="message">ïº»Û¹ïºµïº¿ï®Œïºï­–ïº¥ïºµï»³ïºµÛ±ïº³ïº¥ïºïº</param>
+    /// <param name="icon">ïº»Û¹ïºµïº¿ï®Œïºï­–ïº¥ïº±ïº™ïºï»¡ï­ºï»“ïº·ïº±</param>
     public void Configure(string message, MessageDialogIcon icon)
     {
         MessageTextBlock.Text = message;

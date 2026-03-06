@@ -1,0 +1,35 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sty="using:FluentAvalonia.Styling"
+             xmlns:local="using:AYLink.Desktop"
+             xmlns:views="using:AYLink.Desktop.Views.Pages"
+             xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             x:Class="AYLink.Desktop.App"
+             RequestedThemeVariant="Default">
+
+    <Application.Styles>
+        <sty:FluentAvaloniaTheme />
+    </Application.Styles>
+
+    <!-- View-ViewModel 映射：DataTemplate 自动根据 DataContext 类型选择 View -->
+    <Application.DataTemplates>
+        <DataTemplate DataType="vm:HomePageViewModel">
+            <views:HomePage />
+        </DataTemplate>
+        <DataTemplate DataType="vm:FilePageViewModel">
+            <views:FilePage />
+        </DataTemplate>
+        <DataTemplate DataType="vm:ScreenPageViewModel">
+            <views:ScreenPage />
+        </DataTemplate>
+        <DataTemplate DataType="vm:AppPageViewModel">
+            <views:AppPage />
+        </DataTemplate>
+        <DataTemplate DataType="vm:ShellPageViewModel">
+            <views:ShellPage />
+        </DataTemplate>
+        <DataTemplate DataType="vm:SettingsPageViewModel">
+            <views:SettingsPage />
+        </DataTemplate>
+    </Application.DataTemplates>
+</Application>

@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="using:AYLink.Desktop.Models"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+             x:Class="AYLink.Desktop.Views.Dialogs.InputDialog">
+
+    <StackPanel Spacing="12" Margin="12" MinWidth="320" Name="InputContainer">
+        <!-- TextBoxes will be generated dynamically in code-behind -->
+    </StackPanel>
+</UserControl>

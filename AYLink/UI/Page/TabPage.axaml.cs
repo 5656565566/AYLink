@@ -81,7 +81,7 @@ public partial class TabPage : UserControl
                 }
             });
 
-            return; // ���ڼ��ƶ�
+            return; // ﺑﺍﺟﻌﺙﻛﺻﺩﭘﺁ
         }
 
         if (sourceItemsList.Count == 1 && (sourceWindow is DetachedTabWindow))

@@ -1,4 +1,4 @@
-﻿using SDL;
+using SDL;
 using System;
 using System.Diagnostics;
 using static SDL.SDL3;

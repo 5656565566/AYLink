@@ -25,9 +25,9 @@ public partial class AppSettingView : UserControl
 
     private readonly Dictionary<ThemeMode, string> _themeMap = new()
     {
-        { ThemeMode.Light, "明亮" },
-        { ThemeMode.Dark, "暗黑" },
-        { ThemeMode.Default, "跟随系统" }
+        { ThemeMode.Light, "浜壊" },
+        { ThemeMode.Dark, "鏆楄壊" },
+        { ThemeMode.Default, "璺熼殢绯荤粺" }
     };
     public class AudioDevice
     {
@@ -54,7 +54,6 @@ public partial class AppSettingView : UserControl
         LanguagesComboBox.SelectedItem = availableLanguages.FirstOrDefault(lang => lang.Culture == currentCultureName);
         LanguagesComboBox.SelectionChanged += LanguagesComboBox_SelectionChanged;
 
-        // 音频播放选择框
         var devicesTuple = AudioPlayer.GetPlaybackDevices();
         List<AudioDevice> devices = [.. devicesTuple.Select(d => new AudioDevice { Name = d.Name, InstanceID = d.InstanceID })];
         var systemDefaultDevice = new AudioDevice
@@ -136,9 +135,6 @@ public partial class AppSettingView : UserControl
         }
     }
 
-    /// <summary>
-    /// 主题改变
-    /// </summary>
     private void ThemeModeComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (ThemeModeComboBox.SelectedItem is KeyValuePair<ThemeMode, string> selectedPair)
@@ -147,9 +143,6 @@ public partial class AppSettingView : UserControl
             ThemeManager.SetTheme(selectedMode, _currentAccentColor);
         }
     }
-    /// <summary>
-    /// 当 ColorPicker 中的颜色发生变化
-    /// </summary>
     private void AccentColorPicker_ColorChanged(object? sender, ColorChangedEventArgs e)
     {
         _currentAccentColor = e.NewColor;

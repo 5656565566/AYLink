@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace AYLink.UI;
 
-// [ĞÂÔö] ´´½¨Ò»¸öÊı¾İ½á¹¹À´·ÖÀëÂß¼­¼üºÍÏÔÊ¾Ãû
+// [ïº«ïºïº·ï»²] Ù¤Ù¤ïºµïºïº¯Ø›Ù¨ï»²ïº—ï»±ïº¹Ã·ïºµï»“Ù©Ù©Â¢Ù¤Ù§ïº¿Â¢ïº½ïºï»‰ïº±ïºïº±ï»™ï»‘ïº£ïº©ïº·ïº—ïº¹ïºƒï»
 public record FileSourceItem(string Key, string DisplayName);
 
 public partial class FilePage : UserControl
@@ -65,17 +65,17 @@ public partial class FilePage : UserControl
         LocalizationManager.Instance.PropertyChanged += OnLanguageChanged;
     }
 
-    // [ĞÂÔö] µ±ÓïÑÔ·¢Éú±ä»¯Ê± Ë¢ĞÂUIÉÏµÄÎÄ±¾
+    // [ïº«ïºïº·ï»²] Ù¥Ù¡ïº³ï»¡ïº­ïº·Ù§ïº‚ïº“ï»¶Ù¡ï»ŸØ›ïº¥ïº—Ù¡ ïº›ïº‚ïº«ïºUIïº“ïº©Ù¥ïº…ïº§ïº…Ù¡ïº¹
     private void OnLanguageChanged(object? sender, PropertyChangedEventArgs e)
     {
-        // ±£´æµ±Ç°Ñ¡ÔñµÄ¼ü
+        // Ù¡Â£Ù¤ï»§Ù¥Ù¡ïºÙ ïº­Â­ïº·Ù‘Ù¥ïº…ïº±ï»™
         var leftKey = (LeftSourceComboBox.SelectedItem as FileSourceItem)?.Key;
         var rightKey = (RightSourceComboBox.SelectedItem as FileSourceItem)?.Key;
 
-        // ÖØĞÂ³õÊ¼»¯Êı¾İÔ´ Õâ»áÊ¹ÓÃĞÂµÄÓïÑÔ
+        // ïº¿ï»…ïº«ïºÙ£ï»°ïº—ïº±Ø›ïº¥ïº—ï»±ïº¹Ã·ïº·Ù¤ ïº»ï»—Ø›ï»“ïº—Ù©ïº³ïºƒïº«ïºÙ¥ïº…ïº³ï»¡ïº­ïº·
         InitializeSources();
 
-        // »Ö¸´Ö®Ç°µÄÑ¡Ôñ
+        // Ø›ïº¿Ù¨Ù¤ïº¿ïº¡ïºÙ Ù¥ïº…ïº­Â­ïº·Ù‘
         if (leftKey != null)
         {
             LeftSourceComboBox.SelectedItem = (LeftSourceComboBox.ItemsSource as ObservableCollection<FileSourceItem>)
@@ -88,7 +88,7 @@ public partial class FilePage : UserControl
         }
     }
 
-    // ... SetupContextMenuEvents ºÍÓÒ¼ü²Ëµ¥²¿·Ö±£³Ö²»±ä ...
+    // ... SetupContextMenuEvents ï»‘ïº£ïº³ïº¯ïº±ï»™Ù¢ïº›Ù¥ïº„Ù¢ØŸÙ§ïº¿Ù¡Â£Ù£ïº¿Ù¢Ø›Ù¡ï»Ÿ ...
     #region Unchanged Code Block 1
     private void SetupContextMenuEvents()
     {
@@ -117,7 +117,7 @@ public partial class FilePage : UserControl
         }
     }
 
-    #region ÓÒ¼ü²Ëµ¥
+    #region ïº³ïº¯ïº±ï»™Ù¢ïº›Ù¥ïº„
     private async Task HandleContextMenuTransfer(FileSystemModel sourceItem, TreeView sourceTreeView, TreeView targetTreeView, TransferOperationType operationType)
     {
         if (_isTransferInProgress)
@@ -192,7 +192,7 @@ public partial class FilePage : UserControl
     #endregion
     #endregion
 
-    #region UI µ¼º½ÓëÊı¾İ¼ÓÔØ (ºËĞÄĞŞ¸Ä²¿·Ö)
+    #region UI Ù¥ïº±ï»‘ïºµïº³ïº½ïº—ï»±ïº¹Ã·ïº±ïº³ïº·ï»… (ï»‘ïº›ïº«ïº…ïº«Ã—Ù¨ïº…Ù¢ØŸÙ§ïº¿)
 
     public void SetDevice(DeviceModel deviceModel)
     {
@@ -201,10 +201,10 @@ public partial class FilePage : UserControl
         LoadInitialData();
     }
 
-    // [ºËĞÄĞŞ¸Ä]
+    // [ï»‘ïº›ïº«ïº…ïº«Ã—Ù¨ïº…]
     private void InitializeSources()
     {
-        // Ê¹ÓÃ FileSourceItem ¶ÔÏóÁĞ±í ¶ø²»ÊÇ×Ö·û´®ÁĞ±í
+        // ïº—Ù©ïº³ïºƒ FileSourceItem Ù¦ïº·ïº©ï»©ïº€ïº«Ù¡ï» Ù¦ï»•Ù¢Ø›ïº—ïºï»ïº¿Ù§ï»Ù¤ïº¡ïº€ïº«Ù¡ï»
         var leftSources = new ObservableCollection<FileSourceItem>
         {
             new("FilePage_Source_LocalHome", L.Tr("FilePage_Source_LocalHome")),
@@ -224,19 +224,19 @@ public partial class FilePage : UserControl
         LeftSourceComboBox.ItemsSource = leftSources;
         RightSourceComboBox.ItemsSource = rightSources;
 
-        // ¸æËß ComboBox ÏÔÊ¾ÄÄ¸öÊôĞÔ
+        // Ù¨ï»§ïº›ï»‰ ComboBox ïº©ïº·ïº—ïº¹ïº…ïº…Ù¨ï»²ïº—ï»¬ïº«ïº·
         LeftSourceComboBox.DisplayMemberBinding = new Binding("DisplayName");
         RightSourceComboBox.DisplayMemberBinding = new Binding("DisplayName");
 
-        // ÉèÖÃÄ¬ÈÏÑ¡ÖĞÏî
+        // ïº“ï»­ïº¿ïºƒïº…ØŒïº‘ïº©ïº­Â­ïº¿ïº«ïº©ï»
         if (LeftSourceComboBox.Items.Count > 0) LeftSourceComboBox.SelectedIndex = 0;
         if (RightSourceComboBox.Items.Count > 0) RightSourceComboBox.SelectedIndex = 0;
     }
 
-    // [ºËĞÄĞŞ¸Ä]
+    // [ï»‘ïº›ïº«ïº…ïº«Ã—Ù¨ïº…]
     private async void LoadInitialData()
     {
-        // Ê¹ÓÃÎÈ¶¨µÄ Key À´»ñÈ¡³õÊ¼Â·¾¶
+        // ïº—Ù©ïº³ïºƒïº§ïº‘Ù¦ïºÙ¥ïº… Key Â¢Ù¤Ø›Ù‘ïº‘Â­Ù£ï»°ïº—ïº±ïºÙ§ïº¹Ù¦
         var leftInitialPath = GetInitialPathForSource("FilePage_Source_LocalHome");
         await LoadDataForTreeView(LeftTreeView, (LeftSourceComboBox.SelectedItem as FileSourceItem), leftInitialPath);
 
@@ -244,10 +244,10 @@ public partial class FilePage : UserControl
         await LoadDataForTreeView(RightTreeView, (RightSourceComboBox.SelectedItem as FileSourceItem), rightInitialPath);
     }
 
-    // [ºËĞÄĞŞ¸Ä]
+    // [ï»‘ïº›ïº«ïº…ïº«Ã—Ù¨ïº…]
     private static string GetInitialPathForSource(string? key)
     {
-        // Ê¹ÓÃÎÈ¶¨µÄ Key ½øĞĞÂß¼­ÅĞ¶Ï
+        // ïº—Ù©ïº³ïºƒïº§ïº‘Ù¦ïºÙ¥ïº… Key ïºµï»•ïº«ïº«ïºï»‰ïº±ïºï»Šïº«Ù¦ïº©
         return key switch
         {
             "FilePage_Source_LocalHome" => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
@@ -258,11 +258,11 @@ public partial class FilePage : UserControl
         };
     }
 
-    // [ºËĞÄĞŞ¸Ä]
+    // [ï»‘ïº›ïº«ïº…ïº«Ã—Ù¨ïº…]
     private async Task LoadDataForTreeView(TreeView treeView, FileSourceItem? sourceItem, string path)
     {
         if (sourceItem == null || string.IsNullOrEmpty(path)) return;
-        var key = sourceItem.Key; // Ê¹ÓÃ Key ½øĞĞÂß¼­ÅĞ¶Ï
+        var key = sourceItem.Key; // ïº—Ù©ïº³ïºƒ Key ïºµï»•ïº«ïº«ïºï»‰ïº±ïºï»Šïº«Ù¦ïº©
 
         if (treeView == LeftTreeView)
         {
@@ -305,13 +305,13 @@ public partial class FilePage : UserControl
         treeView.ItemsSource = items;
     }
 
-    // [ºËĞÄĞŞ¸Ä]
+    // [ï»‘ïº›ïº«ïº…ïº«Ã—Ù¨ïº…]
     private async void SourceComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        // ÅĞ¶ÏÑ¡ÖĞµÄ¶ÔÏóÊÇ FileSourceItem
+        // ï»Šïº«Ù¦ïº©ïº­Â­ïº¿ïº«Ù¥ïº…Ù¦ïº·ïº©ï»©ïº—ïº FileSourceItem
         if (sender is ComboBox { SelectedItem: FileSourceItem sourceItem } comboBox)
         {
-            // Ê¹ÓÃ Key »ñÈ¡Â·¾¶
+            // ïº—Ù©ïº³ïºƒ Key Ø›Ù‘ïº‘Â­ïºÙ§ïº¹Ù¦
             string initialPath = GetInitialPathForSource(sourceItem.Key);
             if (comboBox.Name == "LeftSourceComboBox")
             {
@@ -326,7 +326,7 @@ public partial class FilePage : UserControl
 
     #endregion
 
-    // ... RefreshButton_Click, PathTextBox_KeyDown, TreeView_DoubleTapped ºÍ ÍÏ×§Óë´«Êä²¿·Ö ±£³Ö²»±ä ...
+    // ... RefreshButton_Click, PathTextBox_KeyDown, TreeView_DoubleTapped ï»‘ïº£ ïº£ïº©ï»ï¿½ïº³ïº½Ù¤ïº™ïº—ï»ŸÙ¢ØŸÙ§ïº¿ Ù¡Â£Ù£ïº¿Ù¢Ø›Ù¡ï»Ÿ ...
     #region Unchanged Code Block 2
     private ObservableCollection<FileSystemModel> GetLocalDirectoryListing(string path)
     {
@@ -400,7 +400,7 @@ public partial class FilePage : UserControl
         }
     }
 
-    #region ÍÏ×§Óë´«Êä
+    #region ïº£ïº©ï»ï¿½ïº³ïº½Ù¤ïº™ïº—ï»Ÿ
     private async void Item_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is Panel panel && panel.DataContext is FileSystemModel)
@@ -524,7 +524,7 @@ public partial class FilePage : UserControl
                 }
             }, cts.Token);
         }
-        catch (OperationCanceledException) { /* ¾²Ä¬´¦Àí */ }
+        catch (OperationCanceledException) { /* ïº¹Ù¢ïº…ØŒÙ¤ï¿½Â¢ï» */ }
         catch (Exception ex)
         {
             await Dispatcher.UIThread.InvokeAsync(() =>

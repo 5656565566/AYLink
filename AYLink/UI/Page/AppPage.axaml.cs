@@ -24,7 +24,7 @@ namespace AYLink.UI;
 public partial class AppPage : UserControl
 {
     public event Action<DeviceModel, string, string>? OnAppStart;
-    // ֻ��ʾɸѡ��Ľ��
+    // ﻅﭨﺵﺿﮌﺝﺭﺕﺹ۰ﭦﮩﭖﺥﺛﻕﺗﻳ
     private readonly ObservableCollection<AppInfo> _appList = [];
     private readonly List<AppInfo> _masterAppList = [];
     private DeviceModel? _deviceModel;
@@ -82,7 +82,7 @@ public partial class AppPage : UserControl
     }
 
     /// <summary>
-    /// ����
+    /// ﺯﺹﺯﺊ
     /// </summary>
     private void PerformSearch()
     {
@@ -114,7 +114,7 @@ public partial class AppPage : UserControl
     {
         if (_deviceModel == null)
         {
-            await DialogHelper.MessageShowAsync("���豸", "����ǰ�� ��ҳ ѡ��һ���豸");
+            await DialogHelper.MessageShowAsync("ﺳﻐﺭﻟﺎﺕ", "ﮄﻣﺵﺫﮄﺍﺱﻱ ﮌﻉﺻﺏ ﺹ۰ﺿﮦﺻﭨﺕﺉﺭﻟﺎﺕ");
             return;
         }
 
@@ -126,20 +126,20 @@ public partial class AppPage : UserControl
 
         var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "��ѡ��һ������ APK �ļ�",
+            Title = "ﮄﻣﺹ۰ﺿﮦﺻﭨﺕﺉﭨﮨﭘﻓﺕﺉ APK ﺳﺥﺙﹼ",
             AllowMultiple = true,
             FileTypeFilter =
             [
                 new FilePickerFileType("APK (*.apk)") { Patterns = ["*.apk"] },
-                new FilePickerFileType("�����ļ� (*.*)") { Patterns = ["*"] },
+                new FilePickerFileType("ﺯﻱﺽﺷﺳﺥﺙﹼ (*.*)") { Patterns = ["*"] },
             ]
         });
 
         if (files.Any())
         {
             DialogHelper.GetProgressShow(
-                "Ӧ�ð�װ",
-                "׼����װ...",
+                "ﺽ۵ﺽﺣﺍﺎﻉﺍ",
+                "ﻉﺙﺎﺕﺍﺎﻉﺍ...",
                 showProgressBar: true
             );
             DialogHelper.ShowProgress();
@@ -164,13 +164,13 @@ public partial class AppPage : UserControl
                         {
                             if (p.State == PackageInstallProgressState.Uploading)
                             {
-                                DialogHelper.UpdateProgressMessage($"�����ϴ� {fileName}");
+                                DialogHelper.UpdateProgressMessage($"ﻁﮮﺿﻌﺭﺵﺑ، {fileName}");
                                 DialogHelper.UpdateProgressValue(p.UploadProgress);
                             }
 
                             if (p.State == PackageInstallProgressState.Installing)
                             {
-                                DialogHelper.UpdateProgressMessage($"���ڰ�װ");
+                                DialogHelper.UpdateProgressMessage($"ﻁﮮﺿﻌﺍﺎﻉﺍ");
                                 DialogHelper.UpdateProgressValue(p.UploadProgress);
                             }
                         }
@@ -189,7 +189,7 @@ public partial class AppPage : UserControl
                 catch (Exception ex)
                 {
                     DialogHelper.CloseProgress();
-                    await DialogHelper.MessageShowAsync("��װʧ��", $"Ӧ�ð�װ�����з�������: {ex.Message}");
+                    await DialogHelper.MessageShowAsync("ﺍﺎﻉﺍﮌ۶ﺍﻎ", $"ﺽ۵ﺽﺣﺍﺎﻉﺍﺗﮮﺏﮊﻅﺷﺓ۱ﺭﻲﺑﻥﺳﮩ: {ex.Message}");
                 }
             });
         }
@@ -223,8 +223,8 @@ public partial class AppPage : UserControl
     private void LoadAppData()
     {
         DialogHelper.GetProgressShow(
-            "Ӧ�û�ȡ",
-            "��ȡ��...",
+            "ﺽ۵ﺽﺣﭨﮦﺫ۰",
+            "ﭨﮦﺫ۰ﻅﺷ...",
             showProgressBar: false
             );
 

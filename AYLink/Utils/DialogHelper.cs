@@ -1,4 +1,4 @@
-﻿using AYLink.UI;
+using AYLink.UI;
 using FluentAvalonia.UI.Controls;
 using System;
 using System.Threading.Tasks;

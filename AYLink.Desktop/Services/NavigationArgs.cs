@@ -1,0 +1,38 @@
+using System;
+
+namespace AYLink.Desktop.Services;
+
+/// <summary>
+/// 导航参数基类 - 所有导航参数必须继承此类
+/// 
+/// 使用示例：
+/// <code>
+/// // 定义参数类
+/// public class ScreenNavigationArgs : NavigationArgs
+/// {
+///     public string DeviceSerial { get; init; }
+///     public string? PackageName { get; init; }
+/// }
+/// 
+/// public class FileNavigationArgs : NavigationArgs
+/// {
+///     public string DeviceSerial { get; init; }
+///     public string InitialPath { get; init; } = "/sdcard";
+/// }
+/// 
+/// // 调用导航
+/// NavigationService.Instance.NavigateTo("Screen", new ScreenNavigationArgs 
+/// { 
+///     DeviceSerial = "192.168.1.100:5555" 
+/// });
+/// 
+/// NavigationService.Instance.NavigateTo("File", new FileNavigationArgs 
+/// { 
+///     DeviceSerial = "abc123",
+///     InitialPath = "/sdcard/Download" 
+/// });
+/// </code>
+/// </summary>
+public abstract class NavigationArgs
+{
+}

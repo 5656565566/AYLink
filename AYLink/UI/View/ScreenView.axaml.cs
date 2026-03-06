@@ -28,7 +28,7 @@ public partial class ScreenView : UserControl
     private bool _isPointerCaptured;
     private readonly ConfigManager configManager = ConfigManager.Instance;
 
-    public ScreenView() // 为了ui预览可以正常显示
+    public ScreenView()
     {
         InitializeComponent();
     }
@@ -84,7 +84,7 @@ public partial class ScreenView : UserControl
             {
                 if (string.IsNullOrEmpty(_deviceModel.ServerOptions.NewDisplay))
                 {
-                    _deviceModel.ServerOptions.NewDisplay = " "; // 默认跟随主屏幕
+                    _deviceModel.ServerOptions.NewDisplay = " ";
                 }
             }
             else
@@ -419,7 +419,7 @@ public partial class ScreenView : UserControl
                 return 0;
         }
     }
-    #region 触控处理逻辑
+    #region 瑙︽帶颅
 
     private void ClearAllTouchPoints()
     {

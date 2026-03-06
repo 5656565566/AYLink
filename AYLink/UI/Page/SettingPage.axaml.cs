@@ -33,7 +33,7 @@ public partial class SettingPage : UserControl
             configManager.SaveConfig(HashHelper.ToMd5Hash(_deviceSettingView.deviceName!), _deviceSettingView.deviceConfig);
             _deviceSettingView = null;
 
-            return; // ´¦ÀíÌØÊâÉèÖÃÒ³Ãæ
+            return; // ïº‘Ûµï­ºï»¥ï®Šï»Šï®Œï»—ïº­ï»Ÿï»…ïº£ïº»ïºïº£ï®”
         }
 
         configManager.SaveConfig("appConfig", _appSettingView.appConfig);

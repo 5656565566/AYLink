@@ -7,7 +7,7 @@ namespace AYLink.UI;
 public partial class ProgressDialog : UserControl
 {
     public static readonly StyledProperty<string> MessageProperty =
-        AvaloniaProperty.Register<ProgressDialog, string>(nameof(Message), "ÕıÔÚ´¦Àí...");
+        AvaloniaProperty.Register<ProgressDialog, string>(nameof(Message), "ï»ï®®ïº¿ï»Œïº‘Ûµï­ºï»¥...");
 
     public static readonly StyledProperty<bool> ShowProgressProperty =
         AvaloniaProperty.Register<ProgressDialog, bool>(nameof(ShowProgress), false);
@@ -52,7 +52,7 @@ public partial class ProgressDialog : UserControl
 
 
     /// <summary>
-    /// ³õÊ¼»¯£ºÍâ²¿¿ÉÌæ»»Ä¬ÈÏÊÂ¼ş´¦ÀíÆ÷
+    /// ïºïº€ï®Œïº™ï­¨ïºÛ²ï­¦ïº±ï»—ïºïºŸïºŸïº­ï®Šï®”ï­¨ï­¨ïº¥Ø›ïº«ïºµï®Œïº¡ïº™ï¹¼ïº‘Ûµï­ºï»¥ïº©ïºŠ
     /// </summary>
     public void Initialize(Action? onCancel = null, Action? onRunInBackground = null)
     {

@@ -1,4 +1,4 @@
-﻿using AYLink.Utils;
+using AYLink.Utils;
 using FFmpeg.AutoGen;
 using SkiaSharp;
 using System;

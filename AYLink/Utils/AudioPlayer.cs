@@ -1,4 +1,4 @@
-﻿using SDL;
+using SDL;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

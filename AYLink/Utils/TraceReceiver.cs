@@ -1,4 +1,4 @@
-﻿using AdvancedSharpAdbClient.Receivers;
+using AdvancedSharpAdbClient.Receivers;
 using System;
 using System.Diagnostics;
 using System.Threading;

@@ -73,7 +73,7 @@ public partial class MainWindow : Window
 
                 Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
                 {
-                    await Task.Delay(300); // 保证 ui 流畅性
+                    await Task.Delay(300);
                     await DialogHelper.MessageShowAsync(L.Tr("MainWindow_Warning"), L.Tr("MainWindow_Warning_ADB"));
                     if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
                     {

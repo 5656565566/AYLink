@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AYLink.Desktop.Views.Pages.SettingsPage"
+             x:DataType="vm:SettingsPageViewModel">
+
+    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+        <TextBlock Text="设置" FontSize="24" />
+    </Grid>
+</UserControl>
