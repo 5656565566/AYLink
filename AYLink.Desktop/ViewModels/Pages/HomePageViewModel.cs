@@ -8,6 +8,7 @@ using FluentAvalonia.UI.Controls;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Collections;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
@@ -139,10 +140,10 @@ public partial class HomePageViewModel : PageViewModelBase
     /// <summary>
     /// 删除设备
     /// </summary>
-    /// <param name="selectedItems"></param>
+    /// <param name="selectedItems">被选择的设备</param>
     /// <returns></returns>
     [RelayCommand]
-    private async Task DeleteDevice(System.Collections.IList? selectedItems)
+    private async Task DeleteDevice(IList? selectedItems)
     {
         if (selectedItems == null || selectedItems.Count == 0) return;
 

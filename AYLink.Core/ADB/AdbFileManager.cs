@@ -156,4 +156,39 @@ public class AdbFileManager(AdbClient client, DeviceData device)
             return false;
         }
     }
+
+    /// <summary>
+    /// 在设备上异步删除文件或目录
+    /// </summary>
+    /// <param name="path">要删除的完整路径</param>
+    /// <param name="cancellationToken">用于取消操作的令牌</param>
+    /// <returns>操作成功时返回 true 否则返回 false</returns>
+    public async Task<bool> DeleteFileAsync(string path, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            string command = $"rm -rf \"{path}\"";
+            var receiver = new ConsoleOutputReceiver();
+
+            await _client.ExecuteShellCommandAsync(_device, command, receiver, cancellationToken);
+
+            string output = receiver.ToString();
+
+            if (!string.IsNullOrWhiteSpace(output) &&
+                (output.Contains("fail", StringComparison.OrdinalIgnoreCase) ||
+                 output.Contains("denied", StringComparison.OrdinalIgnoreCase) ||
+                 output.Contains("No such file or directory", StringComparison.OrdinalIgnoreCase)))
+            {
+                Debug.WriteLine($"删除文件 '{path}' 时出错: {output}");
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"执行删除命令时发生异常: {ex.Message}");
+            return false;
+        }
+    }
 }

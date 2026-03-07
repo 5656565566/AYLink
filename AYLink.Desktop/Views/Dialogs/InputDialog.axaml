@@ -7,6 +7,6 @@
              x:Class="AYLink.Desktop.Views.Dialogs.InputDialog">
 
     <StackPanel Spacing="12" Margin="12" MinWidth="320" Name="InputContainer">
-        <!-- TextBoxes will be generated dynamically in code-behind -->
+        <!-- 文本框在代码中动态生成 -->
     </StackPanel>
 </UserControl>

@@ -3,11 +3,187 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:models="using:AYLink.Core.Models"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AYLink.Desktop.Views.Pages.AppPage"
              x:DataType="vm:AppPageViewModel">
 
-    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
-        <TextBlock Text="应用管理" FontSize="24" />
+    <!-- AppTabViewModel 的内容模板 -->
+    <UserControl.Resources>
+        <DataTemplate x:Key="AppTabContentTemplate" x:DataType="vm:AppTabViewModel">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- 顶部 CommandBar -->
+                <ui:CommandBar Grid.Row="0"
+                               DefaultLabelPosition="Right"
+                               Background="Transparent">
+
+                    <!-- 左侧：搜索 -->
+                    <ui:CommandBar.Content>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="8,0,0,0">
+                            <ui:CommandBarButton Label="搜索"
+                                                 Command="{Binding SearchCommand}">
+                                <ui:CommandBarButton.IconSource>
+                                    <ui:SymbolIconSource Symbol="Find"/>
+                                </ui:CommandBarButton.IconSource>
+                            </ui:CommandBarButton>
+
+                            <TextBox Text="{Binding SearchText}"
+                                     Watermark="搜索应用名称或包名..."
+                                     Width="250"
+                                     VerticalAlignment="Center"
+                                     Margin="8,0,0,0"
+                                     KeyDown="SearchBox_KeyDown"/>
+                        </StackPanel>
+                    </ui:CommandBar.Content>
+
+                    <!-- 右侧：安装、刷新 -->
+                    <ui:CommandBar.PrimaryCommands>
+                        <ui:CommandBarButton Label="安装 APK"
+                                             Click="InstallAppBtn_Click">
+                            <ui:CommandBarButton.IconSource>
+                                <ui:SymbolIconSource Symbol="Add"/>
+                            </ui:CommandBarButton.IconSource>
+                        </ui:CommandBarButton>
+
+                        <ui:CommandBarSeparator/>
+
+                        <ui:CommandBarButton Label="刷新"
+                                             Command="{Binding LoadAppsCommand}">
+                            <ui:CommandBarButton.IconSource>
+                                <ui:SymbolIconSource Symbol="Refresh"/>
+                            </ui:CommandBarButton.IconSource>
+                        </ui:CommandBarButton>
+                    </ui:CommandBar.PrimaryCommands>
+                </ui:CommandBar>
+
+                <!-- 主内容区域 -->
+                <Grid Grid.Row="1">
+                    <!-- 加载中状态 -->
+                    <Grid IsVisible="{Binding IsLoading}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center">
+                        <StackPanel Spacing="16">
+                            <ProgressBar IsIndeterminate="True" Width="200"/>
+                            <TextBlock Text="{Binding StatusMessage}"
+                                       HorizontalAlignment="Center"
+                                       Theme="{StaticResource BodyTextBlockStyle}"
+                                       Opacity="0.6"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 无应用提示（有设备但无应用时） -->
+                    <Grid IsVisible="{Binding !IsLoading}">
+                        <!-- 空状态提示层 -->
+                        <StackPanel IsVisible="{Binding !HasApps}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12"
+                                    Opacity="0.5">
+                            <ui:SymbolIcon Symbol="AllApps" FontSize="48"/>
+                            <TextBlock Text="{Binding StatusMessage}"
+                                       HorizontalAlignment="Center"
+                                       Theme="{StaticResource SubtitleTextBlockStyle}"/>
+                        </StackPanel>
+
+                        <!-- 应用列表 -->
+                        <Border IsVisible="{Binding HasApps}"
+                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Margin="12"
+                                Padding="0">
+                            <Grid RowDefinitions="Auto,*">
+                                <!-- 表头 -->
+                                <Border Grid.Row="0"
+                                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="0,0,0,1"
+                                        Padding="12,8">
+                                    <Grid ColumnDefinitions="*,*">
+                                        <TextBlock Grid.Column="0" Text="应用名称" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                                        <TextBlock Grid.Column="1" Text="包名" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 应用数据列表 -->
+                                <DataGrid Grid.Row="1"
+                                          ItemsSource="{Binding Apps}"
+                                          SelectedItem="{Binding SelectedApp}"
+                                          AutoGenerateColumns="False"
+                                          CanUserSortColumns="True"
+                                          GridLinesVisibility="Horizontal"
+                                          HeadersVisibility="None"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          IsReadOnly="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Binding="{Binding Name}" Width="*"/>
+                                        <DataGridTextColumn Binding="{Binding PackageName}" Width="*"/>
+                                    </DataGrid.Columns>
+
+                                    <DataGrid.ContextFlyout>
+                                        <MenuFlyout>
+                                            <MenuItem Header="卸载" Click="CtxUninstall_Click">
+                                                <MenuItem.Icon>
+                                                    <ui:SymbolIcon Symbol="Delete"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </MenuFlyout>
+                                    </DataGrid.ContextFlyout>
+                                </DataGrid>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+
+                <!-- 底部状态栏 -->
+                <Border Grid.Row="2"
+                        Padding="12,4"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="0,1,0,0">
+                    <TextBlock Text="{Binding StatusMessage}"
+                               Theme="{StaticResource CaptionTextBlockStyle}"
+                               Opacity="0.6"
+                               VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <!-- 主容器 -->
+    <Grid>
+        <!-- 无设备标签页时的空状态 -->
+        <StackPanel IsVisible="{Binding !Tabs.Count}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="12"
+                    Opacity="0.5">
+            <ui:SymbolIcon Symbol="AllApps" FontSize="64"/>
+            <TextBlock Text="未选中设备"
+                       HorizontalAlignment="Center"
+                       Theme="{StaticResource SubtitleTextBlockStyle}"/>
+            <TextBlock Text="请在首页选择一个设备来管理应用"
+                       HorizontalAlignment="Center"
+                       Theme="{StaticResource BodyTextBlockStyle}"/>
+        </StackPanel>
+
+        <!-- 设备标签页 -->
+        <ui:TabView TabItems="{Binding Tabs}"
+                     SelectedItem="{Binding SelectedTab}"
+                     IsAddTabButtonVisible="False"
+                     TabCloseRequested="TabView_TabCloseRequested"
+                     IsVisible="{Binding Tabs.Count}">
+            <ui:TabView.TabItemTemplate>
+                <DataTemplate x:DataType="vm:AppTabViewModel">
+                    <ui:TabViewItem Header="{Binding Title}"
+                                    Content="{Binding}"
+                                    ContentTemplate="{StaticResource AppTabContentTemplate}"
+                                    IsClosable="True" />
+                </DataTemplate>
+            </ui:TabView.TabItemTemplate>
+        </ui:TabView>
     </Grid>
 </UserControl>
