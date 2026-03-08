@@ -61,24 +61,26 @@ public partial class AppTabViewModel : ViewModelBase
     /// 状态消息
     /// </summary>
     [ObservableProperty]
-    private string _statusMessage = "请选择设备以查看应用列表";
+    private string _statusMessage = string.Empty;
 
     /// <summary>
-    /// 全量应用列表（未搜索过滤的）
+    /// 应用数量文本
+    /// </summary>
+    [ObservableProperty]
+    private string _appCountText = string.Empty;
+
+    /// <summary>
+    /// 全应用列表
     /// </summary>
     private readonly List<AppInfo> _masterAppList = [];
 
     public event Action<AppTabViewModel>? OnCloseRequested;
 
-    public AppTabViewModel(DeviceModel? device = null)
+    public AppTabViewModel(DeviceModel device)
     {
         _device = device;
-
-        if (device != null)
-        {
-            Title = device.Name;
-            _ = LoadAppsAsync();
-        }
+        Title = device.Name;
+        _ = LoadAppsAsync();
     }
 
     /// <summary>
@@ -100,13 +102,14 @@ public partial class AppTabViewModel : ViewModelBase
 
         IsLoading = true;
         StatusMessage = "正在加载应用列表...";
+        AppCountText = string.Empty;
         HasApps = false;
 
         try
         {
             var appList = await Task.Run(() =>
             {
-                var tool = new ScrcpyTool(Device, "Scrcpy/scrcpy-server");
+                var tool = new ScrcpyTool(Device, "3.3.4", "Scrcpy/scrcpy-server");
                 return tool.GetAppInfos();
             });
 
@@ -114,9 +117,6 @@ public partial class AppTabViewModel : ViewModelBase
             _masterAppList.AddRange(appList);
 
             ApplyFilter();
-
-            HasApps = Apps.Count > 0;
-            StatusMessage = HasApps ? $"共 {Apps.Count} 个应用" : "未找到应用";
         }
         catch (Exception ex)
         {
@@ -167,7 +167,10 @@ public partial class AppTabViewModel : ViewModelBase
         }
 
         HasApps = Apps.Count > 0;
-        StatusMessage = HasApps ? $"共 {Apps.Count} 个应用" : "未找到匹配的应用";
+        // 左侧提示：搜索时如果无结果才提示
+        StatusMessage = (!HasApps && !string.IsNullOrEmpty(searchText)) ? "未找到匹配的应用" : string.Empty;
+        // 右侧：有应用时显示数量
+        AppCountText = HasApps ? $"共 {Apps.Count} 个应用" : string.Empty;
     }
 
     /// <summary>

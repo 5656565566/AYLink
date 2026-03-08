@@ -33,4 +33,10 @@
   <ItemGroup>
     <Folder Include="Utils\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Scrcpy\scrcpy-server">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

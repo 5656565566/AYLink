@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using AYLink.Core.Models;
 using AYLink.Desktop.Services;
 using System.Threading.Tasks;
+using AYLink.Core.Scrcpy;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
@@ -120,14 +121,14 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
     /// 查看编码器列表
     /// </summary>
     [RelayCommand]
-    private async System.Threading.Tasks.Task ListEncoders()
+    private async Task ListEncoders()
     {
         if (!CheckDeviceOnline()) return;
 
         DialogHelper.ShowProgress("获取中", "正在获取设备编码器列表...", isBlocking: true);
         
-        var tool = new Core.Scrcpy.ScrcpyTool(Device, "Scrcpy/scrcpy-server");
-        var encoders = await System.Threading.Tasks.Task.Run(() => tool.GetEncoders());
+        var tool = new ScrcpyTool(Device, "3.3.4", "Scrcpy/scrcpy-server");
+        var encoders = await Task.Run(() => tool.GetEncoders());
         
         DialogHelper.CloseProgress();
 

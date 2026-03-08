@@ -7,7 +7,13 @@
              x:Class="AYLink.Desktop.Views.Pages.ShellPage"
              x:DataType="vm:ShellPageViewModel">
 
-    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
-        <TextBlock Text="终端" FontSize="24" />
+    <Grid>
+        <Image x:Name="BackgroundImage"
+               Stretch="UniformToFill"
+               IsVisible="False"
+               Opacity="0.6"/>
+        <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="终端" FontSize="24" />
+        </Grid>
     </Grid>
 </UserControl>

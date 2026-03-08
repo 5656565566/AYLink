@@ -26,7 +26,7 @@ public partial class AppPageViewModel : PageViewModelBase
     /// 添加新标签页
     /// </summary>
     [RelayCommand]
-    private void AddNewTab(DeviceModel? device = null)
+    private void AddNewTab(DeviceModel device)
     {
         var newTab = new AppTabViewModel(device);
         newTab.OnCloseRequested += Tab_OnCloseRequested;
@@ -88,7 +88,7 @@ public partial class AppPageViewModel : PageViewModelBase
             }
             else
             {
-                AddNewTab(device);
+                AddNewTabCommand.Execute(device);
             }
         }
     }

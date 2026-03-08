@@ -3,21 +3,16 @@ using AdvancedSharpAdbClient.Models;
 using AdvancedSharpAdbClient.Receivers;
 using AYLink.Core.Models;
 using AYLink.Core.Utils;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace AYLink.Core.Scrcpy;
 
-public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
+public class ScrcpyTool(DeviceModel deviceModel, string clientVersion, string scrcpyServerPath)
 {
     private readonly DeviceModel _deviceModel = deviceModel;
     private readonly string _scrcpyServerPath = scrcpyServerPath;
+    private string clientVersion = clientVersion;
 
     public async void PushScrcpyServer()
     {
@@ -51,6 +46,19 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
             return;
         }
     }
+    public void SetClientVersion(string newClientVersion)
+    {
+        clientVersion = newClientVersion;
+    }
+
+    public ServerOptions GetServerOptions()
+    {
+        ServerOptions serverOptions = new()
+        {
+            ClientVersion = clientVersion,
+        };
+        return serverOptions;
+    }
 
     public List<string> GetEncoders()
     {
@@ -63,10 +71,8 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
         var receiver = new ConsoleOutputReceiver();
 
         var adbClient = _deviceModel.AdbClient!;
-        var serverOptions = new ServerOptions
-        {
-            ListEncoders = true
-        };
+        ServerOptions serverOptions = GetServerOptions();
+        serverOptions.ListEncoders = true;
 
         try
         {
@@ -102,10 +108,8 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
         var receiver = new ConsoleOutputReceiver();
 
         AdbClient adbClient = _deviceModel.AdbClient!;
-        ServerOptions serverOptions = new()
-        {
-            ListApps = true
-        };
+        ServerOptions serverOptions = GetServerOptions();
+        serverOptions.ListApps = true;
 
         try
         {
@@ -148,10 +152,8 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
         var receiver = new ConsoleOutputReceiver();
 
         AdbClient adbClient = _deviceModel.AdbClient!;
-        ServerOptions serverOptions = new()
-        {
-            ListDisplays = true
-        };
+        ServerOptions serverOptions = GetServerOptions();
+        serverOptions.ListDisplays = true;
 
         try
         {
