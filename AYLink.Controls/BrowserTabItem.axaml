@@ -1,0 +1,88 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:AYLink.Controls">
+  <Design.PreviewWith>
+    <Border Padding="20">
+      <StackPanel Spacing="10">
+        <controls:BrowserTabItem Header="Tab 1" />
+        <controls:BrowserTabItem Header="Tab 2" IsSelected="True" />
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <Style Selector="controls|BrowserTabItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    <Setter Property="Padding" Value="12,6,8,6" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="MaxWidth" Value="240" />
+    <Setter Property="MinWidth" Value="100" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="CornerRadius" Value="8,8,0,0" />
+    <Setter Property="RenderTransform" Value="translateX(0)" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+      </Transitions>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="PART_LayoutRoot"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}"
+                Padding="{TemplateBinding Padding}">
+          <Grid ColumnDefinitions="*,Auto">
+            <ContentPresenter Name="PART_ContentPresenter"
+                              Grid.Column="0"
+                              Content="{TemplateBinding Header}"
+                              ContentTemplate="{TemplateBinding HeaderTemplate}"
+                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                              RecognizesAccessKey="True" />
+            
+            <Button Name="PART_CloseButton"
+                    Grid.Column="1"
+                    Margin="4,0,0,0"
+                    Width="24"
+                    Height="24"
+                    Padding="0"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    IsVisible="{TemplateBinding IsClosable}"
+                    VerticalAlignment="Center">
+              <PathIcon Data="M7.116 8l-4.558 4.558.884.884L8 8.884l4.558 4.558.884-.884L8.884 8l4.558-4.558-.884-.884L8 7.116 3.442 2.558l-.884.884L7.116 8z"
+                        Width="10" Height="10" />
+            </Button>
+          </Grid>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+
+  <Style Selector="controls|BrowserTabItem:pointerover /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+  </Style>
+
+  <Style Selector="controls|BrowserTabItem:selected /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorBaseBrush}" />
+    <Setter Property="BoxShadow" Value="0 -2 4 0 #1A000000" />
+  </Style>
+
+  <Style Selector="controls|BrowserTabItem:selected">
+    <Setter Property="ZIndex" Value="1" />
+  </Style>
+
+  <Style Selector="controls|BrowserTabItem:dragging">
+    <Setter Property="Opacity" Value="0.8" />
+    <Setter Property="ZIndex" Value="2" />
+  </Style>
+
+  <Style Selector="controls|BrowserTabItem /template/ Button#PART_CloseButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
+  </Style>
+
+</Styles>

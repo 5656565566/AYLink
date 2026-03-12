@@ -4,16 +4,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 xmlns:ui="using:FluentAvalonia.UI.Controls"
-             x:Class="AYLink.UI.TabPage">
+			 xmlns:controls="using:AYLink.Controls"
+			          x:Class="AYLink.UI.TabPage">
 	
-	<ui:TabView x:Name="mainTabView"
-			IsAddTabButtonVisible="False"
+	<controls:BrowserTabView x:Name="mainTabView"
+			IsAddButtonVisible="False"
 			HorizontalAlignment="Stretch"
 			VerticalAlignment="Stretch"
-			CanDragTabs="True"
-			CanReorderTabs="True"
-			AllowDropTabs="True"
 			IsVisible="True">
-	</ui:TabView>
+	</controls:BrowserTabView>
 	
 </UserControl>

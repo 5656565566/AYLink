@@ -3,11 +3,162 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="AYLink.Desktop.Views.Pages.SettingsPage"
              x:DataType="vm:SettingsPageViewModel">
 
-    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
-        <TextBlock Text="设置" FontSize="24" />
-    </Grid>
+    <UserControl.Styles>
+        <Style Selector="TextBlock.h2">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,20,0,10"/>
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer>
+        <StackPanel Margin="20" Spacing="4">
+
+            <!-- 通用设置 -->
+            <TextBlock Text="通用" Classes="h2" Margin="0,0,0,10"/>
+
+            <ui:SettingsExpander Header="开机自启" Description="在系统启动时自动运行">
+                <ui:SettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding IsAutoStartEnabled}" IsEnabled="False" />
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="语言" Description="选择应用程序的显示语言">
+                <ui:SettingsExpander.Footer>
+                    <ComboBox MinWidth="150"
+                              ItemsSource="{Binding Languages}"
+                              SelectedItem="{Binding SelectedLanguage}" />
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="音频输出设备" Description="选择用于播放音频的设备">
+                <ui:SettingsExpander.Footer>
+                    <ComboBox MinWidth="230"
+                              ItemsSource="{Binding AudioOutputDevices}"
+                              SelectedItem="{Binding SelectedAudioOutputDevice}" />
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="输出音量" Description="调整全局音频输出音量">
+                <ui:SettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Slider MinWidth="180"
+                                Minimum="0"
+                                Maximum="150"
+                                Value="{Binding OutputVolume}"
+                                VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding OutputVolume, StringFormat={}{0:F0} %}"
+                                   MinWidth="40"
+                                   VerticalAlignment="Center"
+                                   TextAlignment="Right"/>
+                    </StackPanel>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <!-- 外观设置 -->
+            <TextBlock Text="外观" Classes="h2"/>
+
+            <ui:SettingsExpander Header="主题模式" Description="选择应用程序的主题">
+                <ui:SettingsExpander.Footer>
+                    <ComboBox MinWidth="150"
+                              ItemsSource="{Binding ThemeModes}"
+                              SelectedItem="{Binding SelectedThemeMode}" />
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="强调色" Description="选择应用程序的强调色">
+                <ui:SettingsExpander.Footer>
+                    <ColorPicker Color="{Binding AccentColor}"
+                                 IsHexInputVisible="True"
+                                 IsHitTestVisible="True"
+                                 IsColorSpectrumSliderVisible="True"
+                                 IsAlphaEnabled="False"/>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <!-- 组件 -->
+            <TextBlock Text="组件" Classes="h2"/>
+            
+            <ui:SettingsExpander Header="Scrcpy 版本" Description="指定 Scrcpy 的版本">
+                <ui:SettingsExpander.Footer>
+                    <TextBox Text="{Binding ScrcpyVersion}" MinWidth="150" TextAlignment="Right"/>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="Scrcpy Server 路径" Description="选择 Scrcpy Server 文件">
+                <ui:SettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBox Text="{Binding ScrcpyServer}" MinWidth="250" Watermark="未选择"/>
+                        <Button Content="..." Click="SelectScrcpyServerBtn_Click"/>
+                    </StackPanel>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="ADB 路径" Description="选择 ADB 执行文件">
+                <ui:SettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBox Text="{Binding Adb}" MinWidth="250" Watermark="未选择"/>
+                        <Button Content="..." Click="SelectAdbBtn_Click"/>
+                    </StackPanel>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="FFmpeg 目录" Description="选择 FFmpeg 二进制文件目录">
+                <ui:SettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBox Text="{Binding FFmpegBin}" MinWidth="250" Watermark="未选择"/>
+                        <Button Content="..." Click="SelectFFmpegBtn_Click"/>
+                    </StackPanel>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <!-- 组件版本 -->
+            <TextBlock Text="组件版本" Classes="h2"/>
+
+            <ui:SettingsExpander Header="FFmpeg">
+                <ui:SettingsExpander.Footer>
+                    <TextBlock Text="7.1.1" Opacity="0.7" VerticalAlignment="Center"/>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="scrcpy-server">
+                <ui:SettingsExpander.Footer>
+                    <TextBlock Text="3.3.3" Opacity="0.7" VerticalAlignment="Center"/>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="adb">
+                <ui:SettingsExpander.Footer>
+                    <TextBlock Text="{Binding AdbVersion}" Opacity="0.7" VerticalAlignment="Center"/>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <!-- 关于 -->
+            <TextBlock Text="关于" Classes="h2"/>
+
+            <ui:SettingsExpander Header="应用版本">
+                <ui:SettingsExpander.Footer>
+                    <TextBlock Text="{Binding AppVersion}" Opacity="0.7" VerticalAlignment="Center"/>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="检查更新" Description="��取最新版本的应用程序">
+                <ui:SettingsExpander.Footer>
+                    <Button Content="立即检查" Command="{Binding CheckForUpdatesCommand}"/>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="恢复默认设置" Description="将所有设置恢复为初始状态">
+                <ui:SettingsExpander.Footer>
+                    <Button Content="恢复" Command="{Binding ResetToDefaultsCommand}"/>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

@@ -1,8 +1,7 @@
+using AYLink.Controls;
 using Avalonia.Controls;
-using Avalonia.Controls.Presenters;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using FluentAvalonia.UI.Controls;
 
 namespace AYLink.UI;
 
@@ -15,7 +14,7 @@ public partial class DetachedTabWindow : Window
         InitializeComponent();
     }
 
-    public DetachedTabWindow(TabViewItem tabViewItem)
+    public DetachedTabWindow(BrowserTabItem tabViewItem)
     {
         InitializeComponent();
 
@@ -34,7 +33,7 @@ public partial class DetachedTabWindow : Window
         _tabPage?.Dispose();
     }
 
-    public void AddTab(TabViewItem tabViewItem)
+    public void AddTab(BrowserTabItem tabViewItem)
     {
         _tabPage!.AddNewTab(tabViewItem);
     }

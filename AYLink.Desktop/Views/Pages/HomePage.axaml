@@ -171,7 +171,7 @@
                                         <ui:SymbolIcon Symbol="Folder"/>
                                     </Button>
                                     <Button Command="{Binding OpenAppManagerCommand}" ToolTip.Tip="应用管理">
-                                        <ui:SymbolIcon Symbol="Repair"/>
+                                        <ui:SymbolIcon Symbol="AllApps"/>
                                     </Button>
                                     <Button ToolTip.Tip="更多">
                                         <ui:SymbolIcon Symbol="More"/>

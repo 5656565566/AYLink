@@ -70,7 +70,7 @@
                                   SelectedItem="{Binding RightPane.SelectedSource}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Name}" />
+                                    <TextBlock Text="{Binding Name}"/>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
@@ -78,7 +78,7 @@
                                  Text="{Binding RightPane.CurrentPath}"
                                  Watermark="/"/>
                         <Button Grid.Column="2" Command="{Binding RightPane.RefreshCommand}">
-                            <ui:SymbolIcon Symbol="Refresh" />
+                            <ui:SymbolIcon Symbol="Refresh"/>
                         </Button>
                     </Grid>
 
@@ -99,8 +99,8 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8" Background="Transparent"
                                                 DoubleTapped="RightItem_DoubleTapped"
                                                 PointerPressed="RightItem_PointerPressed">
-                                        <ui:SymbolIcon Symbol="Folder" IsVisible="{Binding IsDirectory}" />
-                                        <ui:SymbolIcon Symbol="Document" IsVisible="{Binding !IsDirectory}" />
+                                        <ui:SymbolIcon Symbol="Folder" IsVisible="{Binding IsDirectory}"/>
+                                        <ui:SymbolIcon Symbol="Document" IsVisible="{Binding !IsDirectory}"/>
                                         <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </DataTemplate>
@@ -115,14 +115,13 @@
     <ui:TabView TabItems="{Binding Tabs}"
                 SelectedItem="{Binding SelectedTab}"
                 AddTabButtonCommand="{Binding AddNewTabCommand}"
-                TabCloseRequested="TabView_TabCloseRequested"
-                TabItemTemplate="{x:Null}">
+                TabCloseRequested="TabView_TabCloseRequested">
         <ui:TabView.TabItemTemplate>
             <DataTemplate x:DataType="vm:FileTabViewModel">
                 <ui:TabViewItem Header="{Binding Title}"
                                 Content="{Binding}"
                                 ContentTemplate="{StaticResource FileTabContentTemplate}"
-                                IsClosable="True" />
+                                IsClosable="True"/>
             </DataTemplate>
         </ui:TabView.TabItemTemplate>
     </ui:TabView>

@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using FluentAvalonia.UI.Controls;
+using AYLink.Controls;
 using System;
 using System.Collections;
 using System.Linq;
@@ -18,61 +18,61 @@ public partial class TabPage : UserControl
     {
         InitializeComponent();
 
-        mainTabView.TabDragCompleted += MainTabView_TabDragCompleted;
-        mainTabView.TabDroppedOutside += MainTabView_TabDroppedOutside;
+        mainTabView.TabDraggedOutside += MainTabView_TabDraggedOutside;
         mainTabView.SelectionChanged += MainTabView_SelectionChanged;
+        mainTabView.TabCloseRequested += MainTabView_TabCloseRequested;
     }
 
 
-    private void MainTabView_SelectionChanged(object sender, SelectionChangedEventArgs args)
+    private void MainTabView_SelectionChanged(object? sender, SelectionChangedEventArgs args)
     {
-        if (sender is TabView tabView)
+        if (sender is BrowserTabView tabView)
         {
             var tabViewParentWindow = FindParentWindow(tabView);
 
             if (tabViewParentWindow == null) return;
 
-            if (tabView.SelectedItem is not TabViewItem selectedTabItem) return;
+            if (tabView.SelectedItem is not BrowserTabItem selectedTabItem) return;
 
             if (tabViewParentWindow is MainWindow) return;
 
-            tabViewParentWindow.Title = (string)selectedTabItem.Header;
+            tabViewParentWindow.Title = (string?)selectedTabItem.Header;
         }
     }
 
     public void Dispose()
     {
-        foreach (var item in mainTabView.TabItems.Cast<object>().ToList())
+        foreach (var item in mainTabView.Items.Cast<object>().ToList())
         {
-            if (item is TabViewItem tvi)
+            if (item is BrowserTabItem tvi)
             {
                 (tvi.Content as ScreenView)?.Dispose();
-                (mainTabView.TabItems as IList)?.Remove(tvi);
+                (mainTabView.Items as IList)?.Remove(tvi);
             }
         }
     }
 
-    private void MainTabView_TabDroppedOutside(TabView sender, TabViewTabDroppedOutsideEventArgs args)
+    private void MainTabView_TabDraggedOutside(object? sender, TabDraggedOutsideEventArgs args)
     {
-        if (sender.TabItems is not IList sourceItemsList) return;
+        if (mainTabView.Items is not IList sourceItemsList) return;
 
-        var sourceWindow = FindParentWindow(sender);
+        var sourceWindow = FindParentWindow(mainTabView);
         var targetWindow = windowsManager.GetWindowUnderPointer();
 
         if (sourceWindow != null && targetWindow != null && sourceWindow != targetWindow)
         {
-            sourceItemsList.Remove(args.Tab);
+            sourceItemsList.Remove(args.TabItem);
 
             Dispatcher.UIThread.Post(() =>
             {
                 if (targetWindow is MainWindow mainWindow)
                 {
-                    mainWindow.AddTab(args.Tab);
+                    mainWindow.AddTab(args.TabItem);
                 }
 
                 if (targetWindow is DetachedTabWindow detachedTabWindow)
                 {
-                    detachedTabWindow.AddTab(args.Tab);
+                    detachedTabWindow.AddTab(args.TabItem);
                 }
 
                 if (sourceItemsList.Count == 0)
@@ -81,97 +81,46 @@ public partial class TabPage : UserControl
                 }
             });
 
-            return; // ﺑﺍﺟﻌﺙﻛﺻﺩﭘﺁ
+            return;
         }
 
         if (sourceItemsList.Count == 1 && (sourceWindow is DetachedTabWindow))
         {
             return;
         }
-        if (sourceItemsList.Count == 1 && targetWindow is MainWindow mainWindow)
+        if (sourceItemsList.Count == 1 && targetWindow is MainWindow mainWindow2)
         {
-            mainWindow.ShowTip();
+            mainWindow2.ShowTip();
         }
 
-        DetachedTabWindow detachedTabWindow = new(args.Tab);
+        DetachedTabWindow detachedTabWindowNew = new(args.TabItem);
 
-        sourceItemsList.Remove(args.Tab);
+        sourceItemsList.Remove(args.TabItem);
 
-        if (args.Tab is TabViewItem tabViewItem)
-            detachedTabWindow.Title = (string?)tabViewItem.Header;
+        detachedTabWindowNew.Title = (string?)args.TabItem.Header;
 
-        windowsManager.RegisterWindow(detachedTabWindow);
-        detachedTabWindow.Show();
+        windowsManager.RegisterWindow(detachedTabWindowNew);
+        detachedTabWindowNew.Show();
     }
 
-
-    private void MainTabView_TabDragCompleted(TabView sender, TabViewTabDragCompletedEventArgs args)
-    {
-        switch (args.DropResult)
-        {
-            case DragDropEffects.None:
-                break;
-            case DragDropEffects.Copy:
-                break;
-            case DragDropEffects.Move:
-                MoveTabAcrossWindows(sender, args.Tab);
-                break;
-            case DragDropEffects.Link:
-                break;
-            default:
-                break;
-        }
-    }
-
-    private void MoveTabAcrossWindows(TabView sourceTabView, TabViewItem tvi)
-    {
-        if (sourceTabView.TabItems is not IList sourceItems) return;
-
-        var sourceWnd = FindParentWindow(sourceTabView);
-        var targetWnd = windowsManager.GetWindowUnderPointer();
-
-        if (sourceWnd is null || targetWnd is null || sourceWnd == targetWnd) return;
-        sourceItems.Remove(tvi);
-
-        Dispatcher.UIThread.Post(() =>
-        {
-            switch (targetWnd)
-            {
-                case MainWindow mw: mw.AddTab(tvi); break;
-                case DetachedTabWindow dw: dw.AddTab(tvi); break;
-            }
-
-            if (sourceItems.Count != 0) return;
-
-            switch (sourceWnd)
-            {
-                case DetachedTabWindow: sourceWnd.Close(); break;
-                case MainWindow mw: mw.ShowTip(); break;
-            }
-        });
-    }
     public void AddNewTab(string header, UserControl content, bool onlyTip = false)
     {
-        var existingTvi = mainTabView.TabItems.OfType<TabViewItem>().FirstOrDefault(t => t.Header as string == header);
+        var existingTvi = mainTabView.Items.OfType<BrowserTabItem>().FirstOrDefault(t => t.Header as string == header);
         if (existingTvi != null)
         {
             mainTabView.SelectedItem = existingTvi;
             return;
         }
 
-        var newTabItem = new TabViewItem
+        var newTabItem = new BrowserTabItem
         {
             Header = header,
             Content = content
         };
 
-        var items = mainTabView.TabItems as IList;
+        var items = mainTabView.Items as IList;
 
-        if (!onlyTip)
-        {
-            newTabItem.CloseRequested += NewTabItem_CloseRequested;
-        }
-        else
+        if (onlyTip)
         {
             items?.Clear();
         }
@@ -180,25 +129,23 @@ public partial class TabPage : UserControl
         mainTabView.SelectedItem = newTabItem;
     }
 
-    public void AddNewTab(TabViewItem tabViewItem)
+    public void AddNewTab(BrowserTabItem tabViewItem)
     {
-        if (mainTabView.TabItems is IList items) items.Add(tabViewItem);
+        if (mainTabView.Items is IList items) items.Add(tabViewItem);
     }
 
-    private void NewTabItem_CloseRequested(TabViewItem sender, TabViewTabCloseRequestedEventArgs args)
+    private void MainTabView_TabCloseRequested(object? sender, TabCloseRequestedEventArgs args)
     {
-        var tabToClose = args.Tab ?? sender;
+        var tabToClose = args.TabItem;
 
         var parentTabView = FindParentTabView(tabToClose);
         if (parentTabView == null)
             return;
 
-        if (parentTabView.TabItems is not IList itemsList)
+        if (parentTabView.Items is not IList itemsList)
             return;
 
-        if (args.Tab == null) return;
-
-        (args.Tab.Content as ScreenView)!.Dispose();
+        (tabToClose.Content as ScreenView)?.Dispose();
 
         if (parentTabView.SelectedItem == tabToClose)
         {
@@ -226,12 +173,12 @@ public partial class TabPage : UserControl
         }
     }
 
-    private static TabView? FindParentTabView(TabViewItem tabItem)
+    private static BrowserTabView? FindParentTabView(BrowserTabItem tabItem)
     {
         var parent = tabItem.Parent;
         while (parent != null)
         {
-            if (parent is TabView tabView)
+            if (parent is BrowserTabView tabView)
             {
                 return tabView;
             }
@@ -255,11 +202,11 @@ public partial class TabPage : UserControl
     }
 
     private Window? _fullscreenWnd;
-    private TabViewItem? _sourceTab;
+    private BrowserTabItem? _sourceTab;
 
     public void ToggleFullScreen()
     {
-        if (mainTabView.TabItems is not IList sourceItemsList) return;
+        if (mainTabView.Items is not IList sourceItemsList) return;
 
         if (_fullscreenWnd is { } wnd)
         {
@@ -269,21 +216,28 @@ public partial class TabPage : UserControl
             wnd.Content = null;
             wnd.Close();
 
-            AddNewTab(_sourceTab!);
+            if (_sourceTab != null)
+            {
+                AddNewTab(_sourceTab);
+            }
 
-            FindParentWindow(mainTabView)!.IsVisible = true;
+            var parentWindow = FindParentWindow(mainTabView);
+            if (parentWindow != null)
+            {
+                parentWindow.IsVisible = true;
+            }
             _fullscreenWnd = null;
             _sourceTab = null;
             return;
         }
 
-        if (mainTabView.SelectedItem is not TabViewItem tab ||
+        if (mainTabView.SelectedItem is not BrowserTabItem tab ||
             tab.Content is not UserControl view)
             return;
 
         _sourceTab = tab;
 
-        _sourceTab = (TabViewItem?)mainTabView.SelectedItem;
+        _sourceTab = (BrowserTabItem?)mainTabView.SelectedItem;
         sourceItemsList.Remove(_sourceTab);
 
         var host = new Window
@@ -291,7 +245,7 @@ public partial class TabPage : UserControl
             WindowState = WindowState.Maximized,
             SystemDecorations = SystemDecorations.None,
             Topmost = true,
-            Content = _sourceTab!.Content
+            Content = _sourceTab?.Content
         };
 
         host.AddHandler(
@@ -310,7 +264,11 @@ public partial class TabPage : UserControl
         
         host.Closed += FullScreenWindow_Closed;
 
-        FindParentWindow(mainTabView)!.IsVisible = false;
+        var parentWindow2 = FindParentWindow(mainTabView);
+        if (parentWindow2 != null)
+        {
+            parentWindow2.IsVisible = false;
+        }
 
         _fullscreenWnd = host;
         host.Show();

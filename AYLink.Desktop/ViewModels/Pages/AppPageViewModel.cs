@@ -41,7 +41,7 @@ public partial class AppPageViewModel : PageViewModelBase
 
         if (Tabs.Count == 0)
         {
-            // 应用页不需要保留空标签页，直接清空
+            // 应用页不需要保留空标签页 直接清空
             SelectedTab = null;
         }
         else if (SelectedTab == null)

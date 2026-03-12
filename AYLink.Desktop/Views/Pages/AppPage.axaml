@@ -9,7 +9,6 @@
              x:Class="AYLink.Desktop.Views.Pages.AppPage"
              x:DataType="vm:AppPageViewModel">
 
-    <!-- AppTabViewModel 的内容模板 -->
     <UserControl.Resources>
         <DataTemplate x:Key="AppTabContentTemplate" x:DataType="vm:AppTabViewModel">
             <Grid RowDefinitions="Auto,*">
@@ -138,7 +137,7 @@
                            Theme="{StaticResource BodyTextBlockStyle}"/>
             </StackPanel>
 
-            <!-- TabView：设备标签页 -->
+            <!-- 设备标签页 -->
             <ui:TabView TabItems="{Binding Tabs}"
                          SelectedItem="{Binding SelectedTab}"
                          IsAddTabButtonVisible="False"
@@ -155,26 +154,39 @@
             </ui:TabView>
         </Grid>
 
-        <!-- 底部状态栏（始终固定在页面最底部） -->
+        <!-- 底部状态栏 -->
         <Border Grid.Row="1"
                 Padding="12,4"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                BorderThickness="0,1,0,0"
-                x:CompileBindings="False">
-            <Grid ColumnDefinitions="*,Auto">
-                <!-- 左侧：状态提示 -->
-                <TextBlock Grid.Column="0"
-                           Text="{Binding SelectedTab.StatusMessage}"
-                           Theme="{StaticResource CaptionTextBlockStyle}"
-                           Opacity="0.6"
-                           VerticalAlignment="Center"/>
-                <!-- 右侧：应用数量 -->
-                <TextBlock Grid.Column="1"
-                           Text="{Binding SelectedTab.AppCountText}"
-                           Theme="{StaticResource CaptionTextBlockStyle}"
-                           Opacity="0.6"
-                           VerticalAlignment="Center"/>
-            </Grid>
+                BorderThickness="0,1,0,0">
+            <!-- 使用 ContentControl 完全隔离 SelectedTab 为 null 时的渲染与绑定 -->
+            <ContentControl Content="{Binding SelectedTab}">
+                <ContentControl.ContentTemplate>
+                    <DataTemplate x:DataType="vm:AppTabViewModel">
+                        
+                        <!-- 统一在右侧显示 靠右对齐 -->
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="16"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center">
+                            
+                            <!-- 状态提示 -->
+                            <TextBlock Text="{Binding StatusMessage}"
+                                       IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                       Theme="{StaticResource CaptionTextBlockStyle}"
+                                       Opacity="0.6"/>
+                                       
+                            <!-- 应用数量 -->
+                            <TextBlock Text="{Binding AppCountText}"
+                                       IsVisible="{Binding AppCountText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                       Theme="{StaticResource CaptionTextBlockStyle}"
+                                       Opacity="0.6"/>
+                        </StackPanel>
+                        
+                    </DataTemplate>
+                </ContentControl.ContentTemplate>
+            </ContentControl>
         </Border>
+
     </Grid>
 </UserControl>

@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 using Avalonia.Threading;
+using Control = Avalonia.Controls.Control;
 
 namespace AYLink.Utils;
 

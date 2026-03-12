@@ -49,8 +49,12 @@
   <ItemGroup>
     <AvaloniaResource Include="logo.ico" />
   </ItemGroup>
-    <ItemGroup>
+  <ItemGroup>
     <None Remove="logo.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AYLink.Controls\AYLink.Controls.csproj" />
   </ItemGroup>
 
   <ItemGroup>

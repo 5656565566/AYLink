@@ -1,5 +1,5 @@
+using AYLink.Controls;
 using Avalonia.Controls;
-using FluentAvalonia.UI.Controls;
 
 namespace AYLink.UI;
 
@@ -21,7 +21,7 @@ public partial class ScreenPage : UserControl
         _tabPage.AddNewTab(header, userControl);
     }
 
-    public void AddNewTab(TabViewItem tabViewItem)
+    public void AddNewTab(BrowserTabItem tabViewItem)
     {
         ContentFrame.Content = _tabPage;
         _tabPage.AddNewTab(tabViewItem);

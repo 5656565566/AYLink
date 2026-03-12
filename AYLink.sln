@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AYLink.Core", "AYLink.Core\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AYLink.Agent", "AYLink.Agent\AYLink.Agent.csproj", "{2CDD832D-6278-4BA1-B679-7C439EE72262}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AYLink.Controls", "AYLink.Controls\AYLink.Controls.csproj", "{EB250F57-1960-5BB4-D7A9-E003A65415F1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{2CDD832D-6278-4BA1-B679-7C439EE72262}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2CDD832D-6278-4BA1-B679-7C439EE72262}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2CDD832D-6278-4BA1-B679-7C439EE72262}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB250F57-1960-5BB4-D7A9-E003A65415F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB250F57-1960-5BB4-D7A9-E003A65415F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB250F57-1960-5BB4-D7A9-E003A65415F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB250F57-1960-5BB4-D7A9-E003A65415F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

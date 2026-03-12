@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using AYLink.ADB;
+using AYLink.Controls;
 using AYLink.UI.Themes;
 using AYLink.UIModel;
 using AYLink.Utils;
@@ -144,7 +145,7 @@ public partial class MainWindow : Window
         NavigateTo(pageTag);
     }
 
-    public void AddTab(TabViewItem tabViewItem)
+    public void AddTab(BrowserTabItem tabViewItem)
     {
         screenPage.AddNewTab(tabViewItem);
     }
