@@ -18,6 +18,10 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        // 注册全局背景图
+        BackgroundImageManager.Instance.RegisterImageComponent(GlobalBackgroundImage);
+        BackgroundImageManager.Instance.SetRandomBackgroundImage();
+
         // 订阅导航服务，同步 NavigationView 的选中状态
         _navigationService.Navigated += OnNavigationServiceNavigated;
 

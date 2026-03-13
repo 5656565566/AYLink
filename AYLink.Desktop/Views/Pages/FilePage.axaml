@@ -115,7 +115,8 @@
     <ui:TabView TabItems="{Binding Tabs}"
                 SelectedItem="{Binding SelectedTab}"
                 AddTabButtonCommand="{Binding AddNewTabCommand}"
-                TabCloseRequested="TabView_TabCloseRequested">
+                TabCloseRequested="TabView_TabCloseRequested"
+                Background="Transparent">
         <ui:TabView.TabItemTemplate>
             <DataTemplate x:DataType="vm:FileTabViewModel">
                 <ui:TabViewItem Header="{Binding Title}"

@@ -12,19 +12,9 @@ namespace AYLink.Desktop.Views.Pages;
 
 public partial class ShellPage : UserControl
 {
-    private readonly BackgroundImageManager backgroundImageManager = BackgroundImageManager.Instance;
-
     public ShellPage()
     {
         InitializeComponent();
-        backgroundImageManager.RegisterImageComponent(BackgroundImage);
-        backgroundImageManager.SetRandomBackgroundImage();
-    }
-
-    protected override void OnUnloaded(RoutedEventArgs e)
-    {
-        base.OnUnloaded(e);
-        backgroundImageManager.UnregisterImageComponent(BackgroundImage);
     }
 
     /// <summary>

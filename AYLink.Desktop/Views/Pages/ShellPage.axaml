@@ -29,12 +29,6 @@
     <!-- 主容器 -->
     <Grid RowDefinitions="*,Auto">
         <Grid Grid.Row="0">
-            <!-- 背景图（整个页面） -->
-            <Image x:Name="BackgroundImage"
-                   Stretch="UniformToFill"
-                   IsVisible="True"
-                   Opacity="0.6"/>
-
             <!-- 无设备标签页时的空状态 -->
             <StackPanel IsVisible="{Binding !Tabs.Count}"
                         HorizontalAlignment="Center"

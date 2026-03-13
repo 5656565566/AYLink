@@ -142,13 +142,15 @@
                          SelectedItem="{Binding SelectedTab}"
                          IsAddTabButtonVisible="False"
                          TabCloseRequested="TabView_TabCloseRequested"
-                         IsVisible="{Binding Tabs.Count}">
+                         IsVisible="{Binding Tabs.Count}"
+                         Background="Transparent">
                 <ui:TabView.TabItemTemplate>
                     <DataTemplate x:DataType="vm:AppTabViewModel">
                         <ui:TabViewItem Header="{Binding Title}"
                                         Content="{Binding}"
                                         ContentTemplate="{StaticResource AppTabContentTemplate}"
-                                        IsClosable="True" />
+                                        IsClosable="True"
+                                        Background="Transparent"/>
                     </DataTemplate>
                 </ui:TabView.TabItemTemplate>
             </ui:TabView>
