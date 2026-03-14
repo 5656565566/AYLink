@@ -68,6 +68,7 @@ public partial class ScreenTabViewModel : ViewModelBase, IDisposable
 
     /// <summary>
     /// 绑定视频显示控件
+    /// 首次绑定时启动连接 重排/重新挂载时仅恢复引用 事件绑定保持不变
     /// </summary>
     public void AttachVideoImage(Image videoImage)
     {
@@ -80,7 +81,10 @@ public partial class ScreenTabViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
-    /// 分离视频显示控件
+    /// 分离视频显示控件引用
+    /// 仅置空引用 不解绑事件——事件回调中已有判空保护
+    /// 避免重排标签页时频繁解绑/重绑导致的事件丢失
+    /// 事件的真正清理在 Dispose 时执行
     /// </summary>
     public void DetachVideoImage()
     {

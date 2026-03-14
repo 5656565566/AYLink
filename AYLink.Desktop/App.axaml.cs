@@ -19,11 +19,19 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
+            // 避免从 Avalonia 和 CommunityToolkit 同时进行重复验证
             DisableAvaloniaDataAnnotationValidation();
+
+            var vm = new MainWindowViewModel();
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(),
+                DataContext = vm,
+            };
+
+            // 应用退出时清理所有页面资源（Scrcpy 进程、音频流等）
+            desktop.ShutdownRequested += (_, _) =>
+            {
+                vm.DisposeAllPages();
             };
         }
 

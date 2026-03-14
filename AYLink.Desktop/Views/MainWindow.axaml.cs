@@ -99,6 +99,12 @@ public partial class MainWindow : Window
     private void MainWindow_Closed(object? sender, EventArgs e)
     {
         _navigationService.Navigated -= OnNavigationServiceNavigated;
+
+        // 清理所有投屏标签页，释放 Scrcpy 进程和音频流，防止进程泄露
+        if (DataContext is MainWindowViewModel vm)
+        {
+            vm.DisposeAllPages();
+        }
     }
 
     /// <summary>

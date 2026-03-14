@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:behaviors="using:AYLink.Desktop.Behaviors"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AYLink.Desktop.Views.Pages.ScreenPage"
              x:DataType="vm:ScreenPageViewModel">
@@ -11,7 +12,9 @@
     <!-- 投屏标签页内容模板 -->
     <UserControl.Resources>
         <DataTemplate x:Key="ScreenTabContentTemplate" x:DataType="vm:ScreenTabViewModel">
-            <Grid ColumnDefinitions="*,Auto">
+            <Grid ColumnDefinitions="*,Auto"
+                  VerticalAlignment="Stretch"
+                  HorizontalAlignment="Stretch">
                 <!-- 串流区域 -->
                 <Border Grid.Column="0">
                     <Grid>
@@ -19,7 +22,8 @@
                         <Viewbox Stretch="Uniform">
                             <Grid>
                                 <!-- 视频流 -->
-                                <Image x:Name="VideoImage"/>
+                                <Image x:Name="VideoImage"
+                                       behaviors:VideoImageBehavior.IsAutoAttach="True"/>
                             </Grid>
                         </Viewbox>
 
@@ -38,10 +42,11 @@
                 </Border>
 
                 <!-- 侧边栏 -->
-                <Grid Grid.Column="1" IsVisible="{Binding IsSidebarVisible}">
+                <Grid Grid.Column="1" IsVisible="{Binding IsSidebarVisible}" VerticalAlignment="Stretch">
                     <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
                             BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                            BorderThickness="1,0,0,0">
+                            BorderThickness="1,0,0,0"
+                            VerticalAlignment="Stretch">
                         <StackPanel VerticalAlignment="Center"
                                     HorizontalAlignment="Right"
                                     Margin="4"
@@ -121,16 +126,19 @@
                          SelectedItem="{Binding SelectedTab}"
                          IsAddTabButtonVisible="False"
                          TabCloseRequested="TabView_TabCloseRequested"
-                         SelectionChanged="TabView_SelectionChanged"
                          IsVisible="{Binding Tabs.Count}"
-                         Background="Transparent">
+                         Background="Transparent"
+                         VerticalAlignment="Stretch"
+                         HorizontalAlignment="Stretch">
                 <ui:TabView.TabItemTemplate>
                     <DataTemplate x:DataType="vm:ScreenTabViewModel">
                         <ui:TabViewItem Header="{Binding Title}"
                                         Content="{Binding}"
                                         ContentTemplate="{StaticResource ScreenTabContentTemplate}"
                                         IsClosable="True"
-                                        Background="Transparent"/>
+                                        Background="Transparent"
+                                        HorizontalContentAlignment="Stretch"
+                                        VerticalContentAlignment="Stretch"/>
                     </DataTemplate>
                 </ui:TabView.TabItemTemplate>
             </ui:TabView>

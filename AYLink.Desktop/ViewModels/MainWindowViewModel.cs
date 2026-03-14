@@ -124,4 +124,19 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     private bool CanGoBack() => _navigationService.CanGoBack;
+
+    /// <summary>
+    /// 释放所有实现了 IDisposable 的页面资源
+    /// 在主窗口关闭时调用 确保 Scrcpy 进程等后台资源被正确清理
+    /// </summary>
+    public void DisposeAllPages()
+    {
+        foreach (var page in _pages.Values)
+        {
+            if (page is System.IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+    }
 }

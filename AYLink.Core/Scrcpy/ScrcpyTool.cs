@@ -299,7 +299,10 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
                 AdbClient.Instance.ExecuteRemoteCommand(serverOptions.ToString(), device, new TraceReceiver());
             }
             catch { }
-        });
+        })
+        {
+            IsBackground = true // 后台线程，不阻止进程退出
+        };
 
         scrcpyServer.Start();
 

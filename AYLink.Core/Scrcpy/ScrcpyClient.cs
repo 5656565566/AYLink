@@ -88,7 +88,7 @@ public class ScrcpyClient : IDisposable
             _deviceModel.VideoStream.Add(_videoSocket);
         }
 
-        _videoThread = new Thread(ReceiveVideoFrames);
+        _videoThread = new Thread(ReceiveVideoFrames) { IsBackground = true };
         _videoThread.Start();
     }
 
@@ -103,7 +103,7 @@ public class ScrcpyClient : IDisposable
             _deviceModel.AudioStream = _audioSocket;
         }
 
-        _audioThread = new Thread(ReceiveAudioFrames);
+        _audioThread = new Thread(ReceiveAudioFrames) { IsBackground = true };
         _audioThread.Start();
     }
 
