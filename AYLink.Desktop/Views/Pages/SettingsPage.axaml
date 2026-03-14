@@ -81,6 +81,36 @@
                 </ui:SettingsExpander.Footer>
             </ui:SettingsExpander>
 
+            <ui:SettingsExpander Header="透明亚克力" Description="开启窗口的亚克力透明效果">
+                <ui:SettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding EnableAcrylic}" />
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="背景图" Description="在窗口底层显示背景图片">
+                <ui:SettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding EnableBackgroundImage}" />
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="背景图模式" Description="选择随机图片或指定一张图片" IsVisible="{Binding EnableBackgroundImage}">
+                <ui:SettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <RadioButton Content="随机" IsChecked="{Binding IsRandomBackground}" GroupName="BgMode" />
+                        <RadioButton Content="指定" IsChecked="{Binding !IsRandomBackground}" GroupName="BgMode" />
+                    </StackPanel>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
+            <ui:SettingsExpander Header="指定背景图" Description="选择一张图片作为背景" IsVisible="{Binding !IsRandomBackground}">
+                <ui:SettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBox Text="{Binding SpecificBackgroundImagePath}" MinWidth="250" Watermark="未选择" IsReadOnly="True"/>
+                        <Button Content="..." Click="SelectBackgroundImageBtn_Click"/>
+                    </StackPanel>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
             <!-- 组件 -->
             <TextBlock Text="组件" Classes="h2"/>
             
@@ -147,7 +177,7 @@
                 </ui:SettingsExpander.Footer>
             </ui:SettingsExpander>
 
-            <ui:SettingsExpander Header="检查更新" Description="��取最新版本的应用程序">
+            <ui:SettingsExpander Header="检查更新" Description="获取最新版本的应用程序">
                 <ui:SettingsExpander.Footer>
                     <Button Content="立即检查" Command="{Binding CheckForUpdatesCommand}"/>
                 </ui:SettingsExpander.Footer>

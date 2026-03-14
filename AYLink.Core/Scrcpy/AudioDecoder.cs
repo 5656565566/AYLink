@@ -16,13 +16,13 @@ public enum AudioCodec
     RAW
 }
 
-public unsafe class AudioDecoder : IDisposable
+public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposable
 {
-    private readonly Socket _socket;
+    private readonly Socket _socket = audioSocket ?? throw new ArgumentNullException(nameof(audioSocket));
     private AVCodecContext* _codecContext;
     private SwrContext* _resamplerCtx;
     private AudioCodec _currentCodec;
-    private readonly bool _handshake;
+    private readonly bool _handshake = handshake;
 
     public const int TARGET_SAMPLE_RATE = 48000; // 按理说可以动态处理节省计算量但是其实没必要
     public const int TARGET_CHANNELS = 2;
@@ -33,12 +33,6 @@ public unsafe class AudioDecoder : IDisposable
     /// 参数: pcmData
     /// </summary>
     public event Action<byte[]>? OnAudioDataDecoded;
-
-    public AudioDecoder(Socket audioSocket, bool handshake)
-    {
-        _handshake = handshake;
-        _socket = audioSocket ?? throw new ArgumentNullException(nameof(audioSocket));
-    }
 
     private void Handshake()
     {

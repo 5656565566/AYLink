@@ -23,7 +23,7 @@
         </Image>
 
         <!-- 半透明遮罩层 用于降低背景图亮度/提供默认底色 保证文字可读性 -->
-        <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.75" IsHitTestVisible="False" />
+        <Border x:Name="BackgroundMask" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.75" IsHitTestVisible="False" />
 
         <ui:NavigationView x:Name="NavView"
                            PaneDisplayMode="Left"

@@ -72,4 +72,25 @@ public partial class SettingsPage : UserControl
             vm.FFmpegBin = result[0].Path.LocalPath;
         }
     }
+
+    private async void SelectBackgroundImageBtn_Click(object? sender, RoutedEventArgs e)
+    {
+        var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+        if (storage == null) return;
+
+        var result = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "选择背景图片",
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("图片文件") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.webp"] }
+            ]
+        });
+
+        if (result.Count > 0 && DataContext is SettingsPageViewModel vm)
+        {
+            vm.SpecificBackgroundImagePath = result[0].Path.LocalPath;
+        }
+    }
 }

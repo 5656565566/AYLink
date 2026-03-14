@@ -8,11 +8,10 @@ using System.Text.RegularExpressions;
 
 namespace AYLink.Core.Scrcpy;
 
-public class ScrcpyTool(DeviceModel deviceModel, string clientVersion, string scrcpyServerPath)
+public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
 {
     private readonly DeviceModel _deviceModel = deviceModel;
     private readonly string _scrcpyServerPath = scrcpyServerPath;
-    private string clientVersion = clientVersion;
 
     public async void PushScrcpyServer()
     {
@@ -46,16 +45,12 @@ public class ScrcpyTool(DeviceModel deviceModel, string clientVersion, string sc
             return;
         }
     }
-    public void SetClientVersion(string newClientVersion)
-    {
-        clientVersion = newClientVersion;
-    }
 
     public ServerOptions GetServerOptions()
     {
         ServerOptions serverOptions = new()
         {
-            ClientVersion = clientVersion,
+            ClientVersion = "3.3.4",
         };
         return serverOptions;
     }
@@ -254,7 +249,7 @@ public class ScrcpyTool(DeviceModel deviceModel, string clientVersion, string sc
 
             if (!isAudioAvailable)
             {
-                serverOptions.Audio = false; // 必须可以播放
+                serverOptions.Audio = false; // 必须可以播放音频才启用音频
             }
 
             if (serverOptions.Audio)
@@ -301,16 +296,7 @@ public class ScrcpyTool(DeviceModel deviceModel, string clientVersion, string sc
         {
             try
             {
-                // 使用 TraceReceiver 可能会有性能问题，但在 Core 中我们可能没有更好的选择，或者可以实现一个 NullReceiver
-                // 这里暂时保留 TraceReceiver，假设它只是输出到 Trace
-                // 实际上 AdvancedSharpAdbClient 的 ConsoleOutputReceiver 会收集所有输出
-                // 我们这里可能不需要收集输出，只需要让它运行
-                // 但是 ExecuteRemoteCommand 是阻塞的，直到命令结束
-                // scrcpy-server 是一个长运行进程
-                
-                // 注意：这里需要一个 Receiver 来接收输出，否则可能会阻塞或者抛���异常
-                // 我们可以实现一个简单的 LoggingReceiver
-                AdbClient.Instance.ExecuteRemoteCommand(serverOptions.ToString(), device, new ConsoleOutputReceiver());
+                AdbClient.Instance.ExecuteRemoteCommand(serverOptions.ToString(), device, new TraceReceiver());
             }
             catch { }
         });

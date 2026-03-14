@@ -14,7 +14,7 @@ public class ServerOptions
     /// <summary>
     /// 服务端必须知道与之通信的客户端版本 以确保协议兼容
     /// </summary>
-    public string ClientVersion { get; set; } = "";
+    public string ClientVersion { get; set; } = "3.3.4";
 
     /// <summary>
     /// 服务端连接ID (Session ID) 用于区分连接到同一个服务端的多个客户端
@@ -66,7 +66,7 @@ public class ServerOptions
     public bool AudioDup { get; set; } = false;
 
     /// <summary>
-    /// ���求服务端使用的特定视频编码器名称如果设置 将忽略VideoCodec
+    /// 请求服务端使用的特定视频编码器名称如果设置 将忽略VideoCodec
     /// </summary>
     public string? VideoEncoder { get; set; }
 
@@ -194,7 +194,7 @@ public class ServerOptions
     public bool PowerOn { get; set; } = true;
 
     /// <summary>
-    /// 客户���断开连接时 请求服务端执行关闭屏幕操作
+    /// 客户端断开连接时 请求服务端执行关闭屏幕操作
     /// </summary>
     public bool PowerOffOnClose { get; set; } = false;
 

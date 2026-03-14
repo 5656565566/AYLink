@@ -21,6 +21,52 @@
                         <ui:SymbolIconSource Symbol="Add"/>
                     </ui:CommandBarButton.IconSource>
                 </ui:CommandBarButton>
+                
+                <ui:CommandBarButton Label="更多操作">
+                    <ui:CommandBarButton.IconSource>
+                        <ui:SymbolIconSource Symbol="More"/>
+                    </ui:CommandBarButton.IconSource>
+                    <ui:CommandBarButton.Flyout>
+                        <MenuFlyout>
+                            <MenuItem Header="刷新设备" Command="{Binding RefreshDevicesCommand}">
+                                <MenuItem.Icon>
+                                    <ui:SymbolIcon Symbol="Refresh"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="多选模式" Command="{Binding ToggleMultiSelectCommand}" HotKey="Ctrl+M">
+                                <MenuItem.Icon>
+                                    <ui:SymbolIcon Symbol="List"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="删除设备" Command="{Binding DeleteDeviceCommand}" CommandParameter="{Binding #DeviceListBox.SelectedItems}" IsEnabled="{Binding IsMultiSelectMode}">
+                                <MenuItem.Icon>
+                                    <ui:SymbolIcon Symbol="Delete"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="运行脚本" Command="{Binding RunScriptCommand}" IsEnabled="False">
+                                <MenuItem.Icon>
+                                    <ui:SymbolIcon Symbol="Code"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="-" />
+                            <MenuItem Header="同步控制" Command="{Binding SyncControlCommand}" IsEnabled="False">
+                                <MenuItem.Icon>
+                                    <ui:SymbolIcon Symbol="Sync"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="添加分组" Command="{Binding AddGroupCommand}" IsEnabled="False">
+                                <MenuItem.Icon>
+                                    <ui:SymbolIcon Symbol="Add"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="删除分组" Command="{Binding DeleteGroupCommand}" IsEnabled="False">
+                                <MenuItem.Icon>
+                                    <ui:SymbolIcon Symbol="Delete"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </MenuFlyout>
+                    </ui:CommandBarButton.Flyout>
+                </ui:CommandBarButton>
             </ui:CommandBar.PrimaryCommands>
 
             <!-- 分组选择器 -->
@@ -39,55 +85,6 @@
                     </ComboBox>
                 </StackPanel>
             </ui:CommandBar.Content>
-
-            <!-- 次要操作（溢出菜单） -->
-            <ui:CommandBar.SecondaryCommands>
-                <ui:CommandBarButton Label="刷新设备" Command="{Binding RefreshDevicesCommand}">
-                    <ui:CommandBarButton.IconSource>
-                        <ui:SymbolIconSource Symbol="Refresh"/>
-                    </ui:CommandBarButton.IconSource>
-                </ui:CommandBarButton>
-                <ui:CommandBarButton Label="多选模式" Command="{Binding ToggleMultiSelectCommand}" HotKey="Ctrl+M">
-                    <ui:CommandBarButton.IconSource>
-                        <ui:SymbolIconSource Symbol="List"/>
-                    </ui:CommandBarButton.IconSource>
-                    
-                    <ui:CommandBarButton.Content>
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="多选模式"/>
-                            <ui:SymbolIcon Symbol="Accept" IsVisible="{Binding IsMultiSelectMode}" Foreground="{DynamicResource SystemAccentColor}" />
-                        </StackPanel>
-                    </ui:CommandBarButton.Content>
-                </ui:CommandBarButton>
-                <ui:CommandBarButton Label="删除设备" Command="{Binding DeleteDeviceCommand}" CommandParameter="{Binding #DeviceListBox.SelectedItems}" IsEnabled="{Binding IsMultiSelectMode}">
-                    <ui:CommandBarButton.IconSource>
-                        <ui:SymbolIconSource Symbol="Delete"/>
-                    </ui:CommandBarButton.IconSource>
-                </ui:CommandBarButton>
-                <ui:CommandBarButton Label="运行脚本" Command="{Binding RunScriptCommand}" IsEnabled="False">
-                    <ui:CommandBarButton.IconSource>
-                        <ui:SymbolIconSource Symbol="Code"/>
-                    </ui:CommandBarButton.IconSource>
-                </ui:CommandBarButton>
-
-                <ui:CommandBarSeparator/>
-
-                <ui:CommandBarButton Label="同步控制" Command="{Binding SyncControlCommand}" IsEnabled="False">
-                    <ui:CommandBarButton.IconSource>
-                        <ui:SymbolIconSource Symbol="Sync"/>
-                    </ui:CommandBarButton.IconSource>
-                </ui:CommandBarButton>
-                <ui:CommandBarButton Label="添加分组" Command="{Binding AddGroupCommand}" IsEnabled="False">
-                    <ui:CommandBarButton.IconSource>
-                        <ui:SymbolIconSource Symbol="Add"/>
-                    </ui:CommandBarButton.IconSource>
-                </ui:CommandBarButton>
-                <ui:CommandBarButton Label="删除分组" Command="{Binding DeleteGroupCommand}" IsEnabled="False">
-                    <ui:CommandBarButton.IconSource>
-                        <ui:SymbolIconSource Symbol="Delete"/>
-                    </ui:CommandBarButton.IconSource>
-                </ui:CommandBarButton>
-            </ui:CommandBar.SecondaryCommands>
         </ui:CommandBar>
 
         <!-- 空状态提示 无设备时显示 -->

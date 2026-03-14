@@ -1,6 +1,8 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:sty="using:FluentAvalonia.Styling"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:uip="using:FluentAvalonia.UI.Controls.Primitives"
              xmlns:local="using:AYLink.Desktop"
              xmlns:views="using:AYLink.Desktop.Views.Pages"
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
@@ -10,6 +12,54 @@
     <Application.Styles>
         <sty:FluentAvaloniaTheme />
     </Application.Styles>
+
+    <Application.Resources>
+        <!-- 重写 TabView 的 ControlTheme 实现内容区域透明 并为标签栏添加半透明底色 -->
+        <ControlTheme x:Key="{x:Type ui:TabView}" TargetType="ui:TabView">
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Padding" Value="2,8,2,0" />
+            <Setter Property="KeyboardNavigation.IsTabStop" Value="False" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Grid RowDefinitions="Auto,*">
+                        <Grid Name="TabContainerGrid" Background="{TemplateBinding Background}">
+                            <!-- 半透明底色 增加标签页头部的可读性 -->
+                            <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.85" Grid.ColumnSpan="4" />
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" MinWidth="2" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Rectangle Name="LeftBottomBorderLine" Fill="{DynamicResource TabViewBorderBrush}" Height="1" VerticalAlignment="Bottom"/>
+                            <Rectangle Name="RightBottomBorderLine" Fill="{DynamicResource TabViewBorderBrush}" Height="1" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Bottom"/>
+
+                            <ContentPresenter Grid.Column="0" Name="LeftContentPresenter" Content="{TemplateBinding TabStripHeader}" ContentTemplate="{TemplateBinding TabStripHeaderTemplate}"/>
+
+                            <uip:TabViewListView Grid.Column="1" Name="TabListView" Padding="{TemplateBinding Padding}" ItemsSource="{TemplateBinding TabItems}" ItemTemplate="{TemplateBinding TabItemTemplate}" CanReorderItems="{TemplateBinding CanReorderTabs}" CanDragItems="{TemplateBinding CanDragTabs}" DragDrop.AllowDrop="{TemplateBinding AllowDropTabs}" />
+
+                            <Border IsVisible="{Binding IsAddTabButtonVisible, RelativeSource={RelativeSource TemplatedParent}}" Grid.Column="2" Padding="3,0,0,3" VerticalAlignment="Bottom">
+                                <Button Name="AddButton" HorizontalAlignment="Center" VerticalAlignment="Center" Content="&#xE710;" Command="{TemplateBinding AddTabButtonCommand}" CommandParameter="{TemplateBinding AddTabButtonCommandParameter}" Theme="{DynamicResource TabViewButtonStyle}" />
+                            </Border>
+
+                            <!-- 包含 TabStripFooter 内容 + 窗口控制按钮预留空间 -->
+                            <ContentPresenter Grid.Column="3" Name="RightContentPresenter" HorizontalAlignment="Stretch" Content="{TemplateBinding TabStripFooter}" ContentTemplate="{TemplateBinding TabStripFooterTemplate}" MinWidth="150" />
+                        </Grid>
+
+                        <!-- 内容区域完全透明 -->
+                        <ContentPresenter Name="TabContentPresenter"
+                                          Grid.Row="1"
+                                          Background="Transparent"
+                                          BorderBrush="{TemplateBinding BorderBrush}"
+                                          BorderThickness="{TemplateBinding BorderThickness}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter>
+        </ControlTheme>
+    </Application.Resources>
 
     <!-- View-ViewModel 映射：DataTemplate 自动根据 DataContext 类型选择 View -->
     <Application.DataTemplates>
@@ -30,6 +80,9 @@
         </DataTemplate>
         <DataTemplate DataType="vm:SettingsPageViewModel">
             <views:SettingsPage />
+        </DataTemplate>
+        <DataTemplate DataType="vm:DeviceSettingViewModel">
+            <views:DeviceSettingView />
         </DataTemplate>
     </Application.DataTemplates>
 </Application>

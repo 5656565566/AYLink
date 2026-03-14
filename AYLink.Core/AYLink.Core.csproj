@@ -13,6 +13,8 @@
     <PackageReference Include="AdvancedSharpAdbClient" Version="3.4.14" />
     <!-- FFmpeg 解码 -->
     <PackageReference Include="FFmpeg.AutoGen" Version="7.1.1" />
+    <!-- 日志 -->
+    <PackageReference Include="NLog" Version="6.0.2" />
   </ItemGroup>
 
 </Project>

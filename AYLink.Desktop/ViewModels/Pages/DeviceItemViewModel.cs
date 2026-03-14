@@ -4,6 +4,7 @@ using AYLink.Core.Models;
 using AYLink.Desktop.Services;
 using System.Threading.Tasks;
 using AYLink.Core.Scrcpy;
+using AYLink.Desktop.ViewModels.Pages;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
@@ -114,7 +115,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
     private void OpenDeviceSettings()
     {
         if (!CheckDeviceOnline()) return;
-        Navigation.NavigateTo("Settings", Device);
+        Navigation.NavigateTo("DeviceSetting", new DeviceSettingNavigationArgs { DeviceSerial = Device.Serial });
     }
 
     /// <summary>
@@ -127,7 +128,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
 
         DialogHelper.ShowProgress("获取中", "正在获取设备编码器列表...", isBlocking: true);
         
-        var tool = new ScrcpyTool(Device, "3.3.4", "Scrcpy/scrcpy-server");
+        var tool = new ScrcpyTool(Device, "Scrcpy/scrcpy-server");
         var encoders = await Task.Run(() => tool.GetEncoders());
         
         DialogHelper.CloseProgress();
@@ -152,12 +153,12 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
 
         if (Device.ServerOptions == null)
         {
-            Device.ServerOptions = new Core.Scrcpy.ServerOptions();
+            Device.ServerOptions = new ServerOptions();
         }
         
-        // 假设 -1 代表新建显示器，具体取决于 scrcpy 的实现
-        // Device.ServerOptions.DisplayId = -1;
-        Device.ServerOptions.NewDisplay = "1920x1080/420"; // 示例参数
+        // -1 代表新建显示器
+        Device.ServerOptions.DisplayId = -1;
+        Device.ServerOptions.NewDisplay = "1920x1080/420";
 
         Navigation.NavigateTo("Screen", Device);
     }

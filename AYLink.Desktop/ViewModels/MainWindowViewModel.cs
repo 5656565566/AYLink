@@ -62,6 +62,7 @@ public partial class MainWindowViewModel : ViewModelBase
         RegisterPage(new AppPageViewModel());
         RegisterPage(new ShellPageViewModel());
         RegisterPage(new SettingsPageViewModel());
+        RegisterPage(new DeviceSettingViewModel());
 
         // 订阅导航服务事件
         _navigationService.NavigatedWithParameter += OnNavigated;

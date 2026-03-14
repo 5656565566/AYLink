@@ -109,7 +109,7 @@ public partial class AppTabViewModel : ViewModelBase
         {
             var appList = await Task.Run(() =>
             {
-                var tool = new ScrcpyTool(Device, "3.3.4", "Scrcpy/scrcpy-server");
+                var tool = new ScrcpyTool(Device, "Scrcpy/scrcpy-server");
                 return tool.GetAppInfos();
             });
 
@@ -251,7 +251,7 @@ public partial class AppTabViewModel : ViewModelBase
             "卸载",
             "取消");
 
-        if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary) return;
+        if (result != ContentDialogResult.Primary) return;
 
         DialogHelper.ShowProgress("卸载应用", $"正在卸载 {app.Name}...", isBlocking: true);
 

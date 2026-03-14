@@ -472,3 +472,6 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/python,node,visualstudiocode,jetbrains,macos,windows,linux
 
 *.user
+
+AYLink.Mobile/
+AYLink.Agent/
