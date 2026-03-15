@@ -25,7 +25,7 @@
                     <Grid RowDefinitions="Auto,*">
                         <Grid Name="TabContainerGrid" Background="{TemplateBinding Background}">
                             <!-- 半透明底色 增加标签页头部的可读性 -->
-                            <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.85" Grid.ColumnSpan="4" />
+                            <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.3" Grid.ColumnSpan="4" />
 
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" MinWidth="2" />
@@ -34,19 +34,51 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Rectangle Name="LeftBottomBorderLine" Fill="{DynamicResource TabViewBorderBrush}" Height="1" VerticalAlignment="Bottom"/>
-                            <Rectangle Name="RightBottomBorderLine" Fill="{DynamicResource TabViewBorderBrush}" Height="1" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Bottom"/>
+                            <Rectangle Name="LeftBottomBorderLine"
+                                       Fill="{DynamicResource TabViewBorderBrush}"
+                                       Height="1"
+                                       VerticalAlignment="Bottom"/>
+                            <Rectangle Name="RightBottomBorderLine"
+                                       Fill="{DynamicResource TabViewBorderBrush}"
+                                       Height="1"
+                                       Grid.Column="2"
+                                       Grid.ColumnSpan="2"
+                                       VerticalAlignment="Bottom"/>
 
-                            <ContentPresenter Grid.Column="0" Name="LeftContentPresenter" Content="{TemplateBinding TabStripHeader}" ContentTemplate="{TemplateBinding TabStripHeaderTemplate}"/>
+                            <ContentPresenter Grid.Column="0"
+                                              Name="LeftContentPresenter"
+                                              Content="{TemplateBinding TabStripHeader}"
+                                              ContentTemplate="{TemplateBinding TabStripHeaderTemplate}"/>
 
-                            <uip:TabViewListView Grid.Column="1" Name="TabListView" Padding="{TemplateBinding Padding}" ItemsSource="{TemplateBinding TabItems}" ItemTemplate="{TemplateBinding TabItemTemplate}" CanReorderItems="{TemplateBinding CanReorderTabs}" CanDragItems="{TemplateBinding CanDragTabs}" DragDrop.AllowDrop="{TemplateBinding AllowDropTabs}" />
+                            <uip:TabViewListView Grid.Column="1"
+                                                 Name="TabListView"
+                                                 Padding="{TemplateBinding Padding}"
+                                                 ItemsSource="{TemplateBinding TabItems}"
+                                                 ItemTemplate="{TemplateBinding TabItemTemplate}"
+                                                 CanReorderItems="{TemplateBinding CanReorderTabs}" 
+                                                 CanDragItems="{TemplateBinding CanDragTabs}"
+                                                 DragDrop.AllowDrop="{TemplateBinding AllowDropTabs}" />
 
-                            <Border IsVisible="{Binding IsAddTabButtonVisible, RelativeSource={RelativeSource TemplatedParent}}" Grid.Column="2" Padding="3,0,0,3" VerticalAlignment="Bottom">
-                                <Button Name="AddButton" HorizontalAlignment="Center" VerticalAlignment="Center" Content="&#xE710;" Command="{TemplateBinding AddTabButtonCommand}" CommandParameter="{TemplateBinding AddTabButtonCommandParameter}" Theme="{DynamicResource TabViewButtonStyle}" />
+                            <Border IsVisible="{Binding IsAddTabButtonVisible,RelativeSource={RelativeSource TemplatedParent}}"
+                                    Grid.Column="2"
+                                    Padding="3,0,0,3"
+                                    VerticalAlignment="Bottom">
+                                <Button Name="AddButton"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Content="&#xE710;"
+                                        Command="{TemplateBinding AddTabButtonCommand}"
+                                        CommandParameter="{TemplateBinding AddTabButtonCommandParameter}"
+                                        Theme="{DynamicResource TabViewButtonStyle}" />
                             </Border>
 
                             <!-- 包含 TabStripFooter 内容 + 窗口控制按钮预留空间 -->
-                            <ContentPresenter Grid.Column="3" Name="RightContentPresenter" HorizontalAlignment="Stretch" Content="{TemplateBinding TabStripFooter}" ContentTemplate="{TemplateBinding TabStripFooterTemplate}" MinWidth="150" />
+                            <ContentPresenter Grid.Column="3"
+                                              Name="RightContentPresenter"
+                                              HorizontalAlignment="Stretch"
+                                              Content="{TemplateBinding TabStripFooter}"
+                                              ContentTemplate="{TemplateBinding TabStripFooterTemplate}"
+                                              MinWidth="150" />
                         </Grid>
 
                         <!-- 内容区域完全透明 -->

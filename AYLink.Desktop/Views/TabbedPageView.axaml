@@ -6,8 +6,7 @@
              xmlns:vm="using:AYLink.Desktop.ViewModels"
              xmlns:local="using:AYLink.Desktop.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="AYLink.Desktop.Views.TabbedPageView"
-             x:CompileBindings="True">
+             x:Class="AYLink.Desktop.Views.TabbedPageView">
 
     <Grid RowDefinitions="*,Auto">
         <Grid Grid.Row="0">
@@ -37,27 +36,40 @@
                          HorizontalAlignment="Stretch">
                 <ui:TabView.TabItemTemplate>
                     <DataTemplate x:DataType="vm:TabItemViewModelBase">
+                        
                         <ui:TabViewItem Header="{Binding Title}"
                                         Content="{Binding}"
                                         ContentTemplate="{Binding $parent[local:TabbedPageView].TabContentTemplate}"
                                         IsClosable="True"
-                                        Background="Transparent"
                                         HorizontalContentAlignment="Stretch"
-                                        VerticalContentAlignment="Stretch"/>
+                                        VerticalContentAlignment="Stretch">
+                            
+                            <ui:TabViewItem.Background>
+                                <SolidColorBrush Color="{DynamicResource SolidBackgroundFillColorBase}" Opacity="0.85"/>
+                            </ui:TabViewItem.Background>
+                            
+                        </ui:TabViewItem>
+                        
                     </DataTemplate>
                 </ui:TabView.TabItemTemplate>
             </ui:TabView>
         </Grid>
 
-        <Border Grid.Row="1"
-                Padding="12,4"
-                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                BorderThickness="0,1,0,0"
-                IsVisible="{Binding $parent[local:TabbedPageView].ShowStatusBar}">
-            <ContentPresenter Content="{ReflectionBinding SelectedTab}"
-                              ContentTemplate="{Binding $parent[local:TabbedPageView].StatusBarTemplate}"
-                              IsVisible="{ReflectionBinding SelectedTab, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-        </Border>
+        <Grid Grid.Row="1" IsVisible="{Binding $parent[local:TabbedPageView].ShowStatusBar}">
+            
+            <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="0,1,0,0">
+                <Border.Background>
+                    <SolidColorBrush Color="{DynamicResource SolidBackgroundFillColorBase}" Opacity="0.3"/>
+                </Border.Background>
+            </Border>
+
+            <Border Padding="12,4">
+                <ContentPresenter Content="{Binding #PART_TabView.SelectedItem}"
+                                  ContentTemplate="{Binding $parent[local:TabbedPageView].StatusBarTemplate}"
+                                  IsVisible="{Binding #PART_TabView.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+            </Border>
+            
+        </Grid>
     </Grid>
 </UserControl>

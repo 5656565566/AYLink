@@ -151,7 +151,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
     }
 
     /// <summary>
-    /// 安装 APK（由 View 调用，传入文件路径列表）
+    /// 安装 APK（由 View 调用 传入文件路径列表）
     /// </summary>
     [RelayCommand]
     private async Task InstallApkAsync(IReadOnlyList<string>? filePaths)

@@ -14,8 +14,9 @@
     <UserControl.Resources>
         <DataTemplate x:Key="ShellTabContentTemplate" x:DataType="vm:ShellTabViewModel">
             <Grid>
-                <!-- 终端控件 -->
                 <term:TerminalControl x:Name="TabTerminalCtrl"
+                                      Loaded="OnTerminalLoaded"
+                                      Unloaded="OnTerminalUnloaded"
                                       FontFamily="Cascadia Code, Consolas, Monaco, Courier New, monospace"
                                       FontSize="14"
                                       Background="Transparent"
