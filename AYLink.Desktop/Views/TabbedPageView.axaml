@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:vm="using:AYLink.Desktop.ViewModels"
+             xmlns:local="using:AYLink.Desktop.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AYLink.Desktop.Views.TabbedPageView"
+             x:CompileBindings="True">
+
+    <Grid RowDefinitions="*,Auto">
+        <Grid Grid.Row="0">
+            <StackPanel IsVisible="{ReflectionBinding !Tabs.Count}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="12"
+                        Opacity="0.5">
+                <ContentPresenter Content="{Binding $parent[local:TabbedPageView].EmptyStateIcon}"
+                                  HorizontalAlignment="Center"/>
+                <TextBlock Text="{ReflectionBinding EmptyStateTitle}"
+                           HorizontalAlignment="Center"
+                           Theme="{StaticResource SubtitleTextBlockStyle}"/>
+                <TextBlock Text="{ReflectionBinding EmptyStateDescription}"
+                           HorizontalAlignment="Center"
+                           Theme="{StaticResource BodyTextBlockStyle}"/>
+            </StackPanel>
+
+            <ui:TabView x:Name="PART_TabView"
+                         TabItems="{ReflectionBinding Tabs}"
+                         SelectedItem="{ReflectionBinding SelectedTab}"
+                         IsAddTabButtonVisible="{ReflectionBinding IsAddTabButtonVisible}"
+                         TabCloseRequested="TabView_TabCloseRequested"
+                         IsVisible="{ReflectionBinding Tabs.Count}"
+                         Background="Transparent"
+                         VerticalAlignment="Stretch"
+                         HorizontalAlignment="Stretch">
+                <ui:TabView.TabItemTemplate>
+                    <DataTemplate x:DataType="vm:TabItemViewModelBase">
+                        <ui:TabViewItem Header="{Binding Title}"
+                                        Content="{Binding}"
+                                        ContentTemplate="{Binding $parent[local:TabbedPageView].TabContentTemplate}"
+                                        IsClosable="True"
+                                        Background="Transparent"
+                                        HorizontalContentAlignment="Stretch"
+                                        VerticalContentAlignment="Stretch"/>
+                    </DataTemplate>
+                </ui:TabView.TabItemTemplate>
+            </ui:TabView>
+        </Grid>
+
+        <Border Grid.Row="1"
+                Padding="12,4"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderThickness="0,1,0,0"
+                IsVisible="{Binding $parent[local:TabbedPageView].ShowStatusBar}">
+            <ContentPresenter Content="{ReflectionBinding SelectedTab}"
+                              ContentTemplate="{Binding $parent[local:TabbedPageView].StatusBarTemplate}"
+                              IsVisible="{ReflectionBinding SelectedTab, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        </Border>
+    </Grid>
+</UserControl>

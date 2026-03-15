@@ -19,14 +19,8 @@ namespace AYLink.Desktop.ViewModels.Pages;
 /// <summary>
 /// 应用管理标签页 ViewModel - 每个设备对应一个标签页
 /// </summary>
-public partial class AppTabViewModel : ViewModelBase
+public partial class AppTabViewModel : TabItemViewModelBase
 {
-    [ObservableProperty]
-    private string _title = "应用管理";
-
-    [ObservableProperty]
-    private DeviceModel? _device;
-
     /// <summary>
     /// 当前显示的应用列表（经过搜索过滤）
     /// </summary>
@@ -58,12 +52,6 @@ public partial class AppTabViewModel : ViewModelBase
     private bool _hasApps;
 
     /// <summary>
-    /// 状态消息
-    /// </summary>
-    [ObservableProperty]
-    private string _statusMessage = string.Empty;
-
-    /// <summary>
     /// 应用数量文本
     /// </summary>
     [ObservableProperty]
@@ -74,22 +62,11 @@ public partial class AppTabViewModel : ViewModelBase
     /// </summary>
     private readonly List<AppInfo> _masterAppList = [];
 
-    public event Action<AppTabViewModel>? OnCloseRequested;
-
     public AppTabViewModel(DeviceModel device)
     {
-        _device = device;
+        Device = device;
         Title = device.Name;
         _ = LoadAppsAsync();
-    }
-
-    /// <summary>
-    /// 关闭标签页
-    /// </summary>
-    [RelayCommand]
-    private void CloseTab()
-    {
-        OnCloseRequested?.Invoke(this);
     }
 
     /// <summary>

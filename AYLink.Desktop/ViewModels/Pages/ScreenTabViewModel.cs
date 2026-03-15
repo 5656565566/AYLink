@@ -25,22 +25,16 @@ namespace AYLink.Desktop.ViewModels.Pages;
 /// 投屏标签页 ViewModel - 每个设备对应一个标签页
 /// 管理 ScrcpyClient 连接、视频渲染和控制输入
 /// </summary>
-public partial class ScreenTabViewModel : ViewModelBase, IDisposable
+public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 {
-    [ObservableProperty]
-    private string _title = "投屏";
-
-    [ObservableProperty]
-    private DeviceModel? _device;
-
-    [ObservableProperty]
-    private string _statusMessage = "未连接";
-
     [ObservableProperty]
     private bool _isConnected;
 
     [ObservableProperty]
     private bool _isSidebarVisible = true;
+
+    [ObservableProperty]
+    private Avalonia.Media.Imaging.WriteableBitmap? _videoSource;
 
     private ScrcpyClient? _scrcpyClient;
     private Size _screenSize;
@@ -57,48 +51,58 @@ public partial class ScreenTabViewModel : ViewModelBase, IDisposable
     /// </summary>
     private Image? _videoImage;
 
-    public event Action<ScreenTabViewModel>? OnCloseRequested;
-
     public ScreenTabViewModel(DeviceModel device, string? appName = null)
     {
-        _device = device;
+        Device = device;
         _appName = appName;
         Title = appName != null ? $"{device.Name} - {appName}" : device.Name;
     }
 
     /// <summary>
     /// 绑定视频显示控件
-    /// 首次绑定时启动连接 重排/重新挂载时仅恢复引用 事件绑定保持不变
+    /// 首次绑定时启动连接；重排/重新挂载时恢复引用并重新绑定输入事件
     /// </summary>
     public void AttachVideoImage(Image videoImage)
     {
+        // 如果是同一个实例 无需处理
+        if (ReferenceEquals(_videoImage, videoImage)) return;
+
+        // 先解绑旧控件的事件（如果有旧引用）
+        DetachEventHandlers();
+
         _videoImage = videoImage;
 
         if (Device != null && !IsConnected)
         {
+            // 首次连接
             _ = ConnectDeviceAsync();
+        }
+        else if (IsConnected)
+        {
+            // 已连接状态下重新挂载（重排/视图切换）- 重新绑定输入事件
+            SetupEventHandlers();
         }
     }
 
     /// <summary>
     /// 分离视频显示控件引用
-    /// 仅置空引用 不解绑事件——事件回调中已有判空保护
-    /// 避免重排标签页时频繁解绑/重绑导致的事件丢失
-    /// 事件的真正清理在 Dispose 时执行
+    /// 仅解绑事件并置空引用
+    /// 避免重排标签页时导致后端中断
+    /// 事件的真正清理和后端停止在 Dispose 时执行
     /// </summary>
     public void DetachVideoImage()
     {
+        DetachEventHandlers();
         _videoImage = null;
     }
 
     /// <summary>
-    /// 关闭标签页
+    /// 关闭标签页 - 先释放资源再触发关闭事件
     /// </summary>
-    [RelayCommand]
-    private void CloseTab()
+    protected override void CloseTab()
     {
         Dispose();
-        OnCloseRequested?.Invoke(this);
+        base.CloseTab();
     }
 
     /// <summary>
@@ -110,8 +114,6 @@ public partial class ScreenTabViewModel : ViewModelBase, IDisposable
 
         try
         {
-            StatusMessage = "正在连接...";
-
             _scrcpyClient = new ScrcpyClient(Device);
             
             // 订阅视频帧解码事件
@@ -141,8 +143,7 @@ public partial class ScreenTabViewModel : ViewModelBase, IDisposable
                                 }
                             }
 
-                            if (_videoImage == null) return;
-                            _videoImage.Source = bitmap;
+                            VideoSource = bitmap;
                         }
                         catch (Exception ex)
                         {
@@ -222,14 +223,12 @@ public partial class ScreenTabViewModel : ViewModelBase, IDisposable
             });
 
             IsConnected = true;
-            StatusMessage = $"已连接 - {Device.Name}";
 
             SetupEventHandlers();
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[ScreenTab] ConnectDevice failed: {ex}");
-            StatusMessage = $"连接失败: {ex.Message}";
             DialogHelper.ShowToast("连接失败", ex.Message, InfoBarSeverity.Error);
         }
     }
@@ -330,7 +329,7 @@ public partial class ScreenTabViewModel : ViewModelBase, IDisposable
 
     #endregion
 
-    #region 触控与键盘事件处理
+    #region 触控/键盘事件处理
 
     private void SetupEventHandlers()
     {
@@ -618,7 +617,7 @@ public partial class ScreenTabViewModel : ViewModelBase, IDisposable
     #endregion
     public void Dispose()
     {
-        Dispose(true); // true 表示手动清理 可以安全地清理托管资源
+        Dispose(true);
         GC.SuppressFinalize(this);
     }
 

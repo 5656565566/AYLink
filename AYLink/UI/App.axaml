@@ -8,8 +8,7 @@
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 	<Application.Styles>
 		<sty:FluentAvaloniaTheme />
-		<StyleInclude Source="avares://AYLink.Controls/BrowserTabItem.axaml" />
-		<StyleInclude Source="avares://AYLink.Controls/BrowserTabView.axaml" />
+		<StyleInclude Source="avares://AYLink.Controls/Themes/BrowserTabViewTheme.axaml" />
 
 		<Style Selector="TextBox">
 			<Setter Property="utils:TextBoxFlyoutLocalizer.IsEnabled" Value="True" />

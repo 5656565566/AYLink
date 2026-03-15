@@ -1,71 +1,53 @@
 using AYLink.Controls.Terminal;
-using AYLink.Desktop.Services;
 using AYLink.Desktop.ViewModels.Pages;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
-using FluentAvalonia.UI.Controls;
 using System.Linq;
 
 namespace AYLink.Desktop.Views.Pages;
-
 
 public partial class ShellPage : UserControl
 {
     public ShellPage()
     {
         InitializeComponent();
+
+        // 监听 DataContext 变化以订阅 SelectedTab 变更
+        DataContextChanged += OnDataContextChanged;
     }
 
-    /// <summary>
-    /// 标签页关闭请求
-    /// </summary>
-    private void TabView_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
+    private ShellPageViewModel? _viewModel;
+
+    private void OnDataContextChanged(object? sender, System.EventArgs e)
     {
-        if (args.Item is ShellTabViewModel tab)
+        // 解除旧订阅
+        if (_viewModel != null)
         {
-            tab.CloseTabCommand.Execute(null);
+            _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        }
+
+        _viewModel = DataContext as ShellPageViewModel;
+
+        if (_viewModel != null)
+        {
+            _viewModel.PropertyChanged += ViewModel_PropertyChanged;
         }
     }
 
-    /// <summary>
-    /// 标签页选择变化 - 绑定终端控件到 ViewModel
-    /// </summary>
-    private void TabView_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        // 分离旧选项卡
-        foreach (var item in e.RemovedItems)
+        if (e.PropertyName == nameof(ShellPageViewModel.SelectedTab))
         {
-            var tab = ExtractTabViewModel(item);
-            tab?.DetachTerminal();
-        }
-
-        // 附加新标签页的终端控件
-        foreach (var item in e.AddedItems)
-        {
-            var newTab = ExtractTabViewModel(item);
-            if (newTab != null)
+            // 当 SelectedTab 变化时延迟到渲染后再绑定终端控件
+            if (_viewModel?.SelectedTab != null)
             {
-                // 延迟到模板渲染完成后再查找 TerminalControl
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    TryAttachTerminal(newTab);
+                    TryAttachTerminal(_viewModel.SelectedTab);
                 }, Avalonia.Threading.DispatcherPriority.Render);
             }
         }
-    }
-
-    /// <summary>
-    /// 从 TabView 的选中项中提取 ShellTabViewModel
-    /// TabView 可能传递 TabViewItem 包装器或直接的 ViewModel
-    /// </summary>
-    private static ShellTabViewModel? ExtractTabViewModel(object? item)
-    {
-        if (item is ShellTabViewModel vm)
-            return vm;
-        if (item is TabViewItem tvi && tvi.DataContext is ShellTabViewModel tabVm)
-            return tabVm;
-        return null;
     }
 
     /// <summary>

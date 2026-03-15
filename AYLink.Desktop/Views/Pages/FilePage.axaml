@@ -5,6 +5,7 @@
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:models="using:AYLink.Core.Models"
+             xmlns:views="using:AYLink.Desktop.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AYLink.Desktop.Views.Pages.FilePage"
              x:DataType="vm:FilePageViewModel">
@@ -112,18 +113,10 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <ui:TabView TabItems="{Binding Tabs}"
-                SelectedItem="{Binding SelectedTab}"
-                AddTabButtonCommand="{Binding AddNewTabCommand}"
-                TabCloseRequested="TabView_TabCloseRequested"
-                Background="Transparent">
-        <ui:TabView.TabItemTemplate>
-            <DataTemplate x:DataType="vm:FileTabViewModel">
-                <ui:TabViewItem Header="{Binding Title}"
-                                Content="{Binding}"
-                                ContentTemplate="{StaticResource FileTabContentTemplate}"
-                                IsClosable="True"/>
-            </DataTemplate>
-        </ui:TabView.TabItemTemplate>
-    </ui:TabView>
+    <views:TabbedPageView TabContentTemplate="{StaticResource FileTabContentTemplate}"
+                          ShowStatusBar="False">
+        <views:TabbedPageView.EmptyStateIcon>
+            <ui:SymbolIcon Symbol="Document" FontSize="64"/>
+        </views:TabbedPageView.EmptyStateIcon>
+    </views:TabbedPageView>
 </UserControl>

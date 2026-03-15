@@ -5,6 +5,7 @@
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
              xmlns:term="using:AYLink.Controls.Terminal"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:views="using:AYLink.Desktop.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AYLink.Desktop.Views.Pages.ShellPage"
              x:DataType="vm:ShellPageViewModel">
@@ -13,8 +14,6 @@
     <UserControl.Resources>
         <DataTemplate x:Key="ShellTabContentTemplate" x:DataType="vm:ShellTabViewModel">
             <Grid>
-                <!-- 半透明底色，适配主题 -->
-                <!-- <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.75" /> -->
                 <!-- 终端控件 -->
                 <term:TerminalControl x:Name="TabTerminalCtrl"
                                       FontFamily="Cascadia Code, Consolas, Monaco, Courier New, monospace"
@@ -24,56 +23,21 @@
                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
             </Grid>
         </DataTemplate>
-    </UserControl.Resources>
 
-    <!-- 主容器 -->
-    <Grid RowDefinitions="*,Auto">
-        <Grid Grid.Row="0">
-            <!-- 无设备标签页时的空状态 -->
-            <StackPanel IsVisible="{Binding !Tabs.Count}"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Spacing="12"
-                        Opacity="0.5">
-                <ui:SymbolIcon Symbol="Code" FontSize="64"/>
-                <TextBlock Text="未选中设备"
-                           HorizontalAlignment="Center"
-                           Theme="{StaticResource SubtitleTextBlockStyle}"/>
-                <TextBlock Text="请在首页选择一个设备来启动终端"
-                           HorizontalAlignment="Center"
-                           Theme="{StaticResource BodyTextBlockStyle}"/>
-            </StackPanel>
-
-            <!-- TabView: 设备终端标签页 -->
-            <ui:TabView TabItems="{Binding Tabs}"
-                         SelectedItem="{Binding SelectedTab}"
-                         IsAddTabButtonVisible="False"
-                         TabCloseRequested="TabView_TabCloseRequested"
-                         SelectionChanged="TabView_SelectionChanged"
-                         IsVisible="{Binding Tabs.Count}"
-                         Background="Transparent">
-                <ui:TabView.TabItemTemplate>
-                    <DataTemplate x:DataType="vm:ShellTabViewModel">
-                        <ui:TabViewItem Header="{Binding Title}"
-                                        Content="{Binding}"
-                                        ContentTemplate="{StaticResource ShellTabContentTemplate}"
-                                        IsClosable="True"
-                                        Background="Transparent"/>
-                    </DataTemplate>
-                </ui:TabView.TabItemTemplate>
-            </ui:TabView>
-        </Grid>
-
-        <!-- 底部状态栏 -->
-        <Border Grid.Row="1"
-                Padding="12,4"
-                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                BorderThickness="0,0,0,0"
-                x:CompileBindings="False">
-            <TextBlock Text="{Binding SelectedTab.StatusMessage, FallbackValue=''}"
+        <!-- 状态栏模板 -->
+        <DataTemplate x:Key="ShellStatusBarTemplate" x:DataType="vm:ShellTabViewModel">
+            <TextBlock Text="{Binding StatusMessage, FallbackValue=''}"
                        Theme="{StaticResource CaptionTextBlockStyle}"
                        Opacity="0.6"
                        VerticalAlignment="Center"/>
-        </Border>
-    </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <views:TabbedPageView TabContentTemplate="{StaticResource ShellTabContentTemplate}"
+                          StatusBarTemplate="{StaticResource ShellStatusBarTemplate}"
+                          ShowStatusBar="True">
+        <views:TabbedPageView.EmptyStateIcon>
+            <ui:SymbolIcon Symbol="Code" FontSize="64"/>
+        </views:TabbedPageView.EmptyStateIcon>
+    </views:TabbedPageView>
 </UserControl>

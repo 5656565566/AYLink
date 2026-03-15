@@ -39,7 +39,7 @@ public partial class FilePage : UserControl
         }
     }
 
-    // ---- 左侧面板右键菜单（通过 ListBox.ContextFlyout，使用 SelectedItem） ----
+    // ---- 左侧面板右键菜单 ----
 
     private void LeftCtxOpen_Click(object? sender, RoutedEventArgs e)
     {
@@ -188,18 +188,5 @@ public partial class FilePage : UserControl
             return column == 0 ? "Left" : "Right";
         }
         return null;
-    }
-
-    // ---- Tab 关闭 ----
-
-    private void TabView_TabCloseRequested(
-        FluentAvalonia.UI.Controls.TabView sender,
-        FluentAvalonia.UI.Controls.TabViewTabCloseRequestedEventArgs e)
-    {
-        if (e.Tab.DataContext is FileTabViewModel tab
-            && DataContext is FilePageViewModel vm)
-        {
-            vm.CloseTabCommand.Execute(tab);
-        }
     }
 }

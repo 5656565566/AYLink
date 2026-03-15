@@ -1,56 +1,41 @@
 using AYLink.Core.Models;
 using AYLink.Desktop.Services;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentAvalonia.UI.Controls;
-using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
 /// <summary>
 /// 文件管理页 ViewModel
 /// </summary>
-public partial class FilePageViewModel : PageViewModelBase
+public partial class FilePageViewModel : TabbedPageViewModelBase<FileTabViewModel>
 {
     public override string PageKey => "File";
     public override string Title => "文件管理";
-
-    [ObservableProperty]
-    private ObservableCollection<FileTabViewModel> _tabs = new();
-
-    [ObservableProperty]
-    private FileTabViewModel? _selectedTab;
+    public override string EmptyStateIcon => "Document";
+    public override string EmptyStateTitle => "无标签页";
+    public override string EmptyStateDescription => "点击 + 创建新标签页";
+    public override bool IsAddTabButtonVisible => true;
 
     public FilePageViewModel()
     {
         // 默认添加一个本地标签页
-        AddNewTab();
+        RegisterTab(new FileTabViewModel());
     }
 
-    [RelayCommand]
-    private void AddNewTab(DeviceModel? device = null)
-    {
-        var newTab = new FileTabViewModel(device);
-        newTab.OnCloseRequested += Tab_OnCloseRequested;
-        Tabs.Add(newTab);
-        SelectedTab = newTab;
-    }
+    protected override FileTabViewModel CreateTab(DeviceModel device) => new(device);
 
-    private void Tab_OnCloseRequested(FileTabViewModel tab)
+    /// <summary>
+    /// 拦截关闭：至少保留一个标签页
+    /// </summary>
+    protected override bool OnTabClosing(FileTabViewModel tab)
     {
-        tab.OnCloseRequested -= Tab_OnCloseRequested;
-        Tabs.Remove(tab);
-        
-        if (Tabs.Count == 0)
+        if (Tabs.Count <= 1)
         {
             DialogHelper.ShowToast("无法关闭", "至少要保留一个标签页", InfoBarSeverity.Informational);
-            AddNewTab();
+            return false; // 阻止关闭
         }
-        else if (SelectedTab == null)
-        {
-            SelectedTab = Tabs.LastOrDefault();
-        }
+        return true;
     }
 
     /// <summary>
@@ -91,9 +76,6 @@ public partial class FilePageViewModel : PageViewModelBase
 
     // 右键菜单命令
 
-    /// <summary>
-    /// 左侧面板 - 打开（右键菜单）
-    /// </summary>
     [RelayCommand]
     private void LeftCtxOpen(FileSystemModel? file)
     {
@@ -103,9 +85,6 @@ public partial class FilePageViewModel : PageViewModelBase
         }
     }
 
-    /// <summary>
-    /// 左侧面板 - 复制到右侧（右键菜单）
-    /// </summary>
     [RelayCommand]
     private void LeftCtxCopyToRight(FileSystemModel? file)
     {
@@ -115,9 +94,6 @@ public partial class FilePageViewModel : PageViewModelBase
         }
     }
 
-    /// <summary>
-    /// 左侧面板 - 删除（右键菜单）
-    /// </summary>
     [RelayCommand]
     private void LeftCtxDelete(FileSystemModel? file)
     {
@@ -127,9 +103,6 @@ public partial class FilePageViewModel : PageViewModelBase
         }
     }
 
-    /// <summary>
-    /// 右侧面板 - 打开（右键菜单）
-    /// </summary>
     [RelayCommand]
     private void RightCtxOpen(FileSystemModel? file)
     {
@@ -139,9 +112,6 @@ public partial class FilePageViewModel : PageViewModelBase
         }
     }
 
-    /// <summary>
-    /// 右侧面板 - 复制到左侧（右键菜单）
-    /// </summary>
     [RelayCommand]
     private void RightCtxCopyToLeft(FileSystemModel? file)
     {
@@ -151,34 +121,12 @@ public partial class FilePageViewModel : PageViewModelBase
         }
     }
 
-    /// <summary>
-    /// 右侧面板 - 删除（右键菜单）
-    /// </summary>
     [RelayCommand]
     private void RightCtxDelete(FileSystemModel? file)
     {
         if (file != null && SelectedTab != null)
         {
             SelectedTab.RightPane.DeleteFileCommand.Execute(file);
-        }
-    }
-
-    public override void OnNavigatedTo(object? parameter = null)
-    {
-        base.OnNavigatedTo(parameter);
-        
-        if (parameter is DeviceModel device)
-        {
-            // 检查是否已经有该设备的标签页
-            var existingTab = Tabs.FirstOrDefault(t => t.Device?.Serial == device.Serial);
-            if (existingTab != null)
-            {
-                SelectedTab = existingTab;
-            }
-            else
-            {
-                AddNewTab(device);
-            }
         }
     }
 }

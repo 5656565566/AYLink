@@ -8,12 +8,12 @@ namespace AYLink.Desktop.Views.Dialogs;
 public partial class InputDialog : UserControl
 {
     private readonly List<InputFieldModel> _fields;
-    private readonly Dictionary<string, TextBox> _textBoxes = new();
+    private readonly Dictionary<string, TextBox> _textBoxes = [];
 
     public InputDialog()
     {
         InitializeComponent();
-        _fields = new List<InputFieldModel>();
+        _fields = [];
     }
 
     public InputDialog(string description, List<InputFieldModel> fields)
@@ -38,9 +38,9 @@ public partial class InputDialog : UserControl
 
             if (!string.IsNullOrEmpty(field.Label))
             {
-                // 如果有 Label，可以添加一个 TextBlock 或者使用 FloatingWatermark
-                // 这里我们使用 FloatingWatermark，所以不需要额外的 TextBlock
-                // 但为了更清晰，我们可以设置 InnerLeftContent 或者直接依赖 Watermark
+                // 如果有 Label 可以添加一个 TextBlock 或者使用 FloatingWatermark
+                // 使用 FloatingWatermark 所以不需要额外的 TextBlock
+                // 但为了更清晰 可以设置 InnerLeftContent 或者直接依赖 Watermark
             }
 
             _textBoxes[field.Key] = textBox;

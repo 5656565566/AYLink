@@ -1,0 +1,106 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:AYLink.Controls">
+  <Design.PreviewWith>
+    <Border Padding="0" Width="500" Height="300">
+      <controls:BrowserTabView>
+        <controls:BrowserTabItem Header="标签页 1">
+          <TextBlock Text="内容 1" Margin="20" />
+        </controls:BrowserTabItem>
+        <controls:BrowserTabItem Header="标签页 2" IsSelected="True">
+          <TextBlock Text="内容 2" Margin="20" />
+        </controls:BrowserTabItem>
+        <controls:BrowserTabItem Header="标签页 3">
+          <TextBlock Text="内容 3" Margin="20" />
+        </controls:BrowserTabItem>
+      </controls:BrowserTabView>
+    </Border>
+  </Design.PreviewWith>
+
+  <!-- BrowserTabView 主样式 -->
+  <Style Selector="controls|BrowserTabView">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}">
+          <Grid RowDefinitions="Auto,*">
+            
+            <!-- 标签栏区域 -->
+            <Border Grid.Row="0" 
+                    Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
+                    Padding="0">
+              <Grid ColumnDefinitions="*,Auto">
+                
+                <!-- 标签页滚动区域 -->
+                <ScrollViewer Grid.Column="0"
+                              HorizontalScrollBarVisibility="Hidden"
+                              VerticalScrollBarVisibility="Disabled"
+                              AllowAutoHide="False">
+                  <ItemsPresenter Name="PART_ItemsPresenter"
+                                  ItemsPanel="{TemplateBinding ItemsPanel}" />
+                </ScrollViewer>
+
+                <!-- 添加按钮 -->
+                <Button Name="PART_AddButton"
+                        Grid.Column="1"
+                        Margin="2,0,6,0"
+                        Width="28"
+                        Height="28"
+                        Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        CornerRadius="6"
+                        IsVisible="{TemplateBinding IsAddButtonVisible}"
+                        VerticalAlignment="Center"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center">
+                  <PathIcon Data="M8 0a1 1 0 011 1v6h6a1 1 0 110 2H9v6a1 1 0 11-2 0V9H1a1 1 0 010-2h6V1a1 1 0 011-1z"
+                            Width="10" Height="10" />
+                </Button>
+              </Grid>
+            </Border>
+
+            <!-- 内容区域 -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                    BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                    BorderThickness="0,1,0,0">
+              <ContentPresenter Name="PART_SelectedContentHost"
+                                Margin="{TemplateBinding Padding}"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                Content="{TemplateBinding SelectedContent}"
+                                ContentTemplate="{TemplateBinding SelectedContentTemplate}" />
+            </Border>
+          </Grid>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    
+    <!-- 使用自定义的 AnimatedTabPanel 替代 StackPanel -->
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <controls:AnimatedTabPanel Spacing="1" Margin="6,6,0,0" />
+      </ItemsPanelTemplate>
+    </Setter>
+  </Style>
+
+  <!-- 添加按钮悬浮效果 -->
+  <Style Selector="controls|BrowserTabView /template/ Button#PART_AddButton">
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.1" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="controls|BrowserTabView /template/ Button#PART_AddButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+  </Style>
+  <Style Selector="controls|BrowserTabView /template/ Button#PART_AddButton:pressed">
+    <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
+  </Style>
+
+</Styles>

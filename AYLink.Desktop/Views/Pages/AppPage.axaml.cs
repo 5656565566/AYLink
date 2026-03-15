@@ -89,15 +89,4 @@ public partial class AppPage : UserControl
             vm.UninstallAppCommand.Execute(app);
         }
     }
-
-    /// <summary>
-    /// 标签页关闭请求
-    /// </summary>
-    private void TabView_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
-    {
-        if (args.Item is AppTabViewModel tab)
-        {
-            tab.CloseTabCommand.Execute(null);
-        }
-    }
 }

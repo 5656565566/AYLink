@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 using AYLink.Desktop.ViewModels.Pages;
+using System;
+using System.Diagnostics;
 
 namespace AYLink.Desktop.Behaviors;
 
@@ -13,7 +15,7 @@ namespace AYLink.Desktop.Behaviors;
 public static class VideoImageBehavior
 {
     /// <summary>
-    /// 附加属性：设为 True 即启用自注册行为
+    /// 附加属性 - 设为 True 即启用自注册行为
     /// </summary>
     public static readonly AttachedProperty<bool> IsAutoAttachProperty =
         AvaloniaProperty.RegisterAttached<Image, bool>(
@@ -39,7 +41,7 @@ public static class VideoImageBehavior
             image.AttachedToVisualTree += OnAttachedToVisualTree;
             image.DetachedFromVisualTree += OnDetachedFromVisualTree;
 
-            // 如果设置属性时控件已经在可视树上（例如模板重用），立即尝试 Attach
+            // 如果设置属性时控件已经在可视树上（例如模板重用）立即尝试 Attach
             if (image.GetVisualRoot() != null)
             {
                 TryAttach(image);
@@ -69,6 +71,7 @@ public static class VideoImageBehavior
             TryDetach(image);
         }
     }
+
 
     private static void TryAttach(Image image)
     {

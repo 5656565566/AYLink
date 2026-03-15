@@ -16,17 +16,8 @@ namespace AYLink.Desktop.ViewModels.Pages;
 /// <summary>
 /// 终端标签页 ViewModel - 每个设备对应一个标签页 管理 ADB shell 会话
 /// </summary>
-public partial class ShellTabViewModel : ViewModelBase, IDisposable
+public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
 {
-    [ObservableProperty]
-    private string _title = "终端";
-
-    [ObservableProperty]
-    private DeviceModel? _device;
-
-    [ObservableProperty]
-    private string _statusMessage = "未连接";
-
     [ObservableProperty]
     private bool _isConnected;
 
@@ -40,12 +31,11 @@ public partial class ShellTabViewModel : ViewModelBase, IDisposable
     /// </summary>
     private TerminalControl? _terminalControl;
 
-    public event Action<ShellTabViewModel>? OnCloseRequested;
-
     public ShellTabViewModel(DeviceModel device)
     {
-        _device = device;
+        Device = device;
         Title = device.Name;
+        StatusMessage = "未连接";
     }
 
     /// <summary>
@@ -85,13 +75,12 @@ public partial class ShellTabViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
-    /// 关闭标签页
+    /// 关闭标签页 - 先清理资源再触发关闭事件
     /// </summary>
-    [RelayCommand]
-    private void CloseTab()
+    protected override void CloseTab()
     {
         CloseShellSession();
-        OnCloseRequested?.Invoke(this);
+        base.CloseTab();
     }
 
     /// <summary>

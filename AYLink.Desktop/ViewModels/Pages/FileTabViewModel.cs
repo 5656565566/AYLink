@@ -9,20 +9,14 @@ using System.Linq;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
-public partial class FileTabViewModel : ViewModelBase
+public partial class FileTabViewModel : TabItemViewModelBase
 {
-    [ObservableProperty]
-    private string _title = "文件管理";
-
-    [ObservableProperty]
-    private DeviceModel? _device;
-
     public FilePaneViewModel LeftPane { get; } = new();
     public FilePaneViewModel RightPane { get; } = new();
 
     public FileTabViewModel(DeviceModel? device = null)
     {
-        _device = device;
+        Device = device;
         
         if (device != null)
         {
@@ -32,19 +26,11 @@ public partial class FileTabViewModel : ViewModelBase
         }
         else
         {
+            Title = "文件管理";
             LeftPane.SelectLocalHome();
             RightPane.SelectLocalHome();
         }
     }
-
-    [RelayCommand]
-    private void CloseTab()
-    {
-        // 触发关闭事件，由 FilePageViewModel 处理
-        OnCloseRequested?.Invoke(this);
-    }
-
-    public event System.Action<FileTabViewModel>? OnCloseRequested;
 
     /// <summary>
     /// 传输到右侧
