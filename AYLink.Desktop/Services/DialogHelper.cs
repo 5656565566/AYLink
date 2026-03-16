@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Threading;
+using AYLink.Desktop.Services.Localization;
 using FluentAvalonia.UI.Controls;
 
 namespace AYLink.Desktop.Services;
@@ -9,15 +11,18 @@ namespace AYLink.Desktop.Services;
 public static class DialogHelper
 {
     /// <summary>
-    /// 显示一个阻塞的消息对话框，等待用户确认
+    /// 显示一个阻塞的消息对话框 等待用户确认
     /// </summary>
     public static async Task<ContentDialogResult> ShowMessageAsync(
         string title,
         string message,
-        string primaryButtonText = "确定",
+        string? primaryButtonText = null,
         string? secondaryButtonText = null,
         string? closeButtonText = null)
     {
+        var localizer = LocalizationManager.Instance;
+        primaryButtonText ??= localizer.GetString("Dialog.OK", "确定");
+
         var dialog = new ContentDialog
         {
             Title = title,
@@ -51,10 +56,14 @@ public static class DialogHelper
     private static ToastModel? _currentProgressToast;
 
     /// <summary>
-    /// 显示一个进度提示。
-    /// 如果 isBlocking 为 true，则显示一个模态对话框阻止用户操作。
-    /// 如果 isBlocking 为 false，则在右下角显示一个带进度条的 Toast。
+    /// 显示一个进度提示
+    /// 如果 isBlocking 为 true 则显示一个模态对话框阻止用户操作
+    /// 如果 isBlocking 为 false 则在右下角显示一个带进度条的 Toast
     /// </summary>
+    /// <param name="title">标题</param>
+    /// <param name="message">提示消息</param>
+    /// <param name="isBlocking">是否阻塞</param>
+    /// <param name="isIndeterminate">进度条样式</param>
     public static void ShowProgress(string title, string message, bool isBlocking = true, bool isIndeterminate = true)
     {
         Dispatcher.UIThread.Post(async () =>
@@ -81,7 +90,7 @@ public static class DialogHelper
                     Content = panel,
                     IsPrimaryButtonEnabled = false,
                     IsSecondaryButtonEnabled = false,
-                    CloseButtonText = string.Empty // 隐藏关闭按钮，强制等待
+                    CloseButtonText = string.Empty // 隐藏关闭按钮 强制等待
                 };
 
                 await _currentProgressDialog.ShowAsync();
@@ -105,6 +114,8 @@ public static class DialogHelper
     /// <summary>
     /// 更新进度条的值 (0-100) 和消息
     /// </summary>
+    /// <param name="value">更新的数值</param>
+    /// <param name="newMessage">更新的提示消息</param>
     public static void UpdateProgress(double value, string? newMessage = null)
     {
         Dispatcher.UIThread.Post(() =>
@@ -137,14 +148,24 @@ public static class DialogHelper
     /// <summary>
     /// 显示一个包含多个输入框的对话框
     /// </summary>
-    public static async Task<(ContentDialogResult Result, System.Collections.Generic.Dictionary<string, string> Data)> ShowInputDialogAsync(
+    /// <param name="title">标题</param>
+    /// <param name="description">描述</param>
+    /// <param name="fields"></param>
+    /// <param name="primaryButtonText">确定按钮</param>
+    /// <param name="secondaryButtonText">取消按钮</param>
+    /// <returns></returns>
+    public static async Task<(ContentDialogResult Result, Dictionary<string, string> Data)> ShowInputDialogAsync(
         string title,
         string description,
-        System.Collections.Generic.List<AYLink.Desktop.Models.InputFieldModel> fields,
-        string primaryButtonText = "确定",
-        string secondaryButtonText = "取消")
+        List<Models.InputFieldModel> fields,
+        string? primaryButtonText = null,
+        string? secondaryButtonText = null)
     {
-        var inputDialog = new AYLink.Desktop.Views.Dialogs.InputDialog(description, fields);
+        var localizer = LocalizationManager.Instance;
+        primaryButtonText ??= localizer.GetString("Dialog.OK", "确定");
+        secondaryButtonText ??= localizer.GetString("Dialog.Cancel", "取消");
+
+        var inputDialog = new Views.Dialogs.InputDialog(description, fields);
 
         var dialog = new ContentDialog
         {

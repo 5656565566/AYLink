@@ -1,28 +1,31 @@
+using Avalonia.Media;
+using AYLink.Core.Scrcpy;
 using AYLink.Desktop.Models;
 using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Audio;
 using AYLink.Desktop.Themes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
-using Avalonia.Media;
-using System.Linq;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
 public partial class SettingsPageViewModel : PageViewModelBase
 {
     public override string PageKey => "Settings";
-    public override string Title => "设置";
+    public override string Title => Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.Title", "设置");
 
     private readonly ConfigManager _configManager = ConfigManager.Instance;
-    private AppConfig _appConfig;
+    private readonly AppConfig _appConfig;
+    private readonly AudioPlayer _audioPlayer = AudioPlayer.Instance;
 
     private readonly Dictionary<ThemeMode, string> _themeMap = new()
     {
-        { ThemeMode.Light, "亮色" },
-        { ThemeMode.Dark, "暗色" },
-        { ThemeMode.Default, "跟随系统" }
+        { ThemeMode.Light, Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeLight", "亮色") },
+        { ThemeMode.Dark, Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeDark", "暗色") },
+        { ThemeMode.Default, Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeSystem", "跟随系统") }
     };
 
     public SettingsPageViewModel()
@@ -56,16 +59,25 @@ public partial class SettingsPageViewModel : PageViewModelBase
 
         // 初始化一些默认选项
         Languages.Add(_appConfig.Language);
-        if (_appConfig.AudioOutputDevice != null)
+        
+        var devicesTuple = AudioPlayer.GetPlaybackDevices();
+        AudioOutputDevices.Add(Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认"));
+        foreach (var device in devicesTuple)
         {
-            AudioOutputDevices.Add(_appConfig.AudioOutputDevice);
+            if (device.Name != null)
+            {
+                AudioOutputDevices.Add(device.Name);
+            }
         }
-        AudioOutputDevices.Add("系统默认");
     }
 
     public ObservableCollection<string> Languages { get; } = [];
     public ObservableCollection<string> AudioOutputDevices { get; } = [];
-    public ObservableCollection<string> ThemeModes { get; } = ["亮色", "暗色", "跟随系统"];
+    public ObservableCollection<string> ThemeModes { get; } = [
+        Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeLight", "亮色"),
+        Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeDark", "暗色"),
+        Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeSystem", "跟随系统")
+    ];
 
     [ObservableProperty]
     private bool _isAutoStartEnabled;
@@ -77,13 +89,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
     {
         _appConfig.GlobalVolume = (int)value;
         _configManager.SaveConfig("appConfig", _appConfig);
-        // 留出位置给业务层代码：设置全局音量
-        OnVolumeChangedBusinessLogic((float)(value / 100.0));
-    }
-
-    private void OnVolumeChangedBusinessLogic(float volume)
-    {
-        // TODO: 业务层代码，例如 _audioPlayer.SetGlobalVolume(volume);
+        _audioPlayer.SetGlobalVolume((float)value);
     }
 
     [ObservableProperty]
@@ -91,15 +97,17 @@ public partial class SettingsPageViewModel : PageViewModelBase
 
     partial void OnSelectedAudioOutputDeviceChanged(string? value)
     {
-        _appConfig.AudioOutputDevice = value;
+        if (value == Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认"))
+        {
+            _appConfig.AudioOutputDevice = null;
+            _audioPlayer.ConfigureAudioDevice(null);
+        }
+        else
+        {
+            _appConfig.AudioOutputDevice = value;
+            _audioPlayer.ConfigureAudioDevice(value);
+        }
         _configManager.SaveConfig("appConfig", _appConfig);
-        // 留出位置给业务层代码：配置音频设备
-        OnAudioDeviceChangedBusinessLogic(value);
-    }
-
-    private void OnAudioDeviceChangedBusinessLogic(string? deviceName)
-    {
-        // TODO: 业务层代码，例如 _audioPlayer.ConfigureAudioDevice(deviceName);
     }
 
     [ObservableProperty]
@@ -109,11 +117,11 @@ public partial class SettingsPageViewModel : PageViewModelBase
     {
         _appConfig.Language = value;
         _configManager.SaveConfig("appConfig", _appConfig);
-        // 留出位置给业务层代码：更改语言
+        // TODO 更改语言
     }
 
     [ObservableProperty]
-    private string _selectedThemeMode = "跟随系统";
+    private string _selectedThemeMode = Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeSystem", "跟随系统");
 
     partial void OnSelectedThemeModeChanged(string value)
     {
@@ -144,12 +152,11 @@ public partial class SettingsPageViewModel : PageViewModelBase
         _appConfig.EnableAcrylic = value;
         if (!value)
         {
-            // 如果关闭亚克力，强制关闭背景图
+            // 如果关闭亚克力 强制关闭背景图
             EnableBackgroundImage = false;
         }
         _configManager.SaveConfig("appConfig", _appConfig);
         
-        // 留出位置给业务层代码：切换亚克力状态
         OnAcrylicStateChangedBusinessLogic(value);
     }
 
@@ -187,7 +194,6 @@ public partial class SettingsPageViewModel : PageViewModelBase
         _appConfig.BackgroundImageMode = value ? "Random" : "Specific";
         _configManager.SaveConfig("appConfig", _appConfig);
 
-        // 留出位置给业务层代码：更新背景图模式
         UpdateMainWindowState();
     }
 
@@ -199,7 +205,6 @@ public partial class SettingsPageViewModel : PageViewModelBase
         _appConfig.SpecificBackgroundImagePath = value;
         _configManager.SaveConfig("appConfig", _appConfig);
 
-        // 留出位置给业务层代码：应用指定的背景图
         UpdateMainWindowState();
     }
 
@@ -221,6 +226,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
     {
         _appConfig.ScrcpyVersion = value;
         _configManager.SaveConfig("appConfig", _appConfig);
+        ScrcpyService.Instance.Initialize(null, _appConfig.ScrcpyVersion);
     }
 
     [ObservableProperty]
@@ -230,6 +236,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
     {
         _appConfig.ScrcpyServer = value;
         _configManager.SaveConfig("appConfig", _appConfig);
+        ScrcpyService.Instance.Initialize(_appConfig.ScrcpyServer);
     }
 
     [ObservableProperty]
@@ -259,12 +266,12 @@ public partial class SettingsPageViewModel : PageViewModelBase
     [RelayCommand]
     private void CheckForUpdates()
     {
-        // TODO: Check for updates
+        // TODO: 检查更新
     }
 
     [RelayCommand]
     private void ResetToDefaults()
     {
-        // TODO: Reset to defaults
+        // TODO: 恢复默认
     }
 }

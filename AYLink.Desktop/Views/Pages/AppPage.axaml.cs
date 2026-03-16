@@ -44,9 +44,13 @@ public partial class AppPage : UserControl
             tabVm = control.DataContext as AppTabViewModel;
         }
 
+        var localizer = Services.Localization.LocalizationManager.Instance;
         if (tabVm?.Device == null)
         {
-            Services.DialogHelper.ShowToast("提示", "请先选择设备", InfoBarSeverity.Warning);
+            Services.DialogHelper.ShowToast(
+                localizer.GetString("Dialog.Tip", "提示"),
+                localizer.GetString("AppPage.SelectDeviceFirst", "请先选择设备"),
+                InfoBarSeverity.Warning);
             return;
         }
 
@@ -55,12 +59,12 @@ public partial class AppPage : UserControl
 
         var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "选择要安装的 APK 文件",
+            Title = localizer.GetString("AppPage.SelectApkTitle", "选择要安装的 APK 文件"),
             AllowMultiple = true,
             FileTypeFilter =
             [
-                new FilePickerFileType("APK 文件 (*.apk)") { Patterns = ["*.apk"] },
-                new FilePickerFileType("所有文件 (*.*)") { Patterns = ["*"] },
+                new FilePickerFileType(localizer.GetString("AppPage.ApkFiles", "APK 文件 (*.apk)")) { Patterns = ["*.apk"] },
+                new FilePickerFileType(localizer.GetString("AppPage.AllFiles", "所有文件 (*.*)")) { Patterns = ["*"] },
             ]
         });
 
@@ -74,7 +78,7 @@ public partial class AppPage : UserControl
 
             if (filePaths.Count > 0)
             {
-                await tabVm.InstallApkCommand.ExecuteAsync(filePaths as IReadOnlyList<string>);
+                await tabVm.InstallApkCommand.ExecuteAsync(filePaths);
             }
         }
     }
@@ -87,6 +91,43 @@ public partial class AppPage : UserControl
         if (DataContext is AppPageViewModel vm && vm.SelectedTab?.SelectedApp is AppInfo app)
         {
             vm.UninstallAppCommand.Execute(app);
+        }
+    }
+
+    private void CtxLaunch_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is AppPageViewModel vm && vm.SelectedTab?.SelectedApp is AppInfo app)
+        {
+            vm.LaunchAppCommand.Execute(app);
+        }
+    }
+
+    private void CtxNewLaunch_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is AppPageViewModel vm && vm.SelectedTab?.SelectedApp is AppInfo app)
+        {
+            vm.LaunchAppNewDisplayCommand.Execute(app);
+        }
+    }
+
+    private void CtxDownload_Click(object? sender, RoutedEventArgs e)
+    {
+        // TODO: 实现下载 APK 到本地
+    }
+
+    private void CtxCopyPackage_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is AppPageViewModel vm && vm.SelectedTab?.SelectedApp is AppInfo app)
+        {
+            vm.CopyPackageNameCommand.Execute(app);
+        }
+    }
+
+    private void CtxAppInfo_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is AppPageViewModel vm && vm.SelectedTab?.SelectedApp is AppInfo app)
+        {
+            vm.OpenAppInfoCommand.Execute(app);
         }
     }
 }

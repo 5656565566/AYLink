@@ -8,14 +8,31 @@ using System.Text.RegularExpressions;
 
 namespace AYLink.Core.Scrcpy;
 
-public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
+public class ScrcpyService
 {
-    private readonly DeviceModel _deviceModel = deviceModel;
-    private readonly string _scrcpyServerPath = scrcpyServerPath;
+    private static readonly Lazy<ScrcpyService> _instance = new(() => new ScrcpyService());
+    public static ScrcpyService Instance => _instance.Value;
 
-    public async void PushScrcpyServer()
+    private ScrcpyTool? _tool;
+
+    // 初始化全局配置
+    public void Initialize(string? serverPath = "Scrcpy/scrcpy-server", string? version = "3.3.4")
     {
-        DeviceData device = _deviceModel.DeviceData;
+        _tool = new ScrcpyTool(serverPath!, version!);
+    }
+
+    // 获取工具实例
+    public ScrcpyTool Tool => _tool ?? throw new Exception("ScrcpyService not initialized");
+}
+
+public class ScrcpyTool(string scrcpyServerPath, string clientVersion)
+{
+    private readonly string _scrcpyServerPath = scrcpyServerPath;
+    private readonly string _clientVersion = clientVersion;
+
+    public async void PushScrcpyServer(DeviceModel deviceModel)
+    {
+        DeviceData device = deviceModel.DeviceData;
         
         if (!File.Exists(_scrcpyServerPath))
         {
@@ -50,14 +67,14 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
     {
         ServerOptions serverOptions = new()
         {
-            ClientVersion = "3.3.4",
+            ClientVersion = _clientVersion,
         };
         return serverOptions;
     }
 
-    public List<string> GetEncoders()
+    public List<string> GetEncoders(DeviceModel deviceModel)
     {
-        if (_deviceModel?.DeviceData is not { } device)
+        if (deviceModel?.DeviceData is not { } device)
         {
             return [];
         }
@@ -65,13 +82,13 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
         var encoderList = new List<string>();
         var receiver = new ConsoleOutputReceiver();
 
-        var adbClient = _deviceModel.AdbClient!;
+        var adbClient = deviceModel.AdbClient!;
         ServerOptions serverOptions = GetServerOptions();
         serverOptions.ListEncoders = true;
 
         try
         {
-            PushScrcpyServer();
+            PushScrcpyServer(deviceModel);
 
             adbClient.ExecuteRemoteCommand(serverOptions.ToString(), device, receiver);
             string output = receiver.ToString();
@@ -96,19 +113,19 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
         return [.. encoderList.Distinct()];
     }
 
-    public List<AppInfo> GetAppInfos()
+    public List<AppInfo> GetAppInfos(DeviceModel deviceModel)
     {
-        DeviceData device = _deviceModel.DeviceData;
+        DeviceData device = deviceModel.DeviceData;
         List<AppInfo> appList = [];
         var receiver = new ConsoleOutputReceiver();
 
-        AdbClient adbClient = _deviceModel.AdbClient!;
+        AdbClient adbClient = deviceModel.AdbClient!;
         ServerOptions serverOptions = GetServerOptions();
         serverOptions.ListApps = true;
 
         try
         {
-            PushScrcpyServer();
+            PushScrcpyServer(deviceModel);
             adbClient.ExecuteRemoteCommand(serverOptions.ToString(), device, receiver);
             string output = receiver.ToString();
 
@@ -139,20 +156,20 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
         return appList;
     }
 
-    public Dictionary<int, (int width, int height)> GetResolutions()
+    public Dictionary<int, (int width, int height)> GetResolutions(DeviceModel deviceModel)
     {
-        DeviceData device = _deviceModel.DeviceData;
+        DeviceData device = deviceModel.DeviceData;
 
         var resolutions = new Dictionary<int, (int, int)>();
         var receiver = new ConsoleOutputReceiver();
 
-        AdbClient adbClient = _deviceModel.AdbClient!;
+        AdbClient adbClient = deviceModel.AdbClient!;
         ServerOptions serverOptions = GetServerOptions();
         serverOptions.ListDisplays = true;
 
         try
         {
-            PushScrcpyServer();
+            PushScrcpyServer(deviceModel);
             adbClient.ExecuteRemoteCommand(serverOptions.ToString(), device, receiver);
             var output = receiver.ToString();
             Trace.WriteLine(output);
@@ -210,19 +227,19 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
         }
     }
 
-    public async Task<int[]> DeployServerAsync(bool isAudioAvailable)
+    public async Task<int[]> DeployServerAsync(DeviceModel deviceModel, bool isAudioAvailable)
     {
-        DeviceData device = _deviceModel.DeviceData;
+        DeviceData device = deviceModel.DeviceData;
 
-        PushScrcpyServer();
+        PushScrcpyServer(deviceModel);
 
         int[] ports = [0, 0, 0];
         int port;
 
-        _deviceModel.ServerOptions!.Scid = new Random().Next(10000000, 30000000);
+        deviceModel.ServerOptions!.Scid = new Random().Next(10000000, 30000000);
 
-        ServerOptions serverOptions = _deviceModel.ServerOptions;
-        AdbClient adbClient = _deviceModel.AdbClient!;
+        ServerOptions serverOptions = deviceModel.ServerOptions;
+        AdbClient adbClient = deviceModel.AdbClient!;
 
         try
         {
@@ -242,7 +259,7 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
                 Debug.WriteLine($"视频端口转发成功: tcp:{port} -> localabstract:scrcpy_{serverOptions.Scid}");
             }
 
-            if (_deviceModel.AudioStream != null)
+            if (deviceModel.AudioStream != null)
             {
                 serverOptions.Audio = false; // 音频流只能有一个
             }
@@ -301,7 +318,7 @@ public class ScrcpyTool(DeviceModel deviceModel, string scrcpyServerPath)
             catch { }
         })
         {
-            IsBackground = true // 后台线程，不阻止进程退出
+            IsBackground = true // 后台线程 不阻止进程退出
         };
 
         scrcpyServer.Start();

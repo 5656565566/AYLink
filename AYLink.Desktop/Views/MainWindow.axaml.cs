@@ -21,7 +21,7 @@ public partial class MainWindow : Window
     private bool _isSyncingSelection;
 
     /// <summary>
-    /// 顶部拖拽区域的高度（像素）
+    /// 顶部拖拽区域的高度
     /// </summary>
     private const double TitleBarHeight = 40;
 
@@ -100,7 +100,7 @@ public partial class MainWindow : Window
     {
         _navigationService.Navigated -= OnNavigationServiceNavigated;
 
-        // 清理所有投屏标签页，释放 Scrcpy 进程和音频流，防止进程泄露
+        // 清理所有投屏标签页 释放 Scrcpy 进程和音频流 防止进程泄露
         if (DataContext is MainWindowViewModel vm)
         {
             vm.DisposeAllPages();
@@ -130,15 +130,15 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 判断一个 Visual 或其祖先是否是交互控件（按钮、输入框、滑块等），
-    /// 这些控件不应被拖拽行为覆盖。
-    /// SettingsExpander 内部虽然包含 ToggleButton 等子控件，但整体视为非交互控件，
-    /// 允许拖拽穿透。
+    /// 判断一个 Visual 或其祖先是否是交互控件（按钮、输入框、滑块等）
+    /// 这些控件不应被拖拽行为覆盖
+    /// SettingsExpander 内部虽然包含 ToggleButton 等子控件 但整体视为非交互控件
+    /// 允许拖拽穿透
     /// </summary>
     private static bool IsInteractiveControl(Visual visual)
     {
-        // 先检查 SettingsExpander：如果点击目标位于 SettingsExpander 内部，
-        // 则视为非交互控件，允许拖拽穿透
+        // 先检查 SettingsExpander：如果点击目标位于 SettingsExpander 内部
+        // 则视为非交互控件 允许拖拽穿透
         var check = visual;
         while (check != null)
         {

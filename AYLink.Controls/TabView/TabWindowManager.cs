@@ -4,8 +4,8 @@ using Avalonia.Controls;
 namespace AYLink.Controls;
 
 /// <summary>
-/// 全局标签页窗口管理器，负责跟踪所有包含 BrowserTabView 的窗口实例，
-/// 支持跨窗口的拖拽合并（Merge）操作。
+/// 全局标签页窗口管理器，负责跟踪所有包含 BrowserTabView 的窗口实例
+/// 支持跨窗口的拖拽合并（Merge）操作
 /// </summary>
 public sealed class TabWindowManager
 {

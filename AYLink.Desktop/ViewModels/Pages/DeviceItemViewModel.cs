@@ -1,10 +1,14 @@
+using AYLink.Core.Models;
+using AYLink.Core.Scrcpy;
+using AYLink.Desktop.Models;
+using AYLink.Desktop.Services;
+using AYLink.Desktop.ViewModels.Pages;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using AYLink.Core.Models;
-using AYLink.Desktop.Services;
+using FluentAvalonia.UI.Controls;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using AYLink.Core.Scrcpy;
-using AYLink.Desktop.ViewModels.Pages;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
@@ -24,7 +28,6 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
     [ObservableProperty]
     private DeviceModel _device = device;
 
-    // 便捷属性（直接绑定用）
     public string Name => Device.Name;
     public string Serial => Device.Serial;
     public string ConnectionType => Device.ConnectionType;
@@ -32,7 +35,6 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
 
     private readonly System.Func<Task>? _refreshAction = refreshAction;
 
-    // 设备操作命令
 
     /// <summary>
     /// 删除设备
@@ -40,11 +42,18 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
     [RelayCommand]
     private async Task DeleteDevice()
     {
-        var result = await DialogHelper.ShowMessageAsync("确认断开", $"确定要断开设备 {Name} ({Serial}) 吗？", "断开", "取消");
+        var localizer = Services.Localization.LocalizationManager.Instance;
+        var result = await DialogHelper.ShowMessageAsync(
+            localizer.GetString("DeviceItem.ConfirmDisconnectTitle", "确认断开"),
+            string.Format(localizer.GetString("DeviceItem.ConfirmDisconnectMessage", "确定要断开设备 {0} ({1}) 吗？"), Name, Serial),
+            localizer.GetString("DeviceItem.DisconnectButton", "断开"),
+            localizer.GetString("Dialog.Cancel", "取消"));
         if (result == FluentAvalonia.UI.Controls.ContentDialogResult.Primary)
         {
             Core.ADB.AdbManager.Instance.DisconnectDevice(Serial);
-            DialogHelper.ShowToast("已断开", $"设备 {Name} 已断开连接");
+            DialogHelper.ShowToast(
+                localizer.GetString("DeviceItem.DisconnectedTitle", "已断开"),
+                string.Format(localizer.GetString("DeviceItem.DisconnectedMessage", "设备 {0} 已断开连接"), Name));
             if (_refreshAction != null)
             {
                 await _refreshAction();
@@ -56,7 +65,11 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
     {
         if (!Core.ADB.AdbManager.Instance.IsDeviceTrulyOnline(Device.Serial))
         {
-            DialogHelper.ShowToast("设备离线", "无法连接到设备，请检查连接状态", FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+            var localizer = Services.Localization.LocalizationManager.Instance;
+            DialogHelper.ShowToast(
+                localizer.GetString("DeviceItem.DeviceOfflineTitle", "设备离线"),
+                localizer.GetString("DeviceItem.DeviceOfflineMessage", "无法连接到设备，请检查连接状态"),
+                FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
             return false;
         }
         return true;
@@ -72,7 +85,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
 
         if (Device.ServerOptions == null)
         {
-            Device.ServerOptions = new Core.Scrcpy.ServerOptions();
+            Device.ServerOptions = new ServerOptions();
         }
 
         Navigation.NavigateTo("Screen", Device);
@@ -126,20 +139,29 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
     {
         if (!CheckDeviceOnline()) return;
 
-        DialogHelper.ShowProgress("获取中", "正在获取设备编码器列表...", isBlocking: true);
-        
-        var tool = new ScrcpyTool(Device, "Scrcpy/scrcpy-server");
-        var encoders = await Task.Run(() => tool.GetEncoders());
+        var localizer = Services.Localization.LocalizationManager.Instance;
+        DialogHelper.ShowProgress(
+            localizer.GetString("DeviceItem.FetchingEncodersTitle", "获取中"),
+            localizer.GetString("DeviceItem.FetchingEncodersMessage", "正在获取设备编码器列表..."),
+            isBlocking: true);
+
+        ScrcpyTool tool = ScrcpyService.Instance.Tool;
+        var encoders = await Task.Run(() => tool.GetEncoders(Device));
         
         DialogHelper.CloseProgress();
 
         if (encoders.Count > 0)
         {
-            await DialogHelper.ShowMessageAsync("编码器列表", string.Join("\n", encoders));
+            await DialogHelper.ShowMessageAsync(
+                localizer.GetString("DeviceItem.EncoderListTitle", "编码器列表"),
+                string.Join("\n", encoders));
         }
         else
         {
-            DialogHelper.ShowToast("提示", "未找到可用的编码器", FluentAvalonia.UI.Controls.InfoBarSeverity.Warning);
+            DialogHelper.ShowToast(
+                localizer.GetString("Dialog.Tip", "提示"),
+                localizer.GetString("DeviceItem.NoEncodersFound", "未找到可用的编码器"),
+                InfoBarSeverity.Warning);
         }
     }
 
@@ -147,7 +169,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
     /// 新建显示 - 创建虚拟显示器投屏
     /// </summary>
     [RelayCommand]
-    private void NewDisplay()
+    private async Task NewDisplay()
     {
         if (!CheckDeviceOnline()) return;
 
@@ -155,11 +177,48 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
         {
             Device.ServerOptions = new ServerOptions();
         }
-        
-        // -1 代表新建显示器
-        Device.ServerOptions.DisplayId = -1;
-        Device.ServerOptions.NewDisplay = "1920x1080/420";
 
-        Navigation.NavigateTo("Screen", Device);
+        var localizer = Services.Localization.LocalizationManager.Instance;
+
+        // 定义输入框字段
+        var fields = new List<InputFieldModel>
+        {
+            new() {
+                Key = "resolution",
+                Label = localizer.GetString("DeviceItem.ResolutionLabel", "分辨率和DPI"),
+                Watermark = localizer.GetString("DeviceItem.ResolutionWatermark", "格式: 宽x高/DPI (例如: 1920x1080/420)"),
+                Value = "1920x1080/420",
+                IsRequired = true
+            }
+        };
+
+        // 调用对话框
+        var (result, data) = await DialogHelper.ShowInputDialogAsync(
+            localizer.GetString("DeviceItem.NewDisplayTitle", "新建虚拟显示器"),
+            "",
+            fields: fields,
+            primaryButtonText: localizer.GetString("DeviceItem.CreateButton", "创建")
+        );
+
+        // 判断用户是否点击了“确定/创建”按钮
+        if (result == ContentDialogResult.Primary && data != null)
+        {
+            if (data.TryGetValue("resolution", out var inputRes) && !string.IsNullOrWhiteSpace(inputRes))
+            {
+                // 校验 1920x1080/420 这种格式
+                if (!Regex.IsMatch(inputRes, @"^\d+x\d+/\d+$")) {
+                    DialogHelper.ShowToast(
+                        localizer.GetString("Dialog.Tip", "提示"),
+                        localizer.GetString("DeviceItem.InvalidResolution", "错误的分辨率"),
+                        InfoBarSeverity.Warning);
+                    return;
+                }
+
+                Device.ServerOptions.DisplayId = -1; // -1 表示新建
+                Device.ServerOptions.NewDisplay = inputRes;
+
+                Navigation.NavigateTo("Screen", Device);
+            }
+        }
     }
 }

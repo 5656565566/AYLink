@@ -29,7 +29,7 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
     {
         Device = device;
         Title = device.Name;
-        StatusMessage = "未连接";
+        StatusMessage = Services.Localization.LocalizationManager.Instance.GetString("ShellTab.NotConnected", "未连接");
     }
 
     public void AttachTerminal(TerminalControl terminal)
@@ -80,11 +80,12 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
             await _adbSocket.ReadAdbResponseAsync(CancellationToken.None);
 
             IsConnected = true;
-            StatusMessage = $"已连接 - {Device.Name}";
+            var localizer = Services.Localization.LocalizationManager.Instance;
+            StatusMessage = string.Format(localizer.GetString("ShellTab.ConnectedStatus", "已连接 - {0}"), Device.Name);
             _sessionCts = new CancellationTokenSource();
             _shellStream = GetRawNetworkStream(_adbSocket);
 
-            WriteToTerminal($"\x1b[32m已连接到设备: {Device.Name} ({Device.Serial})\x1b[0m\r\n");
+            WriteToTerminal($"\x1b[32m{string.Format(localizer.GetString("ShellTab.ConnectedMessage", "已连接到设备: {0} ({1})"), Device.Name, Device.Serial)}\x1b[0m\r\n");
 
             if (_terminalControl != null)
             {
@@ -105,8 +106,9 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
         }
         catch (Exception ex)
         {
-            WriteToTerminal($"\x1b[31m会话启动失败: {ex.Message}\x1b[0m\r\n");
-            StatusMessage = $"连接失败: {ex.Message}";
+            var localizer = Services.Localization.LocalizationManager.Instance;
+            WriteToTerminal($"\x1b[31m{string.Format(localizer.GetString("ShellTab.SessionStartFailed", "会话启动失败: {0}"), ex.Message)}\x1b[0m\r\n");
+            StatusMessage = string.Format(localizer.GetString("ShellTab.ConnectionFailed", "连接失败: {0}"), ex.Message);
             CloseShellSession();
         }
     }
@@ -188,9 +190,9 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
             Dispatcher.UIThread.Post(() =>
             {
                 IsConnected = false;
-                StatusMessage = "已断开";
+                StatusMessage = Services.Localization.LocalizationManager.Instance.GetString("ShellTab.DisconnectedStatus", "已断开");
             });
-            WriteToTerminal("\r\n\x1b[33m会话已断开\x1b[0m\r\n");
+            WriteToTerminal($"\r\n\x1b[33m{Services.Localization.LocalizationManager.Instance.GetString("ShellTab.SessionDisconnected", "会话已断开")}\x1b[0m\r\n");
         }
     }
 
@@ -199,7 +201,7 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
         int totalRead = 0;
         while (totalRead < count)
         {
-            int read = await stream.ReadAsync(buffer, totalRead, count - totalRead, token);
+            int read = await stream.ReadAsync(buffer.AsMemory(totalRead, count - totalRead), token);
             if (read == 0) return totalRead;
             totalRead += read;
         }
@@ -247,7 +249,7 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
 
         try
         {
-            await _shellStream.WriteAsync(packet, 0, packet.Length, CancellationToken.None);
+            await _shellStream.WriteAsync(packet, CancellationToken.None);
             await _shellStream.FlushAsync();
         }
         finally
@@ -303,7 +305,7 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
     /// </summary>
     /// <param name="adbSocket"></param>
     /// <returns></returns>
-    private Stream GetRawNetworkStream(IAdbSocket adbSocket)
+    private static Stream GetRawNetworkStream(IAdbSocket adbSocket)
     {
         try
         {

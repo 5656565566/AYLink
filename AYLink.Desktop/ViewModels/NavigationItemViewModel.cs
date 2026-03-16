@@ -9,12 +9,12 @@ namespace AYLink.Desktop.ViewModels;
 public partial class NavigationItemViewModel(string pageKey, string localizationKey, Symbol icon) : ObservableObject
 {
     /// <summary>
-    /// 页面唯一标识 Key，如 "Home"、"File"、"Screen"
+    /// 页面唯一标识 Key 如 "Home"、"File"、"Screen"
     /// </summary>
     public string PageKey { get; } = pageKey;
 
     /// <summary>
-    /// 本地化资源 Key，用于显示名称
+    /// 本地化资源 Key 用于显示名称
     /// </summary>
     public string LocalizationKey { get; } = localizationKey;
 

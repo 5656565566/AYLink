@@ -14,7 +14,7 @@ public class DeviceSettingNavigationArgs : NavigationArgs
 public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNavigationArgs>
 {
     public override string PageKey => "DeviceSetting";
-    public override string Title => "设备设置";
+    public override string Title => Services.Localization.LocalizationManager.Instance.GetString("DeviceSettingPage.Title", "设备设置");
 
     [ObservableProperty]
     private DeviceConfig _deviceConfig = new();
@@ -41,7 +41,11 @@ public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNav
         if (!string.IsNullOrEmpty(_deviceSerial))
         {
             ConfigManager.Instance.SaveConfig(HashHelper.ToMd5Hash(_deviceSerial), DeviceConfig);
-            DialogHelper.ShowToast("成功", "设备设置已保存", FluentAvalonia.UI.Controls.InfoBarSeverity.Success);
+            var localizer = Services.Localization.LocalizationManager.Instance;
+            DialogHelper.ShowToast(
+                localizer.GetString("Dialog.Success", "成功"),
+                localizer.GetString("DeviceSettingPage.SaveSuccess", "设备设置已保存"),
+                FluentAvalonia.UI.Controls.InfoBarSeverity.Success);
         }
     }
 

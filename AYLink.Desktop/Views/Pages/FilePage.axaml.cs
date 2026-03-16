@@ -19,7 +19,7 @@ public partial class FilePage : UserControl
         AddHandler(DragDrop.DropEvent, OnDrop);
     }
 
-    // ---- 双击事件 ----
+    // 双击事件
 
     private void LeftItem_DoubleTapped(object? sender, TappedEventArgs e)
     {
@@ -39,7 +39,7 @@ public partial class FilePage : UserControl
         }
     }
 
-    // ---- 左侧面板右键菜单 ----
+    // 左侧面板右键菜单
 
     private void LeftCtxOpen_Click(object? sender, RoutedEventArgs e)
     {
@@ -68,7 +68,7 @@ public partial class FilePage : UserControl
         }
     }
 
-    // ---- 右侧面板右键菜单 ----
+    // 右侧面板右键菜单
 
     private void RightCtxOpen_Click(object? sender, RoutedEventArgs e)
     {
@@ -97,11 +97,11 @@ public partial class FilePage : UserControl
         }
     }
 
-    // ---- 拖拽支持 ----
+    // 拖拽支持
 
     private async void LeftItem_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        // 只响应左键按下，右键留给 ContextFlyout
+        // 只响应左键按下 右键留给 ContextFlyout
         if (!e.GetCurrentPoint(null).Properties.IsLeftButtonPressed) return;
 
         if (sender is Control { DataContext: FileSystemModel file } && file.Name != "..")
@@ -115,7 +115,7 @@ public partial class FilePage : UserControl
 
     private async void RightItem_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        // 只响应左键按下，右键留给 ContextFlyout
+        // 只响应左键按下 右键留给 ContextFlyout
         if (!e.GetCurrentPoint(null).Properties.IsLeftButtonPressed) return;
 
         if (sender is Control { DataContext: FileSystemModel file } && file.Name != "..")
@@ -178,9 +178,11 @@ public partial class FilePage : UserControl
     /// <summary>
     /// 根据 ListBox 在可视化树中的位置判断它属于左侧还是右侧面板
     /// </summary>
+    /// <param name="listBox"></param>
+    /// <returns></returns>
     private static string? GetPaneName(ListBox listBox)
     {
-        // 向上查找 DockPanel，判断是 Grid.Column=0（左）还是 1（右）
+        // 向上查找 DockPanel 判断是 Grid.Column=0（左）还是 1（右）
         var dockPanel = listBox.FindAncestorOfType<DockPanel>();
         if (dockPanel != null)
         {

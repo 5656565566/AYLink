@@ -164,8 +164,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
             await Task.Run(async () =>
             {
-                var server = new ScrcpyTool(Device, "Scrcpy/scrcpy-server");
-                var displays = server.GetResolutions();
+                ScrcpyTool tool = ScrcpyService.Instance.Tool;
+                var displays = tool.GetResolutions(Device);
 
                 // 加载设备配置并应用到 ServerOptions
                 var deviceConfig = ConfigManager.Instance.LoadConfig<DeviceConfig>(
@@ -205,7 +205,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                         AudioDecoder.TARGET_CHANNELS);
                 }
 
-                var ports = await server.DeployServerAsync(isAudioAvailable);
+                var ports = await tool.DeployServerAsync(Device, isAudioAvailable);
                 await Task.Delay(2000);
                 _scrcpyClient.Connect(ports);
 
@@ -229,7 +229,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         catch (Exception ex)
         {
             Debug.WriteLine($"[ScreenTab] ConnectDevice failed: {ex}");
-            DialogHelper.ShowToast("连接失败", ex.Message, InfoBarSeverity.Error);
+            var localizer = Services.Localization.LocalizationManager.Instance;
+            DialogHelper.ShowToast(localizer.GetString("ScreenTab.ConnectFailed", "连接失败"), ex.Message, InfoBarSeverity.Error);
         }
     }
 

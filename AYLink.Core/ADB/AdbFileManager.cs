@@ -51,7 +51,7 @@ public class AdbFileManager(AdbClient client, DeviceData device)
 
             await foreach (var entry in fileEntries.WithCancellation(cancellationToken))
             {
-                string fullPath = remotePath.EndsWith("/") ? $"{remotePath}{entry.Path}" : $"{remotePath}/{entry.Path}";
+                string fullPath = remotePath.EndsWith('/') ? $"{remotePath}{entry.Path}" : $"{remotePath}/{entry.Path}";
 
                 if (entry.Path == "." || entry.Path == "..")
                 {

@@ -20,11 +20,11 @@ public partial class SettingsPage : UserControl
 
         var result = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "选择 Scrcpy Server 文件",
+            Title = Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.SelectScrcpyServerTitle", "选择 Scrcpy Server 文件"),
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("Java Archive") { Patterns = ["*.jar", "*.*"] }
+                new FilePickerFileType(Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.JavaArchive", "Java Archive")) { Patterns = ["*.jar", "*.*"] }
             ]
         });
 
@@ -40,12 +40,12 @@ public partial class SettingsPage : UserControl
         if (storage == null) return;
 
         var filter = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? new[] { new FilePickerFileType("ADB Executable") { Patterns = ["adb.exe"] } }
+            ? new[] { new FilePickerFileType(Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.AdbExecutable", "ADB Executable")) { Patterns = ["adb.exe"] } }
             : null;
 
         var result = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "选择 ADB 执行文件",
+            Title = Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.SelectAdbTitle", "选择 ADB 执行文件"),
             AllowMultiple = false,
             FileTypeFilter = filter
         });
@@ -63,7 +63,7 @@ public partial class SettingsPage : UserControl
 
         var result = await storage.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "选择 FFmpeg 二进制文件目录",
+            Title = Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.SelectFFmpegTitle", "选择 FFmpeg 二进制文件目录"),
             AllowMultiple = false
         });
 
@@ -80,11 +80,11 @@ public partial class SettingsPage : UserControl
 
         var result = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "选择背景图片",
+            Title = Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.SelectBackgroundImageTitle", "选择背景图片"),
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("图片文件") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.webp"] }
+                new FilePickerFileType(Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ImageFiles", "图片文件")) { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.webp"] }
             ]
         });
 

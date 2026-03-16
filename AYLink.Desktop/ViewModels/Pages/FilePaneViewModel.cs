@@ -15,7 +15,7 @@ namespace AYLink.Desktop.ViewModels.Pages;
 public partial class FilePaneViewModel : ViewModelBase
 {
     [ObservableProperty]
-    private ObservableCollection<FileSource> _availableSources = new();
+    private ObservableCollection<FileSource> _availableSources = [];
 
     [ObservableProperty]
     private FileSource? _selectedSource;
@@ -24,7 +24,7 @@ public partial class FilePaneViewModel : ViewModelBase
     private string _currentPath = string.Empty;
 
     [ObservableProperty]
-    private ObservableCollection<FileSystemModel> _files = new();
+    private ObservableCollection<FileSystemModel> _files = [];
 
     [ObservableProperty]
     private FileSystemModel? _selectedFile;
@@ -43,10 +43,11 @@ public partial class FilePaneViewModel : ViewModelBase
         
         AvailableSources.Clear();
         
+        var localizer = Services.Localization.LocalizationManager.Instance;
         // 添加本地源
-        AvailableSources.Add(new FileSource { Name = "本地 - 用户目录", InitialPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) });
+        AvailableSources.Add(new FileSource { Name = localizer.GetString("FilePage.SourceLocalHome", "本地 - 用户目录"), InitialPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) });
         var rootPath = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System)) ?? "C:\\";
-        AvailableSources.Add(new FileSource { Name = "本地 - 系统盘", InitialPath = rootPath });
+        AvailableSources.Add(new FileSource { Name = localizer.GetString("FilePage.SourceLocalRoot", "本地 - 系统盘"), InitialPath = rootPath });
 
         // 添加设备源
         if (AdbManager.Instance.TryStartAdbServer())
@@ -54,8 +55,8 @@ public partial class FilePaneViewModel : ViewModelBase
             var devices = AdbManager.Instance.GetConnectedDevices();
             foreach (var device in devices)
             {
-                AvailableSources.Add(new FileSource { Name = $"{device.Name} - 内部存储", Device = device, InitialPath = "/" });
-                AvailableSources.Add(new FileSource { Name = $"{device.Name} - SD卡", Device = device, InitialPath = "/sdcard/" });
+                AvailableSources.Add(new FileSource { Name = string.Format(localizer.GetString("FilePage.SourceAndroidInternal", "{0} - 内部存储"), device.Name), Device = device, InitialPath = "/" });
+                AvailableSources.Add(new FileSource { Name = string.Format(localizer.GetString("FilePage.SourceAndroidSdCard", "{0} - SD卡"), device.Name), Device = device, InitialPath = "/sdcard/" });
             }
         }
 
@@ -75,20 +76,23 @@ public partial class FilePaneViewModel : ViewModelBase
 
     public void SelectLocalHome()
     {
-        SelectedSource = AvailableSources.FirstOrDefault(s => s.Name == "本地 - 用户目录");
+        var localizer = Services.Localization.LocalizationManager.Instance;
+        SelectedSource = AvailableSources.FirstOrDefault(s => s.Name == localizer.GetString("FilePage.SourceLocalHome", "本地 - 用户目录"));
     }
 
     public void SelectDevice(DeviceModel device)
     {
+        var localizer = Services.Localization.LocalizationManager.Instance;
         // 查找已有的设备源
-        var deviceSource = AvailableSources.FirstOrDefault(s => s.Device?.Serial == device.Serial && s.Name.Contains("SD卡"))
+        var sdCardSuffix = localizer.GetString("FilePage.SourceAndroidSdCardSuffix", "SD卡");
+        var deviceSource = AvailableSources.FirstOrDefault(s => s.Device?.Serial == device.Serial && s.Name.Contains(sdCardSuffix))
                         ?? AvailableSources.FirstOrDefault(s => s.Device?.Serial == device.Serial);
 
         if (deviceSource == null)
         {
             // 设备源不在列表中，手动添加
-            var internalSource = new FileSource { Name = $"{device.Name} - 内部存储", Device = device, InitialPath = "/" };
-            var sdCardSource = new FileSource { Name = $"{device.Name} - SD卡", Device = device, InitialPath = "/sdcard/" };
+            var internalSource = new FileSource { Name = string.Format(localizer.GetString("FilePage.SourceAndroidInternal", "{0} - 内部存储"), device.Name), Device = device, InitialPath = "/" };
+            var sdCardSource = new FileSource { Name = string.Format(localizer.GetString("FilePage.SourceAndroidSdCard", "{0} - SD卡"), device.Name), Device = device, InitialPath = "/sdcard/" };
             AvailableSources.Add(internalSource);
             AvailableSources.Add(sdCardSource);
             deviceSource = sdCardSource;
@@ -102,16 +106,21 @@ public partial class FilePaneViewModel : ViewModelBase
     {
         if (file == null || file.Name == "..") return;
 
-        var result = await DialogHelper.ShowMessageAsync("确认删除", $"确定要删除 {file.Name} 吗？", "删除", "取消");
+        var localizer = Services.Localization.LocalizationManager.Instance;
+        var result = await DialogHelper.ShowMessageAsync(
+            localizer.GetString("FilePage.ConfirmDeleteTitle", "确认删除"),
+            string.Format(localizer.GetString("FilePage.ConfirmDeleteMessage", "确定要删除 {0} 吗？"), file.Name),
+            localizer.GetString("FilePage.DeleteButton", "删除"),
+            localizer.GetString("Dialog.Cancel", "取消"));
         if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary) return;
-
-        bool success = false;
         string targetPath = SelectedSource!.IsLocal
             ? Path.Combine(CurrentPath, file.Name)
-            : (CurrentPath.EndsWith("/") ? $"{CurrentPath}{file.Name}" : $"{CurrentPath}/{file.Name}");
+            : (CurrentPath.EndsWith('/') ? $"{CurrentPath}{file.Name}" : $"{CurrentPath}/{file.Name}");
 
         try
         {
+
+            bool success;
             if (SelectedSource.IsLocal)
             {
                 if (file.IsDirectory)
@@ -131,17 +140,26 @@ public partial class FilePaneViewModel : ViewModelBase
 
             if (success)
             {
-                DialogHelper.ShowToast("删除成功", $"{file.Name} 已被删除", FluentAvalonia.UI.Controls.InfoBarSeverity.Success);
+                DialogHelper.ShowToast(
+                    localizer.GetString("FilePage.DeleteSuccessTitle", "删除成功"),
+                    string.Format(localizer.GetString("FilePage.DeleteSuccessMessage", "{0} 已被删除"), file.Name),
+                    FluentAvalonia.UI.Controls.InfoBarSeverity.Success);
                 await LoadFilesAsync();
             }
             else
             {
-                DialogHelper.ShowToast("删除失败", $"无法删除 {file.Name}", FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+                DialogHelper.ShowToast(
+                    localizer.GetString("FilePage.DeleteFailedTitle", "删除失败"),
+                    string.Format(localizer.GetString("FilePage.DeleteFailedMessage", "无法删除 {0}"), file.Name),
+                    FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
             }
         }
         catch (Exception ex)
         {
-            DialogHelper.ShowToast("删除出错", ex.Message, FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+            DialogHelper.ShowToast(
+                localizer.GetString("FilePage.DeleteErrorTitle", "删除出错"),
+                ex.Message,
+                FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
         }
     }
 
@@ -180,7 +198,11 @@ public partial class FilePaneViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            DialogHelper.ShowToast("加载失败", ex.Message, FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+            var localizer = Services.Localization.LocalizationManager.Instance;
+            DialogHelper.ShowToast(
+                localizer.GetString("FilePage.LoadFailedTitle", "加载失败"),
+                ex.Message,
+                FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
         }
         finally
         {
@@ -247,7 +269,7 @@ public partial class FilePaneViewModel : ViewModelBase
                 var lastSlash = path.LastIndexOf('/');
                 if (lastSlash > 0)
                 {
-                    CurrentPath = path.Substring(0, lastSlash + 1);
+                    CurrentPath = path[..(lastSlash + 1)];
                 }
                 else
                 {
@@ -264,7 +286,7 @@ public partial class FilePaneViewModel : ViewModelBase
             }
             else
             {
-                CurrentPath = CurrentPath.EndsWith("/") ? $"{CurrentPath}{file.Name}" : $"{CurrentPath}/{file.Name}";
+                CurrentPath = CurrentPath.EndsWith('/') ? $"{CurrentPath}{file.Name}" : $"{CurrentPath}/{file.Name}";
             }
         }
 
@@ -283,16 +305,21 @@ public partial class FilePaneViewModel : ViewModelBase
     {
         if (file == null || file.Name == "..") return;
 
-        var result = await DialogHelper.ShowMessageAsync("确认删除", $"确定要删除 {file.Name} 吗？", "删除", "取消");
+        var localizer = Services.Localization.LocalizationManager.Instance;
+        var result = await DialogHelper.ShowMessageAsync(
+            localizer.GetString("FilePage.ConfirmDeleteTitle", "确认删除"),
+            string.Format(localizer.GetString("FilePage.ConfirmDeleteMessage", "确定要删除 {0} 吗？"), file.Name),
+            localizer.GetString("FilePage.DeleteButton", "删除"),
+            localizer.GetString("Dialog.Cancel", "取消"));
         if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary) return;
-
-        bool success = false;
         string targetPath = SelectedSource!.IsLocal
             ? Path.Combine(CurrentPath, file.Name)
-            : (CurrentPath.EndsWith("/") ? $"{CurrentPath}{file.Name}" : $"{CurrentPath}/{file.Name}");
+            : (CurrentPath.EndsWith('/') ? $"{CurrentPath}{file.Name}" : $"{CurrentPath}/{file.Name}");
 
         try
         {
+
+            bool success;
             if (SelectedSource.IsLocal)
             {
                 if (file.IsDirectory)
@@ -312,17 +339,26 @@ public partial class FilePaneViewModel : ViewModelBase
 
             if (success)
             {
-                DialogHelper.ShowToast("删除成功", $"{file.Name} 已被删除", FluentAvalonia.UI.Controls.InfoBarSeverity.Success);
+                DialogHelper.ShowToast(
+                    localizer.GetString("FilePage.DeleteSuccessTitle", "删除成功"),
+                    string.Format(localizer.GetString("FilePage.DeleteSuccessMessage", "{0} 已被删除"), file.Name),
+                    FluentAvalonia.UI.Controls.InfoBarSeverity.Success);
                 await LoadFilesAsync();
             }
             else
             {
-                DialogHelper.ShowToast("删除失败", $"无法删除 {file.Name}", FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+                DialogHelper.ShowToast(
+                    localizer.GetString("FilePage.DeleteFailedTitle", "删除失败"),
+                    string.Format(localizer.GetString("FilePage.DeleteFailedMessage", "无法删除 {0}"), file.Name),
+                    FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
             }
         }
         catch (Exception ex)
         {
-            DialogHelper.ShowToast("删除出错", ex.Message, FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+            DialogHelper.ShowToast(
+                localizer.GetString("FilePage.DeleteErrorTitle", "删除出错"),
+                ex.Message,
+                FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
         }
     }
 }

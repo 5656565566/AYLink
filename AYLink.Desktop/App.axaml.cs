@@ -22,6 +22,9 @@ public partial class App : Application
             // 避免从 Avalonia 和 CommunityToolkit 同时进行重复验证
             DisableAvaloniaDataAnnotationValidation();
 
+            // 初始化主题
+            InitializeTheme();
+
             var vm = new MainWindowViewModel();
             desktop.MainWindow = new MainWindow
             {
@@ -47,5 +50,25 @@ public partial class App : Application
         {
             BindingPlugins.DataValidators.Remove(plugin);
         }
+    }
+
+    private void InitializeTheme()
+        {
+            var configManager = Services.ConfigManager.Instance;
+            var appConfig = configManager.LoadConfig<Models.AppConfig>("appConfig");
+    
+            var themeMode = Themes.ThemeMode.Default;
+            if (System.Enum.TryParse<Themes.ThemeMode>(appConfig.ThemeMode, out var parsedMode))
+            {
+                themeMode = parsedMode;
+            }
+    
+            Avalonia.Media.Color? accentColor = null;
+            if (Avalonia.Media.Color.TryParse(appConfig.AccentColor, out var color))
+            {
+                accentColor = color;
+            }
+    
+            Themes.ThemeManager.SetTheme(themeMode, accentColor);
     }
 }

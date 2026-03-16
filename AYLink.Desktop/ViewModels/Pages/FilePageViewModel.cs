@@ -11,10 +11,10 @@ namespace AYLink.Desktop.ViewModels.Pages;
 public partial class FilePageViewModel : TabbedPageViewModelBase<FileTabViewModel>
 {
     public override string PageKey => "File";
-    public override string Title => "文件管理";
+    public override string Title => Services.Localization.LocalizationManager.Instance.GetString("FilePage.Title", "文件管理");
     public override string EmptyStateIcon => "Document";
-    public override string EmptyStateTitle => "无标签页";
-    public override string EmptyStateDescription => "点击 + 创建新标签页";
+    public override string EmptyStateTitle => Services.Localization.LocalizationManager.Instance.GetString("FilePage.EmptyStateTitle", "无标签页");
+    public override string EmptyStateDescription => Services.Localization.LocalizationManager.Instance.GetString("FilePage.EmptyStateDescription", "点击 + 创建新标签页");
     public override bool IsAddTabButtonVisible => true;
 
     public FilePageViewModel()
@@ -32,7 +32,11 @@ public partial class FilePageViewModel : TabbedPageViewModelBase<FileTabViewMode
     {
         if (Tabs.Count <= 1)
         {
-            DialogHelper.ShowToast("无法关闭", "至少要保留一个标签页", InfoBarSeverity.Informational);
+            var localizer = Services.Localization.LocalizationManager.Instance;
+            DialogHelper.ShowToast(
+                localizer.GetString("FilePage.CannotCloseTitle", "无法关闭"),
+                localizer.GetString("FilePage.CannotCloseMessage", "至少要保留一个标签页"),
+                InfoBarSeverity.Informational);
             return false; // 阻止关闭
         }
         return true;
@@ -68,10 +72,7 @@ public partial class FilePageViewModel : TabbedPageViewModelBase<FileTabViewMode
     [RelayCommand]
     private void CloseTab(FileTabViewModel? tab)
     {
-        if (tab != null)
-        {
-            tab.CloseTabCommand.Execute(null);
-        }
+        tab?.CloseTabCommand.Execute(null);
     }
 
     // 右键菜单命令

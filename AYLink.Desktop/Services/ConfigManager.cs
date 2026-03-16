@@ -73,7 +73,7 @@ public sealed class ConfigManager
     public IEnumerable<string?> ListConfigs()
     {
         if (!Directory.Exists(_path))
-            return Enumerable.Empty<string>();
+            return [];
 
         return Directory.GetFiles(_path, "*.json")
                        .Select(Path.GetFileNameWithoutExtension);
@@ -104,9 +104,9 @@ public sealed class ConfigManager
         return Path.Combine(_path, $"{safeName}.json");
     }
 
-    public bool HasChanges<T>(T original, T modified)
+    public static bool HasChanges<T>(T original, T modified)
     {
-        if (ReferenceEquals(original, null) || ReferenceEquals(modified, null))
+        if (original is null || modified is null)
             return !ReferenceEquals(original, modified);
 
         var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);

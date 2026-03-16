@@ -26,7 +26,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
         }
         else
         {
-            Title = "文件管理";
+            Title = Services.Localization.LocalizationManager.Instance.GetString("FilePage.Title", "文件管理");
             LeftPane.SelectLocalHome();
             RightPane.SelectLocalHome();
         }
@@ -60,7 +60,11 @@ public partial class FileTabViewModel : TabItemViewModelBase
         if (sourcePane.SelectedSource == null || targetPane.SelectedSource == null) return;
         if (file.IsDirectory)
         {
-            DialogHelper.ShowToast("不支持", "暂不支持直接传输文件夹", FluentAvalonia.UI.Controls.InfoBarSeverity.Warning);
+            var localizer = Services.Localization.LocalizationManager.Instance;
+            DialogHelper.ShowToast(
+                localizer.GetString("FilePage.NotSupportedTitle", "不支持"),
+                localizer.GetString("FilePage.NotSupportedMessage", "暂不支持直接传输文件夹"),
+                FluentAvalonia.UI.Controls.InfoBarSeverity.Warning);
             return;
         }
 
@@ -72,7 +76,11 @@ public partial class FileTabViewModel : TabItemViewModelBase
             ? System.IO.Path.Combine(targetPane.CurrentPath, file.Name)
             : (targetPane.CurrentPath.EndsWith("/") ? $"{targetPane.CurrentPath}{file.Name}" : $"{targetPane.CurrentPath}/{file.Name}");
 
-        DialogHelper.ShowProgress("传输中", $"正在传输 {file.Name}...", isBlocking: false, isIndeterminate: false);
+        var localizer2 = Services.Localization.LocalizationManager.Instance;
+        DialogHelper.ShowProgress(
+            localizer2.GetString("FilePage.TransferringTitle", "传输中"),
+            string.Format(localizer2.GetString("FilePage.TransferringMessage", "正在传输 {0}..."), file.Name),
+            isBlocking: false, isIndeterminate: false);
 
         try
         {
@@ -99,23 +107,23 @@ public partial class FileTabViewModel : TabItemViewModelBase
                 // 设备到设备
                 if (sourcePane.SelectedSource.Device!.Serial == targetPane.SelectedSource.Device!.Serial)
                 {
-                    // 同一设备，使用 shell cp
+                    // 同一设备 使用 shell cp
                     var receiver = new AdvancedSharpAdbClient.Receivers.ConsoleOutputReceiver();
                     await sourcePane.SelectedSource.Device!.AdbClient!.ExecuteShellCommandAsync(
                         sourcePane.SelectedSource.Device!.DeviceData,
                         $"cp \"{sourcePath}\" \"{targetPath}\"",
                         receiver,
-                        default(System.Threading.CancellationToken));
+                        default);
                     DialogHelper.UpdateProgress(100);
                 }
                 else
                 {
                     // 不同设备，使用临时文件中转
                     string tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), file.Name);
-                    DialogHelper.UpdateProgress(0, "正在下载到临时目录...");
+                    DialogHelper.UpdateProgress(0, localizer2.GetString("FilePage.DownloadingToTemp", "正在下载到临时目录..."));
                     await sourcePane.SelectedSource.Device!.FileManager.DownloadFileAsync(sourcePath, tempFile, new System.Progress<double>(p => DialogHelper.UpdateProgress(p / 2)));
                     
-                    DialogHelper.UpdateProgress(50, "正在上传到目标设备...");
+                    DialogHelper.UpdateProgress(50, localizer2.GetString("FilePage.UploadingToTarget", "正在上传到目标设备..."));
                     await targetPane.SelectedSource.Device!.FileManager.UploadFileAsync(tempFile, targetPath, new System.Progress<double>(p => DialogHelper.UpdateProgress(50 + p / 2)));
                     
                     System.IO.File.Delete(tempFile);
@@ -123,13 +131,19 @@ public partial class FileTabViewModel : TabItemViewModelBase
             }
 
             DialogHelper.CloseProgress();
-            DialogHelper.ShowToast("传输完成", $"{file.Name} 传输成功", FluentAvalonia.UI.Controls.InfoBarSeverity.Success);
+            DialogHelper.ShowToast(
+                localizer2.GetString("FilePage.TransferCompleteTitle", "传输完成"),
+                string.Format(localizer2.GetString("FilePage.TransferCompleteMessage", "{0} 传输成功"), file.Name),
+                FluentAvalonia.UI.Controls.InfoBarSeverity.Success);
             await targetPane.LoadFilesAsync();
         }
         catch (System.Exception ex)
         {
             DialogHelper.CloseProgress();
-            DialogHelper.ShowToast("传输失败", ex.Message, FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+            DialogHelper.ShowToast(
+                localizer2.GetString("FilePage.TransferFailedTitle", "传输失败"),
+                ex.Message,
+                FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
         }
     }
 }

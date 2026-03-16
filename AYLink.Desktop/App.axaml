@@ -4,6 +4,7 @@
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:uip="using:FluentAvalonia.UI.Controls.Primitives"
              xmlns:local="using:AYLink.Desktop"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
              xmlns:views="using:AYLink.Desktop.Views.Pages"
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
              x:Class="AYLink.Desktop.App"
@@ -14,6 +15,9 @@
     </Application.Styles>
 
     <Application.Resources>
+        <!-- 本地化定位器 -->
+        <i18n:Locator x:Key="Locator" />
+
         <!-- 重写 TabView 的 ControlTheme 实现内容区域透明 并为标签栏添加半透明底色 -->
         <ControlTheme x:Key="{x:Type ui:TabView}" TargetType="ui:TabView">
             <Setter Property="VerticalAlignment" Value="Top" />

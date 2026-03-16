@@ -6,6 +6,7 @@
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:models="using:AYLink.Core.Models"
              xmlns:views="using:AYLink.Desktop.Views"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AYLink.Desktop.Views.Pages.FilePage"
              x:DataType="vm:FilePageViewModel">
@@ -42,9 +43,9 @@
                                  DragDrop.AllowDrop="True">
                             <ListBox.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuItem Header="打开" Click="LeftCtxOpen_Click"/>
-                                    <MenuItem Header="复制到右侧" Click="LeftCtxCopyToRight_Click"/>
-                                    <MenuItem Header="删除" Click="LeftCtxDelete_Click"/>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxOpen, DefaultText='打开'}" Click="LeftCtxOpen_Click"/>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxCopyToRight, DefaultText='复制到右侧'}" Click="LeftCtxCopyToRight_Click"/>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxDelete, DefaultText='删除'}" Click="LeftCtxDelete_Click"/>
                                 </MenuFlyout>
                             </ListBox.ContextFlyout>
                             <ListBox.ItemTemplate>
@@ -90,9 +91,9 @@
                                  DragDrop.AllowDrop="True">
                             <ListBox.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuItem Header="打开" Click="RightCtxOpen_Click"/>
-                                    <MenuItem Header="复制到左侧" Click="RightCtxCopyToLeft_Click"/>
-                                    <MenuItem Header="删除" Click="RightCtxDelete_Click"/>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxOpen, DefaultText='打开'}" Click="RightCtxOpen_Click"/>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxCopyToLeft, DefaultText='复制到左侧'}" Click="RightCtxCopyToLeft_Click"/>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxDelete, DefaultText='删除'}" Click="RightCtxDelete_Click"/>
                                 </MenuFlyout>
                             </ListBox.ContextFlyout>
                             <ListBox.ItemTemplate>

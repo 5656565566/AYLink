@@ -1,7 +1,10 @@
+using AYLink.Core.Scrcpy;
+using AYLink.Desktop.Models;
+using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Audio;
+using AYLink.Desktop.ViewModels.Pages;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using AYLink.Desktop.Services;
-using AYLink.Desktop.ViewModels.Pages;
 using FluentAvalonia.UI.Controls;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -18,10 +21,16 @@ namespace AYLink.Desktop.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     // 页面 ViewModel 注册表
-    private readonly Dictionary<string, PageViewModelBase> _pages = new();
+    private readonly Dictionary<string, PageViewModelBase> _pages = [];
 
     // 导航服务
     private readonly NavigationService _navigationService = NavigationService.Instance;
+
+    // 音频播放器
+    private readonly AudioPlayer _audioPlayer = AudioPlayer.Instance;
+
+    // 配置管理器
+    private readonly ConfigManager _configManager = ConfigManager.Instance;
 
     /// <summary>
     /// 当前显示的页面 ViewModel
@@ -44,14 +53,14 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>
     /// 导航菜单项集合 - 供 View 层数据绑定
     /// </summary>
-    public ObservableCollection<NavigationItemViewModel> NavigationItems { get; } = new()
-    {
-        new("Home", "首页", Symbol.Home),
-        new("File", "文件管理", Symbol.Folder),
-        new("Screen", "投屏", Symbol.Play),
-        new("App", "应用管理", Symbol.Repair),
-        new("Shell", "终端", Symbol.Code),
-    };
+    public ObservableCollection<NavigationItemViewModel> NavigationItems { get; } =
+    [
+        new("Home", Services.Localization.LocalizationManager.Instance.GetString("MainWindow.NavHome", "首页"), Symbol.Home),
+        new("File", Services.Localization.LocalizationManager.Instance.GetString("MainWindow.NavFile", "文件管理"), Symbol.Folder),
+        new("Screen", Services.Localization.LocalizationManager.Instance.GetString("MainWindow.NavScreen", "投屏"), Symbol.Play),
+        new("App", Services.Localization.LocalizationManager.Instance.GetString("MainWindow.NavApp", "应用管理"), Symbol.Repair),
+        new("Shell", Services.Localization.LocalizationManager.Instance.GetString("MainWindow.NavShell", "终端"), Symbol.Code),
+    ];
 
     public MainWindowViewModel()
     {
@@ -69,6 +78,24 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // 初始导航到首页
         _navigationService.NavigateTo("Home");
+
+        // 加载配置项
+        AppConfig appConfig = _configManager.LoadConfig<AppConfig>("appConfig");
+
+        // 初始化 Scrcpy 服务
+        if (!string.IsNullOrWhiteSpace(appConfig.ScrcpyServer) &&
+        !string.IsNullOrWhiteSpace(appConfig.ScrcpyVersion))
+        {
+            ScrcpyService.Instance.Initialize(appConfig.ScrcpyServer, appConfig.ScrcpyVersion);
+        }
+        else
+        {
+            ScrcpyService.Instance.Initialize();
+        }
+
+        // 初始化音频播放器
+        _audioPlayer.ConfigureAudioDevice(appConfig.AudioOutputDevice);
+        _audioPlayer.SetGlobalVolume(appConfig.GlobalVolume);
     }
 
     /// <summary>

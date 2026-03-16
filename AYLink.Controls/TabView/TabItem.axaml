@@ -12,9 +12,7 @@
     </Border>
   </Design.PreviewWith>
 
-  <!-- =============================== -->
   <!-- BrowserTabItem 基础样式 -->
-  <!-- =============================== -->
   <Style Selector="controls|BrowserTabItem">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -110,9 +108,7 @@
     </Setter>
   </Style>
 
-  <!-- =============================== -->
   <!-- 悬浮状态 (PointerOver) -->
-  <!-- =============================== -->
   <Style Selector="controls|BrowserTabItem:pointerover /template/ Border#PART_LayoutRoot">
     <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
   </Style>
@@ -128,9 +124,7 @@
     <Setter Property="Opacity" Value="0" />
   </Style>
 
-  <!-- =============================== -->
   <!-- 选中状态 (Selected) -->
-  <!-- =============================== -->
   <Style Selector="controls|BrowserTabItem:selected /template/ Border#PART_LayoutRoot">
     <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorBaseBrush}" />
   </Style>
@@ -147,9 +141,7 @@
     <Setter Property="Opacity" Value="0" />
   </Style>
 
-  <!-- =============================== -->
   <!-- 拖拽状态 (Dragging) -->
-  <!-- =============================== -->
   <Style Selector="controls|BrowserTabItem:dragging">
     <Setter Property="Opacity" Value="0.75" />
     <Setter Property="ZIndex" Value="100" />
@@ -162,9 +154,7 @@
     <Setter Property="Opacity" Value="0" />
   </Style>
 
-  <!-- =============================== -->
   <!-- 关闭按钮悬浮效果 -->
-  <!-- =============================== -->
   <Style Selector="controls|BrowserTabItem /template/ Button#PART_CloseButton">
     <Setter Property="Transitions">
       <Transitions>
@@ -180,9 +170,7 @@
     <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
   </Style>
 
-  <!-- =============================== -->
   <!-- 左侧操作按钮悬浮效果 -->
-  <!-- =============================== -->
   <Style Selector="controls|BrowserTabItem /template/ Button#PART_LeftActionButton:pointerover">
     <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
   </Style>
@@ -190,9 +178,7 @@
     <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
   </Style>
 
-  <!-- =============================== -->
   <!-- 分隔符动画 -->
-  <!-- =============================== -->
   <Style Selector="controls|BrowserTabItem /template/ Border#PART_Separator">
     <Setter Property="Transitions">
       <Transitions>

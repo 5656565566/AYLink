@@ -6,6 +6,7 @@
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:models="using:AYLink.Core.Models"
              xmlns:views="using:AYLink.Desktop.Views"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AYLink.Desktop.Views.Pages.AppPage"
              x:DataType="vm:AppPageViewModel">
@@ -23,7 +24,7 @@
                         <StackPanel Orientation="Horizontal"
                                     VerticalAlignment="Center"
                                     Margin="8,0,0,0">
-                            <ui:CommandBarButton Label="搜索"
+                            <ui:CommandBarButton Label="{i18n:Tr AppPage.Search, DefaultText='搜索'}"
                                                  Command="{Binding SearchCommand}">
                                 <ui:CommandBarButton.IconSource>
                                     <ui:SymbolIconSource Symbol="Find"/>
@@ -31,7 +32,7 @@
                             </ui:CommandBarButton>
 
                             <TextBox Text="{Binding SearchText}"
-                                     Watermark="搜索应用名称或包名..."
+                                     Watermark="{i18n:Tr AppPage.SearchWatermark, DefaultText='搜索应用名称或包名...'}"
                                      Width="250"
                                      VerticalAlignment="Center"
                                      Margin="8,0,0,0"
@@ -41,7 +42,7 @@
 
                     <!-- 右侧：安装、刷新 -->
                     <ui:CommandBar.PrimaryCommands>
-                        <ui:CommandBarButton Label="安装 APK"
+                        <ui:CommandBarButton Label="{i18n:Tr AppPage.InstallApp, DefaultText='安装 APK'}"
                                              Click="InstallAppBtn_Click">
                             <ui:CommandBarButton.IconSource>
                                 <ui:SymbolIconSource Symbol="Add"/>
@@ -50,7 +51,7 @@
 
                         <ui:CommandBarSeparator/>
 
-                        <ui:CommandBarButton Label="刷新"
+                        <ui:CommandBarButton Label="{i18n:Tr AppPage.RefreshApps, DefaultText='刷新'}"
                                              Command="{Binding LoadAppsCommand}">
                             <ui:CommandBarButton.IconSource>
                                 <ui:SymbolIconSource Symbol="Refresh"/>
@@ -74,8 +75,8 @@
                                 BorderThickness="0,0,0,1"
                                 Padding="12,8">
                             <Grid ColumnDefinitions="*,*">
-                                <TextBlock Grid.Column="0" Text="应用名称" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
-                                <TextBlock Grid.Column="1" Text="包名" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                                <TextBlock Grid.Column="0" Text="{i18n:Tr AppPage.AppNameHeader, DefaultText='应用名称'}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                                <TextBlock Grid.Column="1" Text="{i18n:Tr AppPage.PackageNameHeader, DefaultText='包名'}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
                             </Grid>
                         </Border>
 
@@ -105,11 +106,13 @@
 
                             <DataGrid.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuItem Header="卸载" Click="CtxUninstall_Click">
-                                        <MenuItem.Icon>
-                                            <ui:SymbolIcon Symbol="Delete"/>
-                                        </MenuItem.Icon>
-                                    </MenuItem>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxLaunch, DefaultText='启动应用'}" x:Name="CtxLaunch" Click="CtxLaunch_Click"/>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxNewLaunch, DefaultText='新建屏幕启动'}" x:Name="CtxNewLaunch" Click="CtxNewLaunch_Click"/>
+                                    <Separator/>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxDownload, DefaultText='下载 APK 到本地'}" x:Name="CtxDownload" Click="CtxDownload_Click"/>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxCopyPackage, DefaultText='复制包名'}" x:Name="CtxCopyPackage" Click="CtxCopyPackage_Click"/>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxUninstall, DefaultText='卸载'}" x:Name="CtxUninstall" Click="CtxUninstall_Click"/>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxAppInfo, DefaultText='应用信息'}" x:Name="CtxAppInfo" Click="CtxAppInfo_Click"/>
                                 </MenuFlyout>
                             </DataGrid.ContextFlyout>
                         </DataGrid>
