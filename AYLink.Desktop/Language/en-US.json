@@ -1,7 +1,6 @@
 {
   "LanguageName": "English",
   "IsBeta": true,
-  "TranslationTip": "Machine Translation",
   "AppPage": {
     "AllFiles": "All Files (*.*)",
     "ApkFiles": "APK Files (*.apk)",
@@ -251,7 +250,8 @@
     "NavHome": "Home",
     "NavScreen": "Screen Mirroring",
     "NavShell": "Terminal",
-    "Title": "AnYiLian"
+    "NavSetting": "Setting",
+    "Title": "AYLink"
   },
   "ScreenPage": {
     "Back": "Back",

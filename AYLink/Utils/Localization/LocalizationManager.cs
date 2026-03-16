@@ -88,7 +88,7 @@ public class LocalizationManager : INotifyPropertyChanged
 
             var json = File.ReadAllText(filePath);
             newStrings = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? [];
-            if (newStrings.ContainsKey(LanguageNameKey)) newStrings.Remove(LanguageNameKey);
+            newStrings.Remove(LanguageNameKey);
         }
         catch
         {

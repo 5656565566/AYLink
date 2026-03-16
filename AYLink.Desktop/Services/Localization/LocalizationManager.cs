@@ -12,7 +12,7 @@ namespace AYLink.Desktop.Services.Localization;
 /// <summary>
 /// 语言信息记录
 /// </summary>
-public record LanguageInfo(string Culture, string DisplayName);
+public record LanguageInfo(string Culture, string DisplayName, bool IsBeta = false);
 
 /// <summary>
 /// 本地化管理器 - 支持嵌套 JSON 语言文件和默认文本回退。
@@ -34,6 +34,7 @@ public class LocalizationManager : INotifyPropertyChanged
 
     private readonly string _languageFolderPath;
     private const string LanguageNameKey = "LanguageName";
+    private const string IsBetaKey = "IsBeta";
     private const string DefaultFallbackCulture = "zh-CN";
 
     /// <summary>
@@ -105,7 +106,8 @@ public class LocalizationManager : INotifyPropertyChanged
                 var jObj = JObject.Parse(json);
                 var culture = Path.GetFileNameWithoutExtension(file);
                 var displayName = jObj[LanguageNameKey]?.Value<string>() ?? culture;
-                languages.Add(new LanguageInfo(culture, displayName));
+                var isBeta = jObj[IsBetaKey]?.Value<bool>() ?? false;
+                languages.Add(new LanguageInfo(culture, displayName, isBeta));
             }
             catch { }
         }

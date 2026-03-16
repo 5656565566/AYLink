@@ -2,10 +2,13 @@ using AYLink.Core.Scrcpy;
 using AYLink.Desktop.Models;
 using AYLink.Desktop.Services;
 using AYLink.Desktop.Services.Audio;
+using AYLink.Desktop.Services.Localization;
 using AYLink.Desktop.ViewModels.Pages;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentAvalonia.UI.Controls;
+using NeoSmart.Unicode;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -55,11 +58,11 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<NavigationItemViewModel> NavigationItems { get; } =
     [
-        new("Home", Services.Localization.LocalizationManager.Instance.GetString("MainWindow.NavHome", "首页"), Symbol.Home),
-        new("File", Services.Localization.LocalizationManager.Instance.GetString("MainWindow.NavFile", "文件管理"), Symbol.Folder),
-        new("Screen", Services.Localization.LocalizationManager.Instance.GetString("MainWindow.NavScreen", "投屏"), Symbol.Play),
-        new("App", Services.Localization.LocalizationManager.Instance.GetString("MainWindow.NavApp", "应用管理"), Symbol.Repair),
-        new("Shell", Services.Localization.LocalizationManager.Instance.GetString("MainWindow.NavShell", "终端"), Symbol.Code),
+        new("Home",LocalizationManager.Instance.GetString("MainWindow.NavHome", "首页"), Symbol.Home),
+        new("File",LocalizationManager.Instance.GetString("MainWindow.NavFile", "文件管理"), Symbol.Folder),
+        new("Screen",LocalizationManager.Instance.GetString("MainWindow.NavScreen", "投屏"), Symbol.Play),
+        new("App",LocalizationManager.Instance.GetString("MainWindow.NavApp", "应用管理"), Symbol.Repair),
+        new("Shell",LocalizationManager.Instance.GetString("MainWindow.NavShell", "终端"), Symbol.Code),
     ];
 
     public MainWindowViewModel()
@@ -134,7 +137,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// 从 NavigationView 选中事件调用（由 View 的最小 code-behind 转发）
+    /// 从 NavigationView 选中事件调用
     /// </summary>
     public void OnNavItemSelected(string pageKey)
     {

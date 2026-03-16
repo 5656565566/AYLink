@@ -3,6 +3,7 @@ using AYLink.Core.Scrcpy;
 using AYLink.Desktop.Models;
 using AYLink.Desktop.Services;
 using AYLink.Desktop.Services.Audio;
+using AYLink.Desktop.Services.Localization;
 using AYLink.Desktop.Themes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -15,18 +16,19 @@ namespace AYLink.Desktop.ViewModels.Pages;
 public partial class SettingsPageViewModel : PageViewModelBase
 {
     public override string PageKey => "Settings";
-    public override string Title => Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.Title", "设置");
+    public override string Title => LocalizationManager.Instance.GetString("SettingsPage.Title", "设置");
 
     private readonly ConfigManager _configManager = ConfigManager.Instance;
-    private readonly AppConfig _appConfig;
     private readonly AudioPlayer _audioPlayer = AudioPlayer.Instance;
 
     private readonly Dictionary<ThemeMode, string> _themeMap = new()
     {
-        { ThemeMode.Light, Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeLight", "亮色") },
-        { ThemeMode.Dark, Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeDark", "暗色") },
-        { ThemeMode.Default, Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeSystem", "跟随系统") }
+        { ThemeMode.Light, LocalizationManager.Instance.GetString("SettingsPage.ThemeLight", "亮色") },
+        { ThemeMode.Dark, LocalizationManager.Instance.GetString("SettingsPage.ThemeDark", "暗色") },
+        { ThemeMode.Default, LocalizationManager.Instance.GetString("SettingsPage.ThemeSystem", "跟随系统") }
     };
+
+    private AppConfig _appConfig;
 
     public SettingsPageViewModel()
     {
@@ -37,7 +39,6 @@ public partial class SettingsPageViewModel : PageViewModelBase
         _adb = _appConfig.Adb;
         _fFmpegBin = _appConfig.FFmpegBin;
         _scrcpyVersion = _appConfig.ScrcpyVersion;
-        _selectedLanguage = _appConfig.Language;
         _selectedAudioOutputDevice = _appConfig.AudioOutputDevice;
 
         _enableAcrylic = _appConfig.EnableAcrylic;
@@ -58,25 +59,30 @@ public partial class SettingsPageViewModel : PageViewModelBase
         _selectedThemeMode = _themeMap[themeMode];
 
         // 初始化一些默认选项
-        Languages.Add(_appConfig.Language);
+        var availableLanguages = LocalizationManager.Instance.ListAvailableLanguages();
+        foreach (var lang in availableLanguages)
+        {
+            Languages.Add(lang);
+        }
+        _selectedLanguage = availableLanguages.FirstOrDefault(l => l.Culture == _appConfig.Language) ?? availableLanguages.First();
         
         var devicesTuple = AudioPlayer.GetPlaybackDevices();
-        AudioOutputDevices.Add(Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认"));
-        foreach (var device in devicesTuple)
+        AudioOutputDevices.Add(LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认"));
+        foreach (var (Name, InstanceID) in devicesTuple)
         {
-            if (device.Name != null)
+            if (Name != null)
             {
-                AudioOutputDevices.Add(device.Name);
+                AudioOutputDevices.Add(Name);
             }
         }
     }
 
-    public ObservableCollection<string> Languages { get; } = [];
+    public ObservableCollection<LanguageInfo> Languages { get; } = [];
     public ObservableCollection<string> AudioOutputDevices { get; } = [];
     public ObservableCollection<string> ThemeModes { get; } = [
-        Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeLight", "亮色"),
-        Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeDark", "暗色"),
-        Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeSystem", "跟随系统")
+        LocalizationManager.Instance.GetString("SettingsPage.ThemeLight", "亮色"),
+        LocalizationManager.Instance.GetString("SettingsPage.ThemeDark", "暗色"),
+        LocalizationManager.Instance.GetString("SettingsPage.ThemeSystem", "跟随系统")
     ];
 
     [ObservableProperty]
@@ -97,7 +103,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
 
     partial void OnSelectedAudioOutputDeviceChanged(string? value)
     {
-        if (value == Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认"))
+        if (value == LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认"))
         {
             _appConfig.AudioOutputDevice = null;
             _audioPlayer.ConfigureAudioDevice(null);
@@ -111,17 +117,19 @@ public partial class SettingsPageViewModel : PageViewModelBase
     }
 
     [ObservableProperty]
-    private string _selectedLanguage;
+    private LanguageInfo _selectedLanguage;
 
-    partial void OnSelectedLanguageChanged(string value)
+    partial void OnSelectedLanguageChanged(LanguageInfo value)
     {
-        _appConfig.Language = value;
+        if (value == null) return;
+        _appConfig.Language = value.Culture;
         _configManager.SaveConfig("appConfig", _appConfig);
-        // TODO 更改语言
+        
+        LocalizationManager.Instance.CurrentCulture = new System.Globalization.CultureInfo(value.Culture);
     }
 
     [ObservableProperty]
-    private string _selectedThemeMode = Services.Localization.LocalizationManager.Instance.GetString("SettingsPage.ThemeSystem", "跟随系统");
+    private string _selectedThemeMode = LocalizationManager.Instance.GetString("SettingsPage.ThemeSystem", "跟随系统");
 
     partial void OnSelectedThemeModeChanged(string value)
     {
@@ -272,6 +280,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
     [RelayCommand]
     private void ResetToDefaults()
     {
-        // TODO: 恢复默认
+        _appConfig = new AppConfig();
+        _configManager.SaveConfig("appConfig", _appConfig);
     }
 }

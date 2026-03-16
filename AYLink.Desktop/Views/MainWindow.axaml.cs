@@ -3,8 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Localization;
 using AYLink.Desktop.ViewModels;
 using FluentAvalonia.UI.Controls;
 using FluentAvalonia.UI.Controls.Primitives;
@@ -41,6 +43,12 @@ public partial class MainWindow : Window
 
         // 使用 Tunnel 策略在整个顶部区域实现窗口拖拽
         AddHandler(PointerPressedEvent, OnWindowPointerPressed, RoutingStrategies.Tunnel);
+
+        // 将 SettingsItem 的绑定延迟到窗口加载完成后
+        Loaded += (s, e) =>
+        {
+            NavView.SettingsItem.Content = LocalizationManager.Instance.GetString("MainWindow.NavSetting", "设置");
+        };
 
         Closed += MainWindow_Closed;
     }
@@ -198,7 +206,7 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnNavigationServiceNavigated(string pageKey)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() => SyncNavViewSelection(pageKey));
+        Dispatcher.UIThread.Post(() => SyncNavViewSelection(pageKey));
     }
 
     /// <summary>

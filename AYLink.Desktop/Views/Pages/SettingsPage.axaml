@@ -30,12 +30,29 @@
                 </ui:SettingsExpander.Footer>
             </ui:SettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.Language, DefaultText='语言'}" 
+            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.Language, DefaultText='语言'}"
                                 Description="{i18n:Tr SettingsPage.LanguageDescription, DefaultText='选择应用程序的显示语言'}">
                 <ui:SettingsExpander.Footer>
                     <ComboBox MinWidth="150"
                               ItemsSource="{Binding Languages}"
-                              SelectedItem="{Binding SelectedLanguage}" />
+                              SelectedItem="{Binding SelectedLanguage}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <TextBlock Text="{Binding DisplayName}"/>
+                                    <Border Background="{DynamicResource SystemAccentColor}"
+                                            CornerRadius="4"
+                                            Padding="4,0"
+                                            IsVisible="{Binding IsBeta}">
+                                        <TextBlock Text="Beta"
+                                                   FontSize="10"
+                                                   Foreground="White"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                 </ui:SettingsExpander.Footer>
             </ui:SettingsExpander>
 

@@ -1,5 +1,6 @@
 {
   "LanguageName": "中文（简体）",
+  "IsBeta": false,
   "AppPage": {
     "AllFiles": "所有文件 (*.*)",
     "ApkFiles": "APK 文件 (*.apk)",
@@ -249,6 +250,7 @@
     "NavHome": "首页",
     "NavScreen": "投屏",
     "NavShell": "终端",
+    "NavSetting": "设置",
     "Title": "安易连"
   },
   "ScreenPage": {
