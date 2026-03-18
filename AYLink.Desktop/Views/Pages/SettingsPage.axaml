@@ -38,11 +38,11 @@
                               SelectedItem="{Binding SelectedLanguage}">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
                                     <TextBlock Text="{Binding DisplayName}"/>
                                     <Border Background="{DynamicResource SystemAccentColor}"
                                             CornerRadius="4"
-                                            Padding="4,0"
+                                            Padding="5,0"
                                             IsVisible="{Binding IsBeta}">
                                         <TextBlock Text="Beta"
                                                    FontSize="10"

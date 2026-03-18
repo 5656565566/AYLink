@@ -108,6 +108,13 @@ public partial class MainWindow : Window
     {
         _navigationService.Navigated -= OnNavigationServiceNavigated;
 
+        // 关闭所有脱离的标签页窗口
+        var detachedWindows = DetachedTabWindowManager.Instance.Windows.ToArray();
+        foreach (var window in detachedWindows)
+        {
+            try { window.Close(); } catch { /* 忽略已关闭的窗口 */ }
+        }
+
         // 清理所有投屏标签页 释放 Scrcpy 进程和音频流 防止进程泄露
         if (DataContext is MainWindowViewModel vm)
         {

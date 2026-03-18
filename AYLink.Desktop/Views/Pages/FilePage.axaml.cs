@@ -4,9 +4,25 @@ using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using AYLink.Core.Models;
 using AYLink.Desktop.ViewModels.Pages;
-using System.Linq;
+using System;
+using System.Collections.Generic;
 
 namespace AYLink.Desktop.Views.Pages;
+
+/// <summary>
+/// 文件拖拽数据传输对象 - 实现 IDataTransfer 接口用于进程内拖拽
+/// Avalonia 11.3 中 DataObject 已过时 新的 DataTransfer 不支持任意对象的 Set/Get
+/// 需要自定义 IDataTransfer 实现来传递进程内数据
+/// </summary>
+internal sealed class FileDragDataTransfer : IDataTransfer
+{
+    public FileSystemModel? File { get; init; }
+    public string? SourcePane { get; init; }
+
+    IReadOnlyList<DataFormat> IDataTransfer.Formats => [];
+    IReadOnlyList<IDataTransferItem> IDataTransfer.Items => [];
+    void IDisposable.Dispose() { }
+}
 
 public partial class FilePage : UserControl
 {
@@ -106,10 +122,12 @@ public partial class FilePage : UserControl
 
         if (sender is Control { DataContext: FileSystemModel file } && file.Name != "..")
         {
-            var dragData = new DataObject();
-            dragData.Set("FileItem", file);
-            dragData.Set("SourcePane", "Left");
-            await DragDrop.DoDragDrop(e, dragData, DragDropEffects.Copy);
+            var dragData = new FileDragDataTransfer
+            {
+                File = file,
+                SourcePane = "Left"
+            };
+            await DragDrop.DoDragDropAsync(e, dragData, DragDropEffects.Copy);
         }
     }
 
@@ -120,10 +138,12 @@ public partial class FilePage : UserControl
 
         if (sender is Control { DataContext: FileSystemModel file } && file.Name != "..")
         {
-            var dragData = new DataObject();
-            dragData.Set("FileItem", file);
-            dragData.Set("SourcePane", "Right");
-            await DragDrop.DoDragDrop(e, dragData, DragDropEffects.Copy);
+            var dragData = new FileDragDataTransfer
+            {
+                File = file,
+                SourcePane = "Right"
+            };
+            await DragDrop.DoDragDropAsync(e, dragData, DragDropEffects.Copy);
         }
     }
 
@@ -131,17 +151,18 @@ public partial class FilePage : UserControl
     {
         e.DragEffects = DragDropEffects.None;
 
-        if (!e.Data.Contains("FileItem") || !e.Data.Contains("SourcePane"))
+        if (e.DataTransfer is not FileDragDataTransfer dragData)
             return;
 
-        var sourcePane = e.Data.Get("SourcePane") as string;
+        if (dragData.File == null || dragData.SourcePane == null)
+            return;
 
         // 判断目标是否是另一个面板的 ListBox
         var targetListBox = (e.Source as Control)?.FindAncestorOfType<ListBox>();
         if (targetListBox == null) return;
 
         var targetPaneName = GetPaneName(targetListBox);
-        if (targetPaneName != null && targetPaneName != sourcePane)
+        if (targetPaneName != null && targetPaneName != dragData.SourcePane)
         {
             e.DragEffects = DragDropEffects.Copy;
         }
@@ -149,11 +170,11 @@ public partial class FilePage : UserControl
 
     private void OnDrop(object? sender, DragEventArgs e)
     {
-        if (!e.Data.Contains("FileItem") || !e.Data.Contains("SourcePane"))
+        if (e.DataTransfer is not FileDragDataTransfer dragData)
             return;
 
-        var file = e.Data.Get("FileItem") as FileSystemModel;
-        var sourcePane = e.Data.Get("SourcePane") as string;
+        var file = dragData.File;
+        var sourcePane = dragData.SourcePane;
 
         if (file == null || sourcePane == null || DataContext is not FilePageViewModel vm)
             return;

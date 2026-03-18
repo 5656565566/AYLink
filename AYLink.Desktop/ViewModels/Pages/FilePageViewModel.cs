@@ -19,8 +19,12 @@ public partial class FilePageViewModel : TabbedPageViewModelBase<FileTabViewMode
 
     public FilePageViewModel()
     {
-        // 默认添加一个本地标签页
-        RegisterTab(new FileTabViewModel());
+        // 默认添加一个本地标签页，且不可关闭
+        var defaultTab = new FileTabViewModel
+        {
+            IsClosable = false
+        };
+        RegisterTab(defaultTab);
     }
 
     protected override FileTabViewModel CreateTab(DeviceModel device) => new(device);

@@ -1,6 +1,6 @@
 namespace AYLink.Core.Models;
 
-public class FileSystemModel(string name, int size , bool isDirectory = false)
+public class FileSystemModel(string name, uint size , bool isDirectory = false)
 {
     /// <summary>
     /// 名称
@@ -13,5 +13,5 @@ public class FileSystemModel(string name, int size , bool isDirectory = false)
     /// <summary>
     /// 文件大小
     /// </summary>
-    public int Size { get; set; } = size;
+    public uint Size { get; set; } = size;
 }

@@ -108,6 +108,47 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase
     }
 
     /// <summary>
+    /// 从集合中移除 Tab（不触发 OnTabClosed），用于标签页脱离到独立窗口
+    /// 解除事件订阅但不执行清理逻辑
+    /// </summary>
+    public bool DetachTab(TabItemViewModelBase tab)
+    {
+        if (tab is not TTab typedTab) return false;
+        if (!Tabs.Contains(typedTab)) return false;
+
+        typedTab.OnCloseRequested -= OnTabCloseRequested;
+        Tabs.Remove(typedTab);
+
+        if (Tabs.Count == 0)
+        {
+            ForceSetSelectedTab(null);
+        }
+        else
+        {
+            SelectedTab ??= Tabs.LastOrDefault();
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 将外部 Tab 插入集合（用于从独立窗口合并回来），支持任意 TabItemViewModelBase 类型
+    /// </summary>
+    public bool AttachTab(TabItemViewModelBase tab, int index = -1)
+    {
+        if (tab is not TTab typedTab) return false;
+
+        typedTab.OnCloseRequested += OnTabCloseRequested;
+        if (index >= 0 && index <= Tabs.Count)
+            Tabs.Insert(index, typedTab);
+        else
+            Tabs.Add(typedTab);
+
+        SelectedTab = typedTab;
+        return true;
+    }
+
+    /// <summary>
     /// 强制清空选中（仅在 Dispose/全部关闭时使用）
     /// 绕过 SelectedTab setter 的保护逻辑
     /// </summary>

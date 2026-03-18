@@ -7,6 +7,7 @@ using AYLink.Desktop.Services.Localization;
 using AYLink.Desktop.Themes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FluentAvalonia.UI.Controls;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -39,7 +40,9 @@ public partial class SettingsPageViewModel : PageViewModelBase
         _adb = _appConfig.Adb;
         _fFmpegBin = _appConfig.FFmpegBin;
         _scrcpyVersion = _appConfig.ScrcpyVersion;
-        _selectedAudioOutputDevice = _appConfig.AudioOutputDevice;
+        // 配置中 null 对应 UI 上的"系统默认"翻译文本
+        _selectedAudioOutputDevice = _appConfig.AudioOutputDevice
+            ?? LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认");
 
         _enableAcrylic = _appConfig.EnableAcrylic;
         _enableBackgroundImage = _appConfig.EnableBackgroundImage;
@@ -124,8 +127,13 @@ public partial class SettingsPageViewModel : PageViewModelBase
         if (value == null) return;
         _appConfig.Language = value.Culture;
         _configManager.SaveConfig("appConfig", _appConfig);
-        
+
         LocalizationManager.Instance.CurrentCulture = new System.Globalization.CultureInfo(value.Culture);
+
+        DialogHelper.ShowToast(
+            LocalizationManager.Instance.GetString("Dialog.Tip", "提示"),
+            LocalizationManager.Instance.GetString("SettingsPage.OnSelectedLanguageChanged", "部分文本需要重启后更新"),
+            InfoBarSeverity.Warning);
     }
 
     [ObservableProperty]
@@ -269,7 +277,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
     private string _adbVersion = "Unknown";
 
     [ObservableProperty]
-    private string _appVersion = "0.0.6-a";
+    private string _appVersion = "0.0.6";
 
     [RelayCommand]
     private void CheckForUpdates()

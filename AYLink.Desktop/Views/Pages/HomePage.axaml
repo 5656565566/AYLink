@@ -5,10 +5,15 @@
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
              xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             xmlns:conv="using:AYLink.Desktop.Converters"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AYLink.Desktop.Views.Pages.HomePage"
              x:DataType="vm:HomePageViewModel"
              Background="Transparent">
+
+    <UserControl.Resources>
+        <conv:ConnectionTypeToIconConverter x:Key="ConnectionTypeToIconConverter"/>
+    </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,*">
 
@@ -155,8 +160,7 @@
 
                                 <!-- 连接方式列 -->
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                    <!-- TODO: 根据 ConnectionType 动态切换图标（WiFi→Wifi4 / USB→Link） -->
-                                    <ui:SymbolIcon FontSize="18" Symbol="Wifi4"/>
+                                    <ui:SymbolIcon FontSize="18" Symbol="{Binding ConnectionType, Converter={StaticResource ConnectionTypeToIconConverter}}"/>
                                     <TextBlock Text="{Binding ConnectionType}" VerticalAlignment="Center"/>
                                 </StackPanel>
 

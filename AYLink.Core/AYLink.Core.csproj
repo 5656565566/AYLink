@@ -10,11 +10,11 @@
 
   <ItemGroup>
     <!-- ADB 客户端 -->
-    <PackageReference Include="AdvancedSharpAdbClient" Version="3.4.14" />
+    <PackageReference Include="AdvancedSharpAdbClient" Version="3.6.16" />
     <!-- FFmpeg 解码 -->
-    <PackageReference Include="FFmpeg.AutoGen" Version="7.1.1" />
+    <PackageReference Include="FFmpeg.AutoGen" Version="8.0.0.1" />
     <!-- 日志 -->
-    <PackageReference Include="NLog" Version="6.0.2" />
+    <PackageReference Include="NLog" Version="6.1.1" />
   </ItemGroup>
 
 </Project>

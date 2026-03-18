@@ -10,27 +10,12 @@
 
     <Grid RowDefinitions="*,Auto">
         <Grid Grid.Row="0">
-            <StackPanel IsVisible="{ReflectionBinding !Tabs.Count}"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Spacing="12"
-                        Opacity="0.5">
-                <ContentPresenter Content="{Binding $parent[local:TabbedPageView].EmptyStateIcon}"
-                                  HorizontalAlignment="Center"/>
-                <TextBlock Text="{ReflectionBinding EmptyStateTitle}"
-                           HorizontalAlignment="Center"
-                           Theme="{StaticResource SubtitleTextBlockStyle}"/>
-                <TextBlock Text="{ReflectionBinding EmptyStateDescription}"
-                           HorizontalAlignment="Center"
-                           Theme="{StaticResource BodyTextBlockStyle}"/>
-            </StackPanel>
-
             <ui:TabView x:Name="PART_TabView"
                          TabItems="{ReflectionBinding Tabs}"
                          SelectedItem="{ReflectionBinding SelectedTab}"
-                         IsAddTabButtonVisible="{ReflectionBinding IsAddTabButtonVisible}"
+                         IsAddTabButtonVisible="False"
                          TabCloseRequested="TabView_TabCloseRequested"
-                         IsVisible="{ReflectionBinding Tabs.Count}"
+                         TabDragStarting="TabView_TabDragStarting"
                          Background="Transparent"
                          VerticalAlignment="Stretch"
                          HorizontalAlignment="Stretch">
@@ -40,7 +25,7 @@
                         <ui:TabViewItem Header="{Binding Title}"
                                         Content="{Binding}"
                                         ContentTemplate="{Binding $parent[local:TabbedPageView].TabContentTemplate}"
-                                        IsClosable="True"
+                                        IsClosable="{Binding IsClosable}"
                                         HorizontalContentAlignment="Stretch"
                                         VerticalContentAlignment="Stretch">
                             
@@ -52,6 +37,40 @@
                         
                     </DataTemplate>
                 </ui:TabView.TabItemTemplate>
+            </ui:TabView>
+
+            <!-- 空标签页占位：作为独立的 TabView 覆盖在上方 仅当无功能标签页时显示 -->
+            <ui:TabView x:Name="PART_EmptyTabView"
+                         IsVisible="False"
+                         Background="Transparent"
+                         VerticalAlignment="Stretch"
+                         HorizontalAlignment="Stretch"
+                         IsAddTabButtonVisible="False"
+                         CanReorderTabs="False">
+                <ui:TabViewItem x:Name="PART_EmptyTabItem"
+                                Header="{Binding $parent[local:TabbedPageView].EmptyTabTitle}"
+                                IsClosable="False"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Stretch">
+                    <ui:TabViewItem.Background>
+                        <SolidColorBrush Color="{DynamicResource SolidBackgroundFillColorBase}" Opacity="0.85"/>
+                    </ui:TabViewItem.Background>
+                    <ui:TabViewItem.Content>
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12"
+                                    Opacity="0.5">
+                            <ContentPresenter Content="{Binding $parent[local:TabbedPageView].EmptyStateIcon}"
+                                              HorizontalAlignment="Center"/>
+                            <TextBlock Text="{ReflectionBinding EmptyStateTitle}"
+                                       HorizontalAlignment="Center"
+                                       Theme="{StaticResource SubtitleTextBlockStyle}"/>
+                            <TextBlock Text="{ReflectionBinding EmptyStateDescription}"
+                                       HorizontalAlignment="Center"
+                                       Theme="{StaticResource BodyTextBlockStyle}"/>
+                        </StackPanel>
+                    </ui:TabViewItem.Content>
+                </ui:TabViewItem>
             </ui:TabView>
         </Grid>
 

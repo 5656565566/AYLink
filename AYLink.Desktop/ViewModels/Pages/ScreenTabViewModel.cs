@@ -119,38 +119,41 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             // 订阅视频帧解码事件
             _scrcpyClient.OnVideoFrameDecoded += (width, height, bgraDataPtr, rowBytes) =>
             {
-                if (_videoImage != null)
+                // 在回调中检查 _disposed 防止访问已释放的内存导致 AccessViolationException
+                if (_disposed || _videoImage == null) return;
+
+                Dispatcher.UIThread.Post(() =>
                 {
-                    Dispatcher.UIThread.Post(() =>
+                    // 再次检查 - Post 到 UI 线程执行时可能已经被 Dispose
+                    if (_disposed || _videoImage == null) return;
+
+                    try
                     {
-                        try
-                        {
-                            var bitmap = new Avalonia.Media.Imaging.WriteableBitmap(
-                                new PixelSize(width, height),
-                                new Vector(96, 96),
-                                Avalonia.Platform.PixelFormat.Bgra8888,
-                                Avalonia.Platform.AlphaFormat.Premul);
+                        var bitmap = new Avalonia.Media.Imaging.WriteableBitmap(
+                            new PixelSize(width, height),
+                            new Vector(96, 96),
+                            Avalonia.Platform.PixelFormat.Bgra8888,
+                            Avalonia.Platform.AlphaFormat.Premul);
 
-                            using (var buf = bitmap.Lock())
+                        using (var buf = bitmap.Lock())
+                        {
+                            unsafe
                             {
-                                unsafe
-                                {
-                                    Buffer.MemoryCopy(
-                                        bgraDataPtr.ToPointer(),
-                                        buf.Address.ToPointer(),
-                                        buf.RowBytes * height,
-                                        rowBytes * height);
-                                }
+                                Buffer.MemoryCopy(
+                                    bgraDataPtr.ToPointer(),
+                                    buf.Address.ToPointer(),
+                                    buf.RowBytes * height,
+                                    rowBytes * height);
                             }
+                        }
 
-                            VideoSource = bitmap;
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine($"[ScreenTab] Render frame error: {ex.Message}");
-                        }
-                    }, DispatcherPriority.Render);
-                }
+                        VideoSource = bitmap;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[ScreenTab] Render frame error: {ex.Message}");
+                    }
+                }, DispatcherPriority.Render);
             };
 
             // 订阅音频解码事件 - 将解码后的 PCM 数据推送到音频播放器

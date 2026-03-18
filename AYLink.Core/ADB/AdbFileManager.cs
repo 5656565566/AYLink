@@ -96,7 +96,7 @@ public class AdbFileManager(AdbClient client, DeviceData device)
 
         void progressAction(SyncProgressChangedEventArgs e) => progress?.Report(e.ProgressPercentage);
 
-        await service.PullAsync(remoteFilePath, stream, progressAction, cancellationToken);
+        await service.PullAsync(remoteFilePath, stream, progressAction, false, cancellationToken);
         progress?.Report(100.0);
     }
 
@@ -117,7 +117,7 @@ public class AdbFileManager(AdbClient client, DeviceData device)
 
         UnixFileStatus permissions = UnixFileStatus.DefaultFileMode;
 
-        await service.PushAsync(stream, remoteFilePath, permissions, DateTimeOffset.Now, progressAction, cancellationToken);
+        await service.PushAsync(stream, remoteFilePath, permissions, DateTimeOffset.Now, progressAction, false, cancellationToken);
         progress?.Report(100.0); // 确保最后报告100% 保证进度弹窗可以主动关闭
     }
 

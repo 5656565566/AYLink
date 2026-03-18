@@ -1,8 +1,5 @@
 using FFmpeg.AutoGen;
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 
@@ -363,7 +360,7 @@ public unsafe class VideoDecoder : IDisposable
             _swsCtx = ffmpeg.sws_getContext(
                 width, height, pix_fmt,
                 width, height, AVPixelFormat.AV_PIX_FMT_BGRA,
-                ffmpeg.SWS_BILINEAR, null, null, null);
+                (int)SwsFlags.SWS_BILINEAR, null, null, null);
 
             if (_swsCtx == null)
                 throw new InvalidOperationException("Failed to create SwsContext for frame conversion.");

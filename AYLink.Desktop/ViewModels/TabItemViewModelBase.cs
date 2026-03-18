@@ -19,6 +19,9 @@ public abstract partial class TabItemViewModelBase : ViewModelBase
     [ObservableProperty]
     private string _statusMessage = "";
 
+    [ObservableProperty]
+    private bool _isClosable = true;
+
     /// <summary>
     /// 关闭请求事件 - 由 TabbedPageViewModelBase 订阅
     /// </summary>

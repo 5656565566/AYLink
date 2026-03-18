@@ -54,6 +54,7 @@ public class ScrcpyTool(string scrcpyServerPath, string clientVersion)
                 fileMode,
                 DateTimeOffset.Now,
                 (IProgress<SyncProgressChangedEventArgs>?)null,
+                false,
                 CancellationToken.None);
         }
         catch (Exception ex)

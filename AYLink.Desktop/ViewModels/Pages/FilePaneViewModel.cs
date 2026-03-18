@@ -232,7 +232,7 @@ public partial class FilePaneViewModel : ViewModelBase
             }
             foreach (var file in dirInfo.GetFiles())
             {
-                result.Add(new FileSystemModel(file.Name, (int)file.Length, false));
+                result.Add(new FileSystemModel(file.Name, (uint)file.Length, false));
             }
 
             return result;
