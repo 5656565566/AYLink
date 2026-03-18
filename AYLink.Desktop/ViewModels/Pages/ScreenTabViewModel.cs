@@ -218,12 +218,13 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 await Task.Delay(2000);
                 bool connected = _scrcpyClient.Connect(ports);
 
-                Device.ServerOptions = null;
-
                 if (!connected)
                 {
+                    Device.ServerOptions = null;
                     throw new Exception("Failed to connect to scrcpy server.");
                 }
+
+                Device.ServerOptions = null;
 
                 if (_appName != null)
                 {
@@ -243,6 +244,18 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         catch (Exception ex)
         {
             Debug.WriteLine($"[ScreenTab] ConnectDevice failed: {ex}");
+
+            // 连接失败时清理已分配的资源
+            if (_audioStreamId >= 0)
+            {
+                _audioPlayer.StopStream(_audioStreamId);
+                _audioStreamId = -1;
+            }
+
+            _scrcpyClient?.DisConnect();
+            _scrcpyClient?.Dispose();
+            _scrcpyClient = null;
+
             var localizer = Services.Localization.LocalizationManager.Instance;
             DialogHelper.ShowToast(localizer.GetString("ScreenTab.ConnectFailed", "连接失败"), ex.Message, InfoBarSeverity.Error);
         }
