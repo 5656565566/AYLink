@@ -128,7 +128,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
     private void OpenDeviceSettings()
     {
         if (!CheckDeviceOnline()) return;
-        Navigation.NavigateTo("DeviceSetting", new DeviceSettingNavigationArgs { DeviceSerial = Device.Serial });
+        Navigation.NavigateTo("DeviceSetting", new DeviceSettingNavigationArgs { DeviceSerial = Device.Serial, DeviceName = Device.Name });
     }
 
     /// <summary>

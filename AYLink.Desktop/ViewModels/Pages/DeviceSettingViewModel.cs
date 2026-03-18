@@ -13,12 +13,16 @@ namespace AYLink.Desktop.ViewModels.Pages;
 public class DeviceSettingNavigationArgs : NavigationArgs
 {
     public string DeviceSerial { get; init; } = string.Empty;
+    public string DeviceName { get; init; } = string.Empty;
 }
 
 public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNavigationArgs>
 {
     public override string PageKey => "DeviceSetting";
     public override string Title => Services.Localization.LocalizationManager.Instance.GetString("DeviceSettingPage.Title", "设备设置");
+
+    [ObservableProperty]
+    private string _deviceName = string.Empty;
 
     [ObservableProperty]
     private DeviceConfig _deviceConfig = new();
@@ -67,6 +71,7 @@ public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNav
     protected override void OnNavigatedTo(DeviceSettingNavigationArgs args)
     {
         _deviceSerial = args.DeviceSerial;
+        DeviceName = args.DeviceName;
         LoadConfig();
     }
 
