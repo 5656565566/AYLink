@@ -72,6 +72,27 @@ public class ScrcpyClient : IDisposable
         catch (Exception ex)
         {
             Debug.WriteLine($"Connection failed: {ex.Message}");
+            
+            // 清理部分建立的连接和引用
+            _isRunning = true; // 临时设置为 true 以便 DisConnect 能够执行
+            DisConnect();
+            
+            if (_deviceModel.VideoStream != null && _videoSocket != null)
+            {
+                _deviceModel.VideoStream.Remove(_videoSocket);
+            }
+            if (_audioSocket != null && _deviceModel.AudioStream == _audioSocket)
+            {
+                _deviceModel.AudioStream = null;
+            }
+            if (_deviceModel.ControlStream != null && _controlSocket != null)
+            {
+                _deviceModel.ControlStream.Remove(_controlSocket);
+            }
+            
+            // 重新初始化 Socket 以备下次重试
+            InitializeSockets();
+            
             return false;
         }
     }

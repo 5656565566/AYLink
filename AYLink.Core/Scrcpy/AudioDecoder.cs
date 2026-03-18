@@ -278,11 +278,17 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
                 if (received == 0) throw new EndOfStreamException("Socket closed prematurely.");
                 offset += received;
             }
-            catch (SocketException)
+            catch (SocketException ex)
             {
-                break;
+                throw new EndOfStreamException($"Socket exception during receive: {ex.Message}", ex);
             }
         }
+        
+        if (offset < length)
+        {
+            throw new EndOfStreamException($"Incomplete read: expected {length} bytes, but got {offset} bytes.");
+        }
+        
         return buffer;
     }
 

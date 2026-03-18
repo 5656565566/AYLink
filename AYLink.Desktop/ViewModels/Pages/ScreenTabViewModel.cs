@@ -363,6 +363,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     {
         if (_videoImage == null) return;
 
+        // 先移除已有的事件绑定 防止重复注册
+        DetachEventHandlers();
+
         _videoImage.PointerMoved += VideoImage_PointerMoved;
         _videoImage.PointerCaptureLost += VideoImage_PointerCaptureLost;
 
