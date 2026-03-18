@@ -20,6 +20,7 @@ public sealed class UpdateService
         return client;
     }
 
+    [System.Diagnostics.CodeAnalysis.DynamicDependency(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All, typeof(GitHubReleaseInfo))]
     public async Task<GitHubReleaseInfo?> GetLatestReleaseAsync()
     {
         using var response = await HttpClient.GetAsync(LatestReleaseUri);

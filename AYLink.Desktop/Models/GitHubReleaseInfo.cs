@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json;
 
 namespace AYLink.Desktop.Models;
 
-public sealed class GitHubReleaseInfo
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+[method: JsonConstructor]
+public sealed class GitHubReleaseInfo()
 {
     [JsonProperty("tag_name")]
     public string? TagName { get; set; }
