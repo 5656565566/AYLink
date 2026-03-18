@@ -58,19 +58,19 @@
 
 			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.MaxSize, DefaultText='最大分辨率'}" Description="{i18n:Tr DeviceSettings.MaxSize_Description, DefaultText='最大分辨率，不影响屏幕比例，缩放最长的边'}">
 				<ui:SettingsExpander.Footer>
-					<TextBox MinWidth="150" Text="{Binding DeviceConfig.MaxSize}" />
+					<TextBox MinWidth="150" Text="{Binding MaxSizeInput, StringFormat={}{0}}" />
 				</ui:SettingsExpander.Footer>
 			</ui:SettingsExpander>
 
 			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.VideoBitrate, DefaultText='视频比特率'}" Description="{i18n:Tr DeviceSettings.VideoBitrate_Description, DefaultText='请求服务端使用的视频比特率 (单位: bps) 例如: 8000000 (8Mbps)'}">
 				<ui:SettingsExpander.Footer>
-					<TextBox MinWidth="150" Text="{Binding DeviceConfig.VideoBitRate}" />
+					<TextBox MinWidth="150" Text="{Binding VideoBitRateInput, StringFormat={}{0}}" />
 				</ui:SettingsExpander.Footer>
 			</ui:SettingsExpander>
 
 			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.MaxFps, DefaultText='最大帧率'}" Description="{i18n:Tr DeviceSettings.MaxFps_Description, DefaultText='请求服务端编码的最大帧率'}">
 				<ui:SettingsExpander.Footer>
-					<TextBox MinWidth="150" Text="{Binding DeviceConfig.MaxFps}" />
+					<TextBox MinWidth="150" Text="{Binding MaxFpsInput, StringFormat={}{0}}" />
 				</ui:SettingsExpander.Footer>
 			</ui:SettingsExpander>
 
@@ -87,7 +87,7 @@
 
 			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.AudioBitrate, DefaultText='音频比特率'}" Description="{i18n:Tr DeviceSettings.AudioBitrate_Description, DefaultText='请求服务端使用的音频比特率 (单位: bps) 例如: 128000 (128kbps)'}">
 				<ui:SettingsExpander.Footer>
-					<TextBox MinWidth="150" Text="{Binding DeviceConfig.AudioBitRate}" />
+					<TextBox MinWidth="150" Text="{Binding DeviceConfig.AudioBitRate, StringFormat={}{0}}" />
 				</ui:SettingsExpander.Footer>
 			</ui:SettingsExpander>
 
@@ -239,7 +239,6 @@
 
 		<!-- 悬浮返回按钮 -->
 		<Button Command="{Binding BackToHomeCommand}"
-				Content="{i18n:Tr DeviceSettings.BackToHome, DefaultText='返回'}"
 				HorizontalAlignment="Left"
 				VerticalAlignment="Top"
 				Margin="20,20,0,0"
