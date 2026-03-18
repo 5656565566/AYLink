@@ -1,0 +1,123 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:models="using:AYLink.Core.Models"
+             xmlns:views="using:AYLink.Desktop.Views"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AYLink.Desktop.Views.Pages.FilePage"
+             x:DataType="vm:FilePageViewModel">
+
+    <!-- 定义 FileTabViewModel 的 DataTemplate 作为资源 -->
+    <UserControl.Resources>
+        <DataTemplate x:Key="FileTabContentTemplate" x:DataType="vm:FileTabViewModel">
+            <Grid ColumnDefinitions="*,*">
+                <!-- 左侧面板 -->
+                <DockPanel Grid.Column="0" Margin="4">
+                    <Grid ColumnDefinitions="Auto, *, Auto" DockPanel.Dock="Top" Margin="0,0,0,4" ColumnSpacing="8">
+                        <ComboBox Grid.Column="0"
+                                  MinWidth="150"
+                                  ItemsSource="{Binding LeftPane.AvailableSources}"
+                                  SelectedItem="{Binding LeftPane.SelectedSource}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBox Grid.Column="1"
+                                 Text="{Binding LeftPane.CurrentPath}"
+                                 Watermark="/"/>
+                        <Button Grid.Column="2" Command="{Binding LeftPane.RefreshCommand}">
+                            <ui:SymbolIcon Symbol="Refresh" />
+                        </Button>
+                    </Grid>
+
+                    <Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4">
+                        <ListBox ItemsSource="{Binding LeftPane.Files}"
+                                 SelectedItem="{Binding LeftPane.SelectedFile}"
+                                 Background="Transparent"
+                                 DragDrop.AllowDrop="True">
+                            <ListBox.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxOpen, DefaultText='打开'}" Click="LeftCtxOpen_Click"/>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxCopyToRight, DefaultText='复制到右侧'}" Click="LeftCtxCopyToRight_Click"/>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxDelete, DefaultText='删除'}" Click="LeftCtxDelete_Click"/>
+                                </MenuFlyout>
+                            </ListBox.ContextFlyout>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:FileSystemModel">
+                                    <StackPanel Orientation="Horizontal" Spacing="8" Background="Transparent"
+                                                DoubleTapped="LeftItem_DoubleTapped"
+                                                PointerPressed="LeftItem_PointerPressed">
+                                        <ui:SymbolIcon Symbol="Folder" IsVisible="{Binding IsDirectory}" />
+                                        <ui:SymbolIcon Symbol="Document" IsVisible="{Binding !IsDirectory}" />
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </DockPanel>
+
+                <!-- 右侧面板 -->
+                <DockPanel Grid.Column="1" Margin="4">
+                    <Grid ColumnDefinitions="Auto, *, Auto" DockPanel.Dock="Top" Margin="0,0,0,4" ColumnSpacing="8">
+                        <ComboBox Grid.Column="0"
+                                  MinWidth="150"
+                                  ItemsSource="{Binding RightPane.AvailableSources}"
+                                  SelectedItem="{Binding RightPane.SelectedSource}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBox Grid.Column="1"
+                                 Text="{Binding RightPane.CurrentPath}"
+                                 Watermark="/"/>
+                        <Button Grid.Column="2" Command="{Binding RightPane.RefreshCommand}">
+                            <ui:SymbolIcon Symbol="Refresh"/>
+                        </Button>
+                    </Grid>
+
+                    <Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4">
+                        <ListBox ItemsSource="{Binding RightPane.Files}"
+                                 SelectedItem="{Binding RightPane.SelectedFile}"
+                                 Background="Transparent"
+                                 DragDrop.AllowDrop="True">
+                            <ListBox.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxOpen, DefaultText='打开'}" Click="RightCtxOpen_Click"/>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxCopyToLeft, DefaultText='复制到左侧'}" Click="RightCtxCopyToLeft_Click"/>
+                                    <MenuItem Header="{i18n:Tr FilePage.CtxDelete, DefaultText='删除'}" Click="RightCtxDelete_Click"/>
+                                </MenuFlyout>
+                            </ListBox.ContextFlyout>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:FileSystemModel">
+                                    <StackPanel Orientation="Horizontal" Spacing="8" Background="Transparent"
+                                                DoubleTapped="RightItem_DoubleTapped"
+                                                PointerPressed="RightItem_PointerPressed">
+                                        <ui:SymbolIcon Symbol="Folder" IsVisible="{Binding IsDirectory}"/>
+                                        <ui:SymbolIcon Symbol="Document" IsVisible="{Binding !IsDirectory}"/>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </DockPanel>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <views:TabbedPageView TabContentTemplate="{StaticResource FileTabContentTemplate}"
+                          ShowStatusBar="False">
+        <views:TabbedPageView.EmptyStateIcon>
+            <ui:SymbolIcon Symbol="Document" FontSize="64"/>
+        </views:TabbedPageView.EmptyStateIcon>
+    </views:TabbedPageView>
+</UserControl>

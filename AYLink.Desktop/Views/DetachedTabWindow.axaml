@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:vm="using:AYLink.Desktop.ViewModels"
+        xmlns:local="using:AYLink.Desktop.Views"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="AYLink.Desktop.Views.DetachedTabWindow"
+        CanResize="True"
+        SizeToContent="Manual"
+        Icon="avares://AYLink.Desktop/Assets/avalonia-logo.ico"
+        Title="AYLink"
+        Width="800" Height="600"
+        ExtendClientAreaToDecorationsHint="True">
+    
+    <Grid>
+        <!-- 背景图（与主窗口同步） -->
+        <Image x:Name="GlobalBackgroundImage"
+               Stretch="UniformToFill"
+               IsVisible="False"
+               IsHitTestVisible="False" />
+
+        <!-- 遮罩层 -->
+        <Border x:Name="BackgroundMask"
+                Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                IsHitTestVisible="False" />
+        
+        <Grid RowDefinitions="*">
+            <ui:TabView x:Name="PART_TabView"
+                         TabCloseRequested="TabView_TabCloseRequested"
+                         Background="Transparent"
+                         VerticalAlignment="Stretch"
+                         HorizontalAlignment="Stretch"
+                         CanReorderTabs="True"
+                         IsAddTabButtonVisible="False">
+                <ui:TabView.TabItemTemplate>
+                    <DataTemplate x:DataType="vm:TabItemViewModelBase">
+                        <ui:TabViewItem Header="{ReflectionBinding Title}"
+                                        Content="{ReflectionBinding}"
+                                        ContentTemplate="{Binding $parent[local:DetachedTabWindow].DefaultContentTemplate}"
+                                        IsClosable="True"
+                                        HorizontalContentAlignment="Stretch"
+                                        VerticalContentAlignment="Stretch">
+                            <ui:TabViewItem.Background>
+                                <SolidColorBrush Color="{DynamicResource SolidBackgroundFillColorBase}" Opacity="0.85"/>
+                            </ui:TabViewItem.Background>
+                        </ui:TabViewItem>
+                    </DataTemplate>
+                </ui:TabView.TabItemTemplate>
+            </ui:TabView>
+        </Grid>
+    </Grid>
+</Window>

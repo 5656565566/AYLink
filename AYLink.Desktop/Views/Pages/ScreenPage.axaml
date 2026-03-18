@@ -1,0 +1,128 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:behaviors="using:AYLink.Desktop.Behaviors"
+             xmlns:views="using:AYLink.Desktop.Views"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AYLink.Desktop.Views.Pages.ScreenPage"
+             x:DataType="vm:ScreenPageViewModel">
+
+    <!-- 投屏标签页内容模板 -->
+    <UserControl.Resources>
+        <DataTemplate x:Key="ScreenTabContentTemplate" x:DataType="vm:ScreenTabViewModel">
+            <Grid ColumnDefinitions="*,Auto"
+                  VerticalAlignment="Stretch"
+                  HorizontalAlignment="Stretch">
+                <!-- 串流区域 -->
+                <Border Grid.Column="0">
+                    <Grid>
+                        <!-- 视频内容 -->
+                        <Viewbox Stretch="Uniform">
+                            <Grid>
+                                <!-- 视频流 -->
+                                <Viewbox Stretch="Uniform">
+                                    <Grid>
+                                        <Image x:Name="VideoImage"
+                                               Source="{Binding VideoSource}"
+                                               behaviors:VideoImageBehavior.IsAutoAttach="True"/>
+                                    </Grid>
+                                </Viewbox>
+                            </Grid>
+                        </Viewbox>
+
+                        <!-- 展开侧边栏按钮 -->
+                        <Button Width="40" Height="40"
+                                ToolTip.Tip="{i18n:Tr ScreenPage.ExpandSidebar, DefaultText='展开侧边栏'}"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Margin="10"
+                                Opacity="0.6"
+                                IsVisible="{Binding !IsSidebarVisible}"
+                                Command="{Binding ToggleSidebarCommand}">
+                            <ui:SymbolIcon Symbol="{x:Static ui:Symbol.ChevronLeft}"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- 侧边栏 -->
+                <Grid Grid.Column="1" IsVisible="{Binding IsSidebarVisible}" VerticalAlignment="Stretch">
+                    <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1,0,0,0"
+                            VerticalAlignment="Stretch">
+                        <StackPanel VerticalAlignment="Center"
+                                    HorizontalAlignment="Right"
+                                    Margin="4"
+                                    Spacing="4">
+
+                            <!-- 收起按钮 -->
+                            <Button Width="40" Height="40"
+                                    ToolTip.Tip="{i18n:Tr ScreenPage.CollapseSidebar, DefaultText='收起侧边栏'}"
+                                    Command="{Binding ToggleSidebarCommand}">
+                                <ui:SymbolIcon Symbol="{x:Static ui:Symbol.ChevronRight}"/>
+                            </Button>
+
+                            <!-- 控制按钮 -->
+                            <Button Width="40" Height="40" 
+                                    ToolTip.Tip="{i18n:Tr ScreenPage.Power, DefaultText='电源'}"
+                                    Command="{Binding SendKeyActionCommand}" CommandParameter="Power">
+                                <ui:SymbolIcon Symbol="{x:Static ui:Symbol.Play}"/>
+                            </Button>
+                            <Button Width="40" Height="40" 
+                                    ToolTip.Tip="{i18n:Tr ScreenPage.VolumeUp, DefaultText='音量+'}"
+                                    Command="{Binding SendKeyActionCommand}" CommandParameter="VolumeUp">
+                                <ui:SymbolIcon Symbol="{x:Static ui:Symbol.Add}"/>
+                            </Button>
+                            <Button Width="40" Height="40" 
+                                    ToolTip.Tip="{i18n:Tr ScreenPage.VolumeDown, DefaultText='音量-'}"
+                                    Command="{Binding SendKeyActionCommand}" CommandParameter="VolumeDown">
+                                <ui:SymbolIcon Symbol="{x:Static ui:Symbol.Remove}"/>
+                            </Button>
+                            <Button Width="40" Height="40" 
+                                    ToolTip.Tip="{i18n:Tr ScreenPage.Mute, DefaultText='静音'}"
+                                    Command="{Binding SendKeyActionCommand}" CommandParameter="Mute">
+                                <ui:SymbolIcon Symbol="{x:Static ui:Symbol.Mute}"/>
+                            </Button>
+                            <Button Width="40" Height="40" 
+                                    ToolTip.Tip="{i18n:Tr ScreenPage.ScreenOn, DefaultText='亮屏'}"
+                                    Command="{Binding SendKeyActionCommand}" CommandParameter="ScreenOn">
+                                <ui:SymbolIcon Symbol="{x:Static ui:Symbol.Star}"/>
+                            </Button>
+                            <Button Width="40" Height="40" 
+                                    ToolTip.Tip="{i18n:Tr ScreenPage.ScreenOff, DefaultText='熄屏'}"
+                                    Command="{Binding SendKeyActionCommand}" CommandParameter="ScreenOff">
+                                <ui:SymbolIcon Symbol="{x:Static ui:Symbol.StarOff}"/>
+                            </Button>
+                            <Button Width="40" Height="40" 
+                                    ToolTip.Tip="{i18n:Tr ScreenPage.Back, DefaultText='返回'}"
+                                    Command="{Binding SendKeyActionCommand}" CommandParameter="Back">
+                                <ui:SymbolIcon Symbol="{x:Static ui:Symbol.Back}"/>
+                            </Button>
+                            <Button Width="40" Height="40" 
+                                    ToolTip.Tip="{i18n:Tr ScreenPage.Home, DefaultText='主页'}"
+                                    Command="{Binding SendKeyActionCommand}" CommandParameter="Home">
+                                <ui:SymbolIcon Symbol="{x:Static ui:Symbol.Home}"/>
+                            </Button>
+                            <Button Width="40" Height="40" 
+                                    ToolTip.Tip="{i18n:Tr ScreenPage.Menu, DefaultText='菜单'}"
+                                    Command="{Binding SendKeyActionCommand}" CommandParameter="Menu">
+                                <ui:SymbolIcon Symbol="{x:Static ui:Symbol.List}"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <views:TabbedPageView TabContentTemplate="{StaticResource ScreenTabContentTemplate}"
+                          ShowStatusBar="False">
+        <views:TabbedPageView.EmptyStateIcon>
+            <ui:SymbolIcon Symbol="Play" FontSize="64"/>
+        </views:TabbedPageView.EmptyStateIcon>
+    </views:TabbedPageView>
+</UserControl>

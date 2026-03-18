@@ -1,0 +1,71 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:vm="using:AYLink.Desktop.ViewModels"
+        xmlns:views="using:AYLink.Desktop.Views"
+        xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="AYLink.Desktop.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="avares://AYLink.Desktop/Assets/avalonia-logo.ico"
+        Title="{i18n:Tr MainWindow.Title, DefaultText='安易连'}"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True">
+
+    <Grid>
+        <!-- 全局背景图 -->
+        <Image x:Name="GlobalBackgroundImage" Stretch="UniformToFill" IsVisible="False">
+            <Image.Effect>
+                <BlurEffect Radius="15" />
+            </Image.Effect>
+        </Image>
+
+        <!-- 半透明遮罩层 用于降低背景图亮度/提供默认底色 保证文字可读性 -->
+        <Border x:Name="BackgroundMask" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.75" IsHitTestVisible="False" />
+
+        <ui:NavigationView x:Name="NavView"
+                           PaneDisplayMode="Left"
+                           SelectionChanged="NavView_OnSelectionChanged"
+                           IsSettingsVisible="True"
+                           Background="Transparent">
+
+            <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavHome, DefaultText='首页'}" Tag="Home" Margin="1.1">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Home}"/>
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
+                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavFile, DefaultText='文件管理'}" Tag="File" Margin="1.1">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Folder}"/>
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
+                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavScreen, DefaultText='投屏'}" Tag="Screen" Margin="1.1">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Play}"/>
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
+                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavApp, DefaultText='应用管理'}" Tag="App" Margin="1.1">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.AllApps}"/>
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
+                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavShell, DefaultText='终端'}" Tag="Shell" Margin="1.1">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Code}"/>
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
+            </ui:NavigationView.MenuItems>
+
+            <!-- 绑定 ViewModel 的 CurrentPage 通过 App.axaml 中的 DataTemplate 自动匹配 View -->
+            <ContentControl Content="{Binding CurrentPage}"/>
+
+        </ui:NavigationView>
+
+        <!-- 消息弹出层 覆盖在最上层 -->
+        <views:ToastHost/>
+    </Grid>
+</Window>

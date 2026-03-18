@@ -3,7 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36327.8
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AYLink", "AYLink\AYLink.csproj", "{E43A58EE-9406-43B9-9DDD-BB169F7500C8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AYLink.Desktop", "AYLink.Desktop\AYLink.Desktop.csproj", "{7627B914-8A26-49C4-A33D-C6676D791AA4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AYLink.Core", "AYLink.Core\AYLink.Core.csproj", "{AF605427-B23B-4FC1-AE8A-D976FA5B856D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AYLink.Agent", "AYLink.Agent\AYLink.Agent.csproj", "{2CDD832D-6278-4BA1-B679-7C439EE72262}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AYLink.Controls", "AYLink.Controls\AYLink.Controls.csproj", "{EB250F57-1960-5BB4-D7A9-E003A65415F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +17,22 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E43A58EE-9406-43B9-9DDD-BB169F7500C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E43A58EE-9406-43B9-9DDD-BB169F7500C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E43A58EE-9406-43B9-9DDD-BB169F7500C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E43A58EE-9406-43B9-9DDD-BB169F7500C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7627B914-8A26-49C4-A33D-C6676D791AA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7627B914-8A26-49C4-A33D-C6676D791AA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7627B914-8A26-49C4-A33D-C6676D791AA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7627B914-8A26-49C4-A33D-C6676D791AA4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF605427-B23B-4FC1-AE8A-D976FA5B856D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF605427-B23B-4FC1-AE8A-D976FA5B856D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF605427-B23B-4FC1-AE8A-D976FA5B856D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF605427-B23B-4FC1-AE8A-D976FA5B856D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2CDD832D-6278-4BA1-B679-7C439EE72262}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CDD832D-6278-4BA1-B679-7C439EE72262}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CDD832D-6278-4BA1-B679-7C439EE72262}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CDD832D-6278-4BA1-B679-7C439EE72262}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB250F57-1960-5BB4-D7A9-E003A65415F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB250F57-1960-5BB4-D7A9-E003A65415F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB250F57-1960-5BB4-D7A9-E003A65415F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB250F57-1960-5BB4-D7A9-E003A65415F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

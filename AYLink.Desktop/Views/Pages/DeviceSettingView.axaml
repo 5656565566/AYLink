@@ -1,0 +1,267 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="AYLink.Desktop.Views.Pages.DeviceSettingView"
+             x:DataType="vm:DeviceSettingViewModel">
+
+	<UserControl.Styles>
+		<Style Selector="TextBlock.h2">
+			<Setter Property="FontSize" Value="18"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="Margin" Value="0,20,0,10"/>
+		</Style>
+	</UserControl.Styles>
+
+	<Grid RowDefinitions="Auto,*">
+		<!-- 固定顶部区域：返回按钮 + 设备名称 -->
+		<Border Grid.Row="0"
+				Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+				BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+				BorderThickness="0,0,0,1"
+				Padding="16,6">
+			<Grid ColumnDefinitions="Auto,*">
+				<Button Grid.Column="0"
+						Command="{Binding BackToHomeCommand}"
+						Padding="8,6"
+						VerticalAlignment="Center">
+					<StackPanel Orientation="Horizontal" Spacing="8">
+						<ui:SymbolIcon Symbol="Back" FontSize="16"/>
+						<TextBlock Text="{i18n:Tr DeviceSettings.BackToHome, DefaultText='返回'}" VerticalAlignment="Center"/>
+					</StackPanel>
+				</Button>
+				<TextBlock Grid.Column="1"
+						   Text="{Binding DeviceName}"
+						   FontSize="18"
+						   FontWeight="SemiBold"
+						   VerticalAlignment="Center"
+						   HorizontalAlignment="Center"
+						   Margin="0,0,60,0"/>
+			</Grid>
+		</Border>
+
+		<ScrollViewer Grid.Row="1">
+			<StackPanel Margin="20,20,20,20" Spacing="4">
+
+			<!-- 主要设置 -->
+			<TextBlock Text="{i18n:Tr DeviceSettings.Main, DefaultText='主要设置'}" Classes="h2" Margin="0,0,0,10"/>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.EnableVideo, DefaultText='启用视频'}" Description="{i18n:Tr DeviceSettings.EnableVideo_Description, DefaultText='请求服务端发送视频流 关闭时不显示画面'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.Video}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.EnableAudio, DefaultText='启用音频'}" Description="{i18n:Tr DeviceSettings.EnableAudio_Description, DefaultText='请求服务端发送音频流 需要Android 11+ 关闭时不捕获音频'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.Audio}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.EnableControl, DefaultText='启用设备控制'}" Description="{i18n:Tr DeviceSettings.EnableControl_Description, DefaultText='请求服务端监听并处理控制事件（如点击、按键）关闭则为纯观看模式'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.Control}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<!-- 流媒体质量 -->
+			<TextBlock Text="{i18n:Tr DeviceSettings.StreamQuality, DefaultText='流媒体质量'}" Classes="h2"/>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.VideoCodec, DefaultText='视频编解码器'}" Description="{i18n:Tr DeviceSettings.VideoCodec_Description, DefaultText='请求服务端使用的视频编解码器'}">
+				<ui:SettingsExpander.Footer>
+					<ComboBox MinWidth="150" SelectedItem="{Binding DeviceConfig.VideoCodec}">
+						<system:String>h264</system:String>
+						<system:String>h265</system:String>
+						<system:String>av1</system:String>
+					</ComboBox>
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.MaxSize, DefaultText='最大分辨率'}" Description="{i18n:Tr DeviceSettings.MaxSize_Description, DefaultText='最大分辨率，不影响屏幕比例，缩放最长的边'}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding MaxSizeInput, StringFormat={}{0}}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.VideoBitrate, DefaultText='视频比特率'}" Description="{i18n:Tr DeviceSettings.VideoBitrate_Description, DefaultText='请求服务端使用的视频比特率 (单位: bps) 例如: 8000000 (8Mbps)'}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding VideoBitRateInput, StringFormat={}{0}}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.MaxFps, DefaultText='最大帧率'}" Description="{i18n:Tr DeviceSettings.MaxFps_Description, DefaultText='请求服务端编码的最大帧率'}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding MaxFpsInput, StringFormat={}{0}}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.AudioCodec, DefaultText='音频编解码器'}" Description="{i18n:Tr DeviceSettings.AudioCodec_Description, DefaultText='请求服务端使用的音频编解码器'}">
+				<ui:SettingsExpander.Footer>
+					<ComboBox MinWidth="150" SelectedItem="{Binding DeviceConfig.AudioCodec}">
+						<system:String>opus</system:String>
+						<system:String>aac</system:String>
+						<system:String>flac</system:String>
+						<system:String>raw</system:String>
+					</ComboBox>
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.AudioBitrate, DefaultText='音频比特率'}" Description="{i18n:Tr DeviceSettings.AudioBitrate_Description, DefaultText='请求服务端使用的音频比特率 (单位: bps) 例如: 128000 (128kbps)'}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding DeviceConfig.AudioBitRate, StringFormat={}{0}}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<!-- 输入源 -->
+			<TextBlock Text="{i18n:Tr DeviceSettings.InputSource, DefaultText='输入源'}" Classes="h2"/>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.VideoSource, DefaultText='视频源'}" Description="{i18n:Tr DeviceSettings.VideoSource_Description, DefaultText='请求视频源，\'display\'表示屏幕内容，\'camera\'表示摄像头'}">
+				<ui:SettingsExpander.Footer>
+					<ComboBox MinWidth="150" SelectedItem="{Binding DeviceConfig.VideoSource}">
+						<system:String>display</system:String>
+						<system:String>camera</system:String>
+					</ComboBox>
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.AudioSource, DefaultText='音频源'}" Description="{i18n:Tr DeviceSettings.AudioSource_Description, DefaultText='请求音频源，\'output\'表示设备内部播放的声音，\'mic\'表示麦克风'}">
+				<ui:SettingsExpander.Footer>
+					<ComboBox MinWidth="150" SelectedItem="{Binding DeviceConfig.AudioSource}">
+						<system:String>output</system:String>
+						<system:String>mic</system:String>
+					</ComboBox>
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<!-- 电源与交互 -->
+			<TextBlock Text="{i18n:Tr DeviceSettings.PowerAndInteraction, DefaultText='电源与交互'}" Classes="h2"/>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.StayAwake, DefaultText='保持设备唤醒'}" Description="{i18n:Tr DeviceSettings.StayAwake_Description, DefaultText='请求服务端持有一个Wakelock，防止设备在连接期间自动休眠'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.StayAwake}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.ShowTouches, DefaultText='显示触摸操作'}" Description="{i18n:Tr DeviceSettings.ShowTouches_Description, DefaultText='请求服务端开启“显示触摸操作”的开发者选项功能'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.ShowTouches}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.PowerOn, DefaultText='连接时点亮屏幕'}" Description="{i18n:Tr DeviceSettings.PowerOn_Description, DefaultText='启动时，请求服务端唤醒并点亮屏幕'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.PowerOn}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.PowerOffOnClose, DefaultText='断开时关闭屏幕'}" Description="{i18n:Tr DeviceSettings.PowerOffOnClose_Description, DefaultText='客户端断开连接时，请求服务端执行关闭屏幕操作'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.PowerOffOnClose}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.ScreenOffTimeout, DefaultText='无操作自动息屏'}" Description="{i18n:Tr DeviceSettings.ScreenOffTimeout_Description, DefaultText='设置一个延迟（毫秒），如果客户端在这段时间内没有交互，则关闭设备屏幕，-1表示禁用'}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding DeviceConfig.ScreenOffTimeout}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<!-- 摄像头专属设置 -->
+			<TextBlock Text="{i18n:Tr DeviceSettings.CameraSettings, DefaultText='摄像头专属设置'}" Classes="h2"/>
+			<TextBlock Text="{i18n:Tr DeviceSettings.CameraSettings_Hint, DefaultText='当视频源为摄像头时生效'}" FontSize="12" Opacity="0.7" Margin="0,-5,0,10"/>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.CameraFacing, DefaultText='摄像头朝向'}" Description="{i18n:Tr DeviceSettings.CameraFacing_Description, DefaultText='选择摄像头朝向'}">
+				<ui:SettingsExpander.Footer>
+					<ComboBox MinWidth="150" SelectedItem="{Binding DeviceConfig.CameraFacing}">
+						<system:String>front</system:String>
+						<system:String>back</system:String>
+						<system:String>external</system:String>
+					</ComboBox>
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.CameraId, DefaultText='摄像头ID'}" Description="{i18n:Tr DeviceSettings.CameraId_Description, DefaultText='要使用的摄像头ID'}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding DeviceConfig.CameraId}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.CameraSize, DefaultText='摄像头分辨率'}" Description="{i18n:Tr DeviceSettings.CameraSize_Description, DefaultText='期望的摄像头分辨率'}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding DeviceConfig.CameraSize}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.CameraFps, DefaultText='摄像头帧率'}" Description="{i18n:Tr DeviceSettings.CameraFps_Description, DefaultText='期望的摄像头帧率'}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding DeviceConfig.CameraFps}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.CameraHighSpeed, DefaultText='摄像头高速模式'}" Description="{i18n:Tr DeviceSettings.CameraHighSpeed_Description, DefaultText='是否启用摄像头高速模式'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.CameraHighSpeed}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<!-- 高级设置 -->
+			<TextBlock Text="{i18n:Tr DeviceSettings.Advanced, DefaultText='高级设置'}" Classes="h2"/>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.AudioDup, DefaultText='音频转发到扬声器'}" Description="{i18n:Tr DeviceSettings.AudioDup_Description, DefaultText='请求服务端在捕获音频的同时，也将其路由到设备扬声器播放'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.AudioDup}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.VdDestroyContent, DefaultText='虚拟显示器关闭行为'}" Description="{i18n:Tr DeviceSettings.VdDestroyContent_Description, DefaultText='销毁内容'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.VdDestroyContent}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.VdSystemDecorations, DefaultText='虚拟显示器启用系统主题'}" Description="{i18n:Tr DeviceSettings.VdSystemDecorations_Description, DefaultText='系统主题'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.VdSystemDecorations}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.NewDisplay, DefaultText='新的显示器参数'}" Description="{i18n:Tr DeviceSettings.NewDisplay_Description, DefaultText='创建显示器'}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding DeviceConfig.NewDisplay}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.VideoEncoderName, DefaultText='指定视频编码器'}" Description="{i18n:Tr DeviceSettings.VideoEncoderName_Description, DefaultText='请求服务端使用的特定视频编码器名称，如果设置，将忽略VideoCodec'}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding DeviceConfig.VideoEncoder}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.AudioEncoderName, DefaultText='指定音频编码器'}" Description="{i18n:Tr DeviceSettings.AudioEncoderName_Description, DefaultText='请求服务端使用的特定音频编码器名称，如果设置，将忽略AudioCodec'}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding DeviceConfig.AudioEncoder}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.CodecOptions, DefaultText='编码器高级选项'}" Description="{i18n:Tr DeviceSettings.CodecOptions_Description, DefaultText='为音视频编码器设置高级键值对选项，格式: \'key:type=value,key2:type=value...\''}">
+				<ui:SettingsExpander.Footer>
+					<TextBox MinWidth="150" Text="{Binding DeviceConfig.CodecOptions}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
+				<Grid Margin="0,20,0,20">
+					<!-- 恢复默认设置 -->
+					<Button Command="{Binding ResetToDefaultsCommand}"
+							Content="{i18n:Tr DeviceSettings.ResetToDefaults, DefaultText='恢复默认设置'}"
+							HorizontalAlignment="Right"/>
+				</Grid>
+			</StackPanel>
+		</ScrollViewer>
+
+	</Grid>
+</UserControl>

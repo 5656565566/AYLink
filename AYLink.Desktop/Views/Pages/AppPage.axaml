@@ -1,0 +1,154 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:models="using:AYLink.Core.Models"
+             xmlns:views="using:AYLink.Desktop.Views"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AYLink.Desktop.Views.Pages.AppPage"
+             x:DataType="vm:AppPageViewModel">
+
+    <UserControl.Resources>
+        <DataTemplate x:Key="AppTabContentTemplate" x:DataType="vm:AppTabViewModel">
+            <Grid RowDefinitions="Auto,*">
+                <!-- 顶部 CommandBar -->
+                <ui:CommandBar Grid.Row="0"
+                               DefaultLabelPosition="Right"
+                               Background="Transparent">
+
+                    <!-- 左侧：搜索 -->
+                    <ui:CommandBar.Content>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="8,0,0,0">
+                            <ui:CommandBarButton Label="{i18n:Tr AppPage.Search, DefaultText='搜索'}"
+                                                 Command="{Binding SearchCommand}">
+                                <ui:CommandBarButton.IconSource>
+                                    <ui:SymbolIconSource Symbol="Find"/>
+                                </ui:CommandBarButton.IconSource>
+                            </ui:CommandBarButton>
+
+                            <TextBox Text="{Binding SearchText}"
+                                     Watermark="{i18n:Tr AppPage.SearchWatermark, DefaultText='搜索应用名称或包名...'}"
+                                     Width="250"
+                                     VerticalAlignment="Center"
+                                     Margin="8,0,0,0"
+                                     KeyDown="SearchBox_KeyDown"/>
+                        </StackPanel>
+                    </ui:CommandBar.Content>
+
+                    <!-- 右侧：安装、刷新 -->
+                    <ui:CommandBar.PrimaryCommands>
+                        <ui:CommandBarButton Label="{i18n:Tr AppPage.InstallApp, DefaultText='安装 APK'}"
+                                             Click="InstallAppBtn_Click">
+                            <ui:CommandBarButton.IconSource>
+                                <ui:SymbolIconSource Symbol="Add"/>
+                            </ui:CommandBarButton.IconSource>
+                        </ui:CommandBarButton>
+
+                        <ui:CommandBarSeparator/>
+
+                        <ui:CommandBarButton Label="{i18n:Tr AppPage.RefreshApps, DefaultText='刷新'}"
+                                             Command="{Binding LoadAppsCommand}">
+                            <ui:CommandBarButton.IconSource>
+                                <ui:SymbolIconSource Symbol="Refresh"/>
+                            </ui:CommandBarButton.IconSource>
+                        </ui:CommandBarButton>
+                    </ui:CommandBar.PrimaryCommands>
+                </ui:CommandBar>
+
+                <!-- 主内容区域：始终显示表头 + DataGrid -->
+                <Border Grid.Row="1"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Margin="12,12,12,0"
+                        Padding="0">
+                    <Grid RowDefinitions="Auto,*">
+                        <!-- 表头 -->
+                        <Border Grid.Row="0"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="0,0,0,1"
+                                Padding="12,8">
+                            <Grid ColumnDefinitions="*,*">
+                                <TextBlock Grid.Column="0" Text="{i18n:Tr AppPage.AppNameHeader, DefaultText='应用名称'}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                                <TextBlock Grid.Column="1" Text="{i18n:Tr AppPage.PackageNameHeader, DefaultText='包名'}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- 加载中进度条 -->
+                        <ProgressBar Grid.Row="0"
+                                     IsIndeterminate="True"
+                                     IsVisible="{Binding IsLoading}"
+                                     VerticalAlignment="Bottom"
+                                     Height="2"
+                                     Margin="0"/>
+
+                        <!-- 应用列表 -->
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding Apps}"
+                                  SelectedItem="{Binding SelectedApp}"
+                                  AutoGenerateColumns="False"
+                                  CanUserSortColumns="True"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="None"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Binding="{Binding PackageName}" Width="*"/>
+                            </DataGrid.Columns>
+
+                            <DataGrid.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxLaunch, DefaultText='启动应用'}" x:Name="CtxLaunch" Click="CtxLaunch_Click"/>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxNewLaunch, DefaultText='新建屏幕启动'}" x:Name="CtxNewLaunch" Click="CtxNewLaunch_Click"/>
+                                    <Separator/>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxDownload, DefaultText='下载 APK 到本地'}" x:Name="CtxDownload" Click="CtxDownload_Click"/>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxCopyPackage, DefaultText='复制包名'}" x:Name="CtxCopyPackage" Click="CtxCopyPackage_Click"/>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxUninstall, DefaultText='卸载'}" x:Name="CtxUninstall" Click="CtxUninstall_Click"/>
+                                    <MenuItem Header="{i18n:Tr AppPage.CtxAppInfo, DefaultText='应用信息'}" x:Name="CtxAppInfo" Click="CtxAppInfo_Click"/>
+                                </MenuFlyout>
+                            </DataGrid.ContextFlyout>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <!-- 状态栏模板 -->
+        <DataTemplate x:Key="AppStatusBarTemplate" x:DataType="vm:AppTabViewModel">
+            <!-- 统一在右侧显示 靠右对齐 -->
+            <StackPanel Orientation="Horizontal"
+                        Spacing="16"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center">
+                
+                <!-- 状态提示 -->
+                <TextBlock Text="{Binding StatusMessage}"
+                           IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                           Theme="{StaticResource CaptionTextBlockStyle}"
+                           Opacity="0.6"/>
+                           
+                <!-- 应用数量 -->
+                <TextBlock Text="{Binding AppCountText}"
+                           IsVisible="{Binding AppCountText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                           Theme="{StaticResource CaptionTextBlockStyle}"
+                           Opacity="0.6"/>
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <views:TabbedPageView TabContentTemplate="{StaticResource AppTabContentTemplate}"
+                          StatusBarTemplate="{StaticResource AppStatusBarTemplate}"
+                          ShowStatusBar="True">
+        <views:TabbedPageView.EmptyStateIcon>
+            <ui:SymbolIcon Symbol="AllApps" FontSize="64"/>
+        </views:TabbedPageView.EmptyStateIcon>
+    </views:TabbedPageView>
+</UserControl>
