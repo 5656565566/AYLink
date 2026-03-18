@@ -2,11 +2,22 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
+
+    <AssemblyTitle>安易连</AssemblyTitle>
+    <AssemblyProduct>安易连</AssemblyProduct>
+    <AssemblyName>AYLink</AssemblyName>
+
+    <Authors>5656565566</Authors>
+    <Copyright>Copyright © 5656565566 &lt;2393963330@qq.com&gt; 2025-2026</Copyright>
+
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>logo.ico</ApplicationIcon>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;win-arm64;osx-arm64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
@@ -51,5 +62,15 @@
     <Content Update="Language\template.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
+
   </ItemGroup>
+    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <SelfContained>true</SelfContained>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>copyused</TrimMode>
+    <ILLinkTreatWarningsAsErrors>false</ILLinkTreatWarningsAsErrors>
+    <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+  </PropertyGroup>
 </Project>
