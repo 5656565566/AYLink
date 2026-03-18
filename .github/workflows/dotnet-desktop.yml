@@ -37,13 +37,44 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       - name: Restore dependencies
-        run: dotnet restore AYLink/AYLink.csproj
+        run: dotnet restore AYLink.Desktop/AYLink.Desktop.csproj
 
       - name: Build and publish
-        run: dotnet publish AYLink/AYLink.csproj -c Release -r ${{ matrix.rid }} -o ./publish_output
+        run: dotnet publish AYLink.Desktop/AYLink.Desktop.csproj -c Release -r ${{ matrix.rid }} -o ./publish_output
+
+      - name: Download scrcpy-server
+        run: |
+          mkdir -p ./publish_output/Scrcpy
+          curl -L -o ./publish_output/Scrcpy/scrcpy-server https://github.com/Genymobile/scrcpy/releases/download/v3.3.4/scrcpy-server-v3.3.4
+        shell: bash
+
+      - name: Download and extract FFmpeg (Windows x64)
+        if: matrix.rid == 'win-x64'
+        run: |
+          curl -L -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.0-latest-win64-lgpl-shared-8.0.zip
+          7z e ffmpeg.zip -o./publish_output -r swscale-9.dll swresample-6.dll avutil-60.dll avcodec-62.dll
+          rm ffmpeg.zip
+        shell: bash
+
+      - name: Download and extract FFmpeg (Windows arm64)
+        if: matrix.rid == 'win-arm64'
+        run: |
+          curl -L -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.0-latest-winarm64-lgpl-shared-8.0.zip
+          7z e ffmpeg.zip -o./publish_output -r swscale-9.dll swresample-6.dll avutil-60.dll avcodec-62.dll
+          rm ffmpeg.zip
+        shell: bash
+
+      - name: Download and extract platform-tools (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          curl -L -o platform-tools.zip "https://dl.google.com/android/repository/platform-tools-latest-windows.zip?hl=zh-cn"
+          mkdir -p ./publish_output/ADB
+          7z e platform-tools.zip -o./publish_output/ADB platform-tools/adb.exe platform-tools/AdbWinApi.dll platform-tools/AdbWinUsbApi.dll
+          rm platform-tools.zip
+        shell: bash
 
       - name: Archive production artifacts (Windows)
         if: runner.os == 'Windows'
