@@ -1,8 +1,8 @@
 using System;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
 using AYLink.Desktop.Models;
+using Newtonsoft.Json;
 
 namespace AYLink.Desktop.Services;
 
@@ -25,7 +25,7 @@ public sealed class UpdateService
         using var response = await HttpClient.GetAsync(LatestReleaseUri);
         response.EnsureSuccessStatusCode();
 
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        return await JsonSerializer.DeserializeAsync<GitHubReleaseInfo>(stream);
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<GitHubReleaseInfo>(content);
     }
 }

@@ -1,12 +1,12 @@
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace AYLink.Desktop.Models;
 
 public sealed class GitHubReleaseInfo
 {
-    [JsonPropertyName("tag_name")]
+    [JsonProperty("tag_name")]
     public string? TagName { get; set; }
 
-    [JsonPropertyName("html_url")]
+    [JsonProperty("html_url")]
     public string? HtmlUrl { get; set; }
 }
