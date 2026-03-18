@@ -129,13 +129,18 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
                     try
                     {
-                        var bitmap = new Avalonia.Media.Imaging.WriteableBitmap(
-                            new PixelSize(width, height),
-                            new Vector(96, 96),
-                            Avalonia.Platform.PixelFormat.Bgra8888,
-                            Avalonia.Platform.AlphaFormat.Premul);
+                        if (VideoSource == null || VideoSource.PixelSize.Width != width || VideoSource.PixelSize.Height != height)
+                        {
+                            var oldBitmap = VideoSource;
+                            VideoSource = new Avalonia.Media.Imaging.WriteableBitmap(
+                                new PixelSize(width, height),
+                                new Vector(96, 96),
+                                Avalonia.Platform.PixelFormat.Bgra8888,
+                                Avalonia.Platform.AlphaFormat.Premul);
+                            oldBitmap?.Dispose();
+                        }
 
-                        using (var buf = bitmap.Lock())
+                        using (var buf = VideoSource.Lock())
                         {
                             unsafe
                             {
@@ -146,8 +151,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                                     rowBytes * height);
                             }
                         }
-
-                        VideoSource = bitmap;
+                        
+                        // 触发 UI 更新
+                        _videoImage?.InvalidateVisual();
                     }
                     catch (Exception ex)
                     {
@@ -210,9 +216,14 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
                 var ports = await tool.DeployServerAsync(Device, isAudioAvailable);
                 await Task.Delay(2000);
-                _scrcpyClient.Connect(ports);
+                bool connected = _scrcpyClient.Connect(ports);
 
                 Device.ServerOptions = null;
+
+                if (!connected)
+                {
+                    throw new Exception("Failed to connect to scrcpy server.");
+                }
 
                 if (_appName != null)
                 {
@@ -380,6 +391,11 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         _videoImage.PointerCaptureLost -= VideoImage_PointerCaptureLost;
         _videoImage.SizeChanged -= VideoImage_SizeChanged;
         _videoImage.PointerWheelChanged -= VideoImage_PointerWheelChanged;
+
+        _videoImage.RemoveHandler(InputElement.PointerPressedEvent, VideoImage_PointerPressed);
+        _videoImage.RemoveHandler(InputElement.PointerReleasedEvent, VideoImage_PointerReleased);
+        _videoImage.RemoveHandler(InputElement.KeyDownEvent, VideoImage_KeyDown);
+        _videoImage.RemoveHandler(InputElement.KeyUpEvent, VideoImage_KeyUp);
     }
 
     private static int GetKeyId(string name)
@@ -645,6 +661,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
                 _scrcpyClient?.DisConnect();
                 _scrcpyClient?.Dispose();
+
+                VideoSource?.Dispose();
+                VideoSource = null;
             }
             _disposed = true;
         }
