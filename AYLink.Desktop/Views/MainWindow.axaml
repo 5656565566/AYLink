@@ -9,7 +9,7 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="AYLink.Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="avares://AYLink.Desktop/Assets/avalonia-logo.ico"
+        Icon="/logo.ico"
         Title="{i18n:Tr MainWindow.Title, DefaultText='安易连'}"
         TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"

@@ -6,6 +6,7 @@
     <AssemblyTitle>安易连</AssemblyTitle>
     <AssemblyProduct>安易连</AssemblyProduct>
     <AssemblyName>AYLink</AssemblyName>
+    <Version>0.0.6</Version>
 
     <Authors>5656565566</Authors>
     <Copyright>Copyright © 5656565566 &lt;2393963330@qq.com&gt; 2025-2026</Copyright>
@@ -22,6 +23,7 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Include="logo.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,6 +43,10 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="FluentAvaloniaUI" Version="2.5.0" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="ppy.SDL3-CS" Version="2026.302.0" />
   </ItemGroup>

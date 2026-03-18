@@ -186,13 +186,13 @@
 
             <ui:SettingsExpander Header="FFmpeg">
                 <ui:SettingsExpander.Footer>
-                    <TextBlock Text="7.1.1" Opacity="0.7" VerticalAlignment="Center"/>
+                    <TextBlock Text="8.0.0" Opacity="0.7" VerticalAlignment="Center"/>
                 </ui:SettingsExpander.Footer>
             </ui:SettingsExpander>
 
             <ui:SettingsExpander Header="scrcpy-server">
                 <ui:SettingsExpander.Footer>
-                    <TextBlock Text="3.3.3" Opacity="0.7" VerticalAlignment="Center"/>
+                    <TextBlock Text="3.3.4" Opacity="0.7" VerticalAlignment="Center"/>
                 </ui:SettingsExpander.Footer>
             </ui:SettingsExpander>
 

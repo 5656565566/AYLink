@@ -80,7 +80,10 @@ public partial class MainWindowViewModel : ViewModelBase
         _navigationService.NavigatedWithParameter += OnNavigated;
 
         // 初始导航到首页
-        _navigationService.NavigateTo("Home");
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            _navigationService.NavigateTo("Home");
+        });
 
         // 加载配置项
         AppConfig appConfig = _configManager.LoadConfig<AppConfig>("appConfig");
