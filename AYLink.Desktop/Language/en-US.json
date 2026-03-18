@@ -1,6 +1,5 @@
 {
   "LanguageName": "English",
-  "IsBeta": true,
   "AppPage": {
     "AllFiles": "All Files (*.*)",
     "ApkFiles": "APK Files (*.apk)",
@@ -115,6 +114,9 @@
     "EnableVideo": "Enable Video",
     "EnableVideo_Description": "Request the server to send a video stream. No picture is displayed when off",
     "InputSource": "Input Source",
+    "InvalidBitRate": "Please enter a valid bitrate, e.g., 8000000",
+    "InvalidFps": "Please enter a valid framerate, e.g., 60 or 59.94",
+    "InvalidResolution": "Please enter a valid resolution (long edge), e.g., 1920",
     "Main": "Main Settings",
     "MaxFps": "Max FPS",
     "MaxFps_Description": "Max frame rate requested for server encoding",
@@ -152,7 +154,8 @@
     "Error": "Error",
     "OK": "OK",
     "Success": "Success",
-    "Tip": "Tip"
+    "Tip": "Tip",
+    "Warning": "Warning"
   },
   "FilePage": {
     "CannotCloseMessage": "At least one tab must remain open",
@@ -249,8 +252,8 @@
     "NavFile": "File Management",
     "NavHome": "Home",
     "NavScreen": "Screen Mirroring",
-    "NavShell": "Terminal",
     "NavSetting": "Setting",
+    "NavShell": "Terminal",
     "Title": "AYLink"
   },
   "ScreenPage": {
@@ -304,6 +307,7 @@
     "Language": "Language",
     "LanguageDescription": "Select the application's display language",
     "NotSelected": "Not Selected",
+    "OnSelectedLanguageChanged": "Some texts require a restart to update",
     "OutputVolume": "Output Volume",
     "OutputVolumeDescription": "Adjust global audio output volume",
     "Random": "Random",
@@ -342,5 +346,6 @@
     "NotConnected": "Not Connected",
     "SessionDisconnected": "Session disconnected",
     "SessionStartFailed": "Failed to start session: {0}"
-  }
+  },
+  "IsBeta": true
 }

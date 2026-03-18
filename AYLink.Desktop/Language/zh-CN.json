@@ -1,6 +1,5 @@
 {
   "LanguageName": "中文（简体）",
-  "IsBeta": false,
   "AppPage": {
     "AllFiles": "所有文件 (*.*)",
     "ApkFiles": "APK 文件 (*.apk)",
@@ -115,6 +114,9 @@
     "EnableVideo": "启用视频",
     "EnableVideo_Description": "请求服务端发送视频流 关闭时不显示画面",
     "InputSource": "输入源",
+    "InvalidBitRate": "请输入合适的码率 例如 8000000",
+    "InvalidFps": "请输入合适的帧数 例如 60 或 59.94",
+    "InvalidResolution": "请输入合适的分辨率(长边) 例如 1920",
     "Main": "主要设置",
     "MaxFps": "最大帧率",
     "MaxFps_Description": "请求服务端编码的最大帧率",
@@ -152,7 +154,8 @@
     "Error": "错误",
     "OK": "确定",
     "Success": "成功",
-    "Tip": "提示"
+    "Tip": "提示",
+    "Warning": "警告"
   },
   "FilePage": {
     "CannotCloseMessage": "至少要保留一个标签页",
@@ -249,8 +252,8 @@
     "NavFile": "文件管理",
     "NavHome": "首页",
     "NavScreen": "投屏",
-    "NavShell": "终端",
     "NavSetting": "设置",
+    "NavShell": "终端",
     "Title": "安易连"
   },
   "ScreenPage": {
@@ -304,6 +307,7 @@
     "Language": "语言",
     "LanguageDescription": "选择应用程序的显示语言",
     "NotSelected": "未选择",
+    "OnSelectedLanguageChanged": "部分文本需要重启后更新",
     "OutputVolume": "输出音量",
     "OutputVolumeDescription": "调整全局音频输出音量",
     "Random": "随机",
@@ -342,5 +346,6 @@
     "NotConnected": "未连接",
     "SessionDisconnected": "会话已断开",
     "SessionStartFailed": "会话启动失败: {0}"
-  }
+  },
+  "IsBeta": false
 }

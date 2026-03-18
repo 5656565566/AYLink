@@ -29,7 +29,7 @@ public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNav
 
     [ObservableProperty]
     [NotifyDataErrorInfo]
-    [RegularExpression(@"^\d*$", ErrorMessage = "请输入合适的分辨率(长边) 例如 1920")]
+    [Services.Localization.LocalizedRegularExpression(@"^\d*$", "DeviceSettings.InvalidResolution", "请输入合适的分辨率(长边) 例如 1920")]
     private string _maxSizeInput = string.Empty;
 
     partial void OnMaxSizeInputChanged(string value)
@@ -42,7 +42,7 @@ public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNav
 
     [ObservableProperty]
     [NotifyDataErrorInfo]
-    [RegularExpression(@"^\d*$", ErrorMessage = "请输入合适的码率 例如 8000000")]
+    [Services.Localization.LocalizedRegularExpression(@"^\d*$", "DeviceSettings.InvalidBitRate", "请输入合适的码率 例如 8000000")]
     private string _videoBitRateInput = string.Empty;
 
     partial void OnVideoBitRateInputChanged(string value)
@@ -55,7 +55,7 @@ public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNav
 
     [ObservableProperty]
     [NotifyDataErrorInfo]
-    [RegularExpression(@"^\d*\.?\d*$", ErrorMessage = "请输入合适的帧数 例如 60 或 59.94")]
+    [Services.Localization.LocalizedRegularExpression(@"^\d*\.?\d*$", "DeviceSettings.InvalidFps", "请输入合适的帧数 例如 60 或 59.94")]
     private string _maxFpsInput = string.Empty;
 
     partial void OnMaxFpsInputChanged(string value)
@@ -113,7 +113,7 @@ public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNav
         {
             var localizer = Services.Localization.LocalizationManager.Instance;
             DialogHelper.ShowToast(
-                localizer.GetString("Dialog.Warning", "提示"),
+                localizer.GetString("Dialog.Warning", "警告"),
                 "请先修正输入错误后再保存",
                 InfoBarSeverity.Warning);
             return false;

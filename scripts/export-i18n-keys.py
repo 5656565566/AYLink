@@ -70,6 +70,14 @@ def extract_from_cs(content: str) -> dict[str, str]:
         if key not in keys:
             keys[key] = ""
 
+    # 匹配 [LocalizedRegularExpression(@"...", "DeviceSettings.InvalidResolution", "默认文本")]
+    pattern3 = r'\[(?:Services\.Localization\.)?LocalizedRegularExpression\([^,]+,\s*"([A-Za-z0-9_.]+)"(?:,\s*"([^"]*)")?\s*\)\]'
+    for match in re.finditer(pattern3, content):
+        key = match.group(1)
+        default_text = match.group(2) or ""
+        if key not in keys or (keys[key] == "" and default_text != ""):
+            keys[key] = default_text
+
     return keys
 
 
@@ -106,6 +114,41 @@ def print_summary(flat_keys: dict[str, str]) -> None:
 
     for group in sorted(groups.keys()):
         print(f"  {group}: {groups[group]} keys")
+
+
+def sync_language_file(template_dict: dict, lang_file_path: Path) -> None:
+    """将模板中的新键同步到现有的语言文件中，保持现有翻译不变"""
+    try:
+        with open(lang_file_path, "r", encoding="utf-8") as f:
+            existing_data = json.load(f)
+    except Exception as e:
+        print(f"  Warning: Failed to read {lang_file_path}: {e}", file=sys.stderr)
+        return
+
+    def merge(tmpl, exist):
+        result = OrderedDict()
+        for k, v in tmpl.items():
+            if k in exist:
+                if isinstance(v, dict) and isinstance(exist[k], dict):
+                    result[k] = merge(v, exist[k])
+                else:
+                    result[k] = exist[k]
+            else:
+                result[k] = v
+        
+        # 保留旧文件中存在但模板中没有的键（防止意外丢失数据）
+        for k, v in exist.items():
+            if k not in result:
+                result[k] = v
+                
+        return result
+
+    merged_data = merge(template_dict, existing_data)
+    
+    with open(lang_file_path, "w", encoding="utf-8") as f:
+        json.dump(merged_data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    print(f"  Synced: {lang_file_path.name}")
 
 
 def main():
@@ -175,10 +218,25 @@ def main():
         json.dump(nested, f, ensure_ascii=False, indent=2)
         f.write("\n")
 
-    print(f"Exported to: {output_path}")
+    print(f"Exported template to: {output_path}")
+    
+    print("\n=== Syncing Existing Language Files ===")
+    lang_dir = Path(output_path).parent
+    template_name = Path(output_path).name
+    sync_count = 0
+    if lang_dir.exists():
+        for lang_file in lang_dir.glob("*.json"):
+            if lang_file.name == template_name:
+                continue
+            sync_language_file(nested, lang_file)
+            sync_count += 1
+            
+    if sync_count == 0:
+        print("  No existing language files found to sync.")
+
     print("\n=== Key Summary ===")
     print_summary(all_keys)
-    print(f"\nDone! Copy this file and translate values for each language.")
+    print(f"\nDone! Template updated and {sync_count} language files synced.")
 
 
 if __name__ == "__main__":
