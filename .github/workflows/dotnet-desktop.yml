@@ -6,6 +6,10 @@ on:
     # 触发分支
     branches: [ "main" ]
     tags: [ 'v*' ]
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'README_EN.md'
 
 jobs:
   # 编译任务
