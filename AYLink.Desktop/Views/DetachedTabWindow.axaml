@@ -36,9 +36,9 @@
                          IsAddTabButtonVisible="False">
                 <ui:TabView.TabItemTemplate>
                     <DataTemplate x:DataType="vm:TabItemViewModelBase">
-                        <ui:TabViewItem Header="{ReflectionBinding Title}"
-                                        Content="{ReflectionBinding}"
-                                        ContentTemplate="{Binding $parent[local:DetachedTabWindow].DefaultContentTemplate}"
+                        <ui:TabViewItem Header="{CompiledBinding Title}"
+                                        Content="{CompiledBinding}"
+                                        ContentTemplate="{CompiledBinding $parent[local:DetachedTabWindow].DefaultContentTemplate}"
                                         IsClosable="True"
                                         HorizontalContentAlignment="Stretch"
                                         VerticalContentAlignment="Stretch">

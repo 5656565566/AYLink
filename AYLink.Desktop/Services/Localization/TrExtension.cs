@@ -52,7 +52,7 @@ public class TrExtension : MarkupExtension
 
     public override object ProvideValue(IServiceProvider serviceProvider)
     {
-        // 确保 Locator 资源已注册
+        // 返回编译绑定兼容的绑定实例
         var staticResource = new StaticResourceExtension("Locator");
         if (staticResource.ProvideValue(serviceProvider) is not Locator)
         {

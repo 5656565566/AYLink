@@ -1,4 +1,5 @@
 using AYLink.Core.Models;
+using System.Collections;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
@@ -11,11 +12,18 @@ namespace AYLink.Desktop.ViewModels;
 /// 提供 Tabs、SelectedTab、AddNewTab、关闭/导航等通用逻辑
 /// </summary>
 /// <typeparam name="TTab">具体的标签页 ViewModel 类型</typeparam>
-public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase
+public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase, ITabbedPageViewModel
     where TTab : TabItemViewModelBase
 {
     [ObservableProperty]
     private ObservableCollection<TTab> _tabs = [];
+
+    IEnumerable ITabbedPageViewModel.Tabs => Tabs;
+    object? ITabbedPageViewModel.SelectedTab
+    {
+        get => SelectedTab;
+        set => SelectedTab = value as TTab;
+    }
 
     /// <summary>
     /// 内部存储当前选中的 Tab
