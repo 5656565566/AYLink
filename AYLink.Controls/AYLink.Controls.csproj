@@ -9,13 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="TabView\TabItem.axaml" />
-    <AvaloniaResource Include="TabView\TabView.axaml" />
-    <AvaloniaResource Include="Themes\BrowserTabViewTheme.axaml" />
-    <AvaloniaResource Include="Terminal\Themes\Generic.axaml" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.12" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.12" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.12" />

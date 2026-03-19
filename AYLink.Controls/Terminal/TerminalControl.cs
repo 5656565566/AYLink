@@ -97,19 +97,17 @@ public class TerminalControl : TemplatedControl
         if (_stylesLoaded || Application.Current == null)
             return;
 
-        var uri = new Uri("avares://AYLink.Controls/Terminal/Themes/Generic.axaml");
-
         // Check if styles are already loaded to avoid duplicates
         foreach (var style in Application.Current.Styles)
         {
-            if (style is global::Avalonia.Markup.Xaml.Styling.StyleInclude include && include.Source == uri)
+            if (style is Themes.Generic)
             {
                 _stylesLoaded = true;
                 return;
             }
         }
 
-        var styles = (IStyle)new global::Avalonia.Markup.Xaml.Styling.StyleInclude(uri) { Source = uri };
+        var styles = (IStyle)new Themes.Generic();
         Application.Current.Styles.Add(styles);
         _stylesLoaded = true;
     }

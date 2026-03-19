@@ -30,6 +30,7 @@
 ![alt text](screenshot/1.png)
 ![alt text](screenshot/2.png)
 ![alt text](screenshot/3.png)
+![alt text](screenshot/4.png)
 
 ### 自定义背景说明
 
