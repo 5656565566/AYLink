@@ -235,7 +235,7 @@ public class ServerOptions
     /// <summary>
     /// 如果请求的视频设置（如分辨率）导致编码器错误 允许服务端自动尝试降低设置并重试
     /// </summary>
-    public bool DownsizeOnError { get; set; } = true;
+    public bool DownsizeOnError { get; set; } = false;
 
     /// <summary>
     /// 客户端断开连接后 服务端是否应自行清理（例如删除/data/local/tmp下的server.jar）

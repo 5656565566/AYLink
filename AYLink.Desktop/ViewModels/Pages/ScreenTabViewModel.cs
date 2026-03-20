@@ -39,7 +39,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private ScrcpyClient? _scrcpyClient;
     private Size _screenSize;
-    private readonly string? _appName;
+    private readonly string? _appPackageName;
+    private readonly string? _appDisplayName;
     private bool _isPointerCaptured;
     private bool _disposed;
     private int _audioStreamId = -1;
@@ -50,11 +51,14 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     /// </summary>
     private Image? _videoImage;
 
-    public ScreenTabViewModel(DeviceModel device, string? appName = null)
+    public ScreenTabViewModel(DeviceModel device, string? appPackageName = null, string? appDisplayName = null)
     {
         Device = device;
-        _appName = appName;
-        Title = appName != null ? $"{device.Name} - {appName}" : device.Name;
+        _appPackageName = appPackageName;
+        _appDisplayName = appDisplayName;
+
+        var titleAppName = string.IsNullOrWhiteSpace(appDisplayName) ? appPackageName : appDisplayName;
+        Title = titleAppName != null ? $"{device.Name} - {titleAppName}" : device.Name;
     }
 
     /// <summary>
@@ -183,7 +187,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
                 deviceConfig.ApplyConfig(Device.ServerOptions);
 
-                if (displays.Count == 0 || _appName != null || Device.ServerOptions.DisplayId == -1)
+                if (displays.Count == 0 || _appPackageName != null || Device.ServerOptions.DisplayId == -1)
                 {
                     if (string.IsNullOrEmpty(Device.ServerOptions.NewDisplay))
                     {
@@ -226,12 +230,12 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
                 Device.ServerOptions = null;
 
-                if (_appName != null)
+                if (!string.IsNullOrWhiteSpace(_appPackageName))
                 {
                     var keyMsg = new ControlMsg
                     {
                         Type = ControlMsgType.StartApp,
-                        Data = _appName
+                        Data = _appPackageName
                     };
                     _scrcpyClient.SendControlCommand(keyMsg.Serialize());
                 }

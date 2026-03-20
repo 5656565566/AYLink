@@ -292,7 +292,6 @@ public partial class AppTabViewModel : TabItemViewModelBase
     private async Task LaunchAppAsync(AppInfo? app)
     {
         if (Device == null || app == null) return;
-
         var localizer = Services.Localization.LocalizationManager.Instance;
 
         try
@@ -301,11 +300,10 @@ public partial class AppTabViewModel : TabItemViewModelBase
             {
                 var receiver = new ConsoleOutputReceiver();
                 AdbClient.Instance.ExecuteRemoteCommand(
-                    $"monkey -p {app.PackageName} -c android.intent.category.LAUNCHER 1",
+                    $"am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER {app.PackageName}",
                     Device.DeviceData,
                     receiver);
             });
-
             DialogHelper.ShowToast(
                 localizer.GetString("AppTab.LaunchSuccessTitle", "启动成功"),
                 string.Format(localizer.GetString("AppTab.LaunchSuccessMessage", "{0} 已启动"), app.Name),
@@ -328,14 +326,11 @@ public partial class AppTabViewModel : TabItemViewModelBase
     {
         if (Device == null || app == null) return;
 
-        // 导航到投屏页面，传递设备信息
-        NavigationService.Instance.NavigateTo("Screen", Device);
-
-        // 延迟一帧后，通过投屏页 ViewModel 添加带应用名的新标签
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        NavigationService.Instance.NavigateTo("Screen", new ScreenNavigationArgs
         {
-            // 这里无法直接访问 ScreenPageViewModel，所以通过导航服务携带参数实现
-            // 实际效果是先切换到投屏页，然后投屏页会为该设备创建标签
+            Device = Device,
+            AppPackageName = app.PackageName,
+            AppDisplayName = app.Name
         });
     }
 

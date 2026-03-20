@@ -36,3 +36,15 @@ namespace AYLink.Desktop.Services;
 public abstract class NavigationArgs
 {
 }
+
+/// <summary>
+/// 投屏页导航参数
+/// </summary>
+public sealed class ScreenNavigationArgs : NavigationArgs
+{
+    public required AYLink.Core.Models.DeviceModel Device { get; init; }
+
+    public string? AppPackageName { get; init; }
+
+    public string? AppDisplayName { get; init; }
+}

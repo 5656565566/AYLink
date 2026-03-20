@@ -1,4 +1,5 @@
 using AYLink.Core.Models;
+using AYLink.Desktop.Services;
 using System;
 using System.Linq;
 
@@ -24,12 +25,24 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
 
     protected override void OnTabClosed(ScreenTabViewModel tab) => tab.Dispose();
 
-    /// <summary>
-    /// 添加新标签页（带应用名）- 使用基类 RegisterTab 统一注册
-    /// </summary>
-    public void AddNewTabWithApp(DeviceModel device, string appName)
+    public override void OnNavigatedTo(object? parameter = null)
     {
-        var newTab = new ScreenTabViewModel(device, appName);
+        if (parameter is ScreenNavigationArgs args)
+        {
+            AddNewTabWithApp(args.Device, args.AppPackageName, args.AppDisplayName);
+            IsActive = true;
+            return;
+        }
+
+        base.OnNavigatedTo(parameter);
+    }
+
+    /// <summary>
+    /// 添加新标签页（带应用启动信息）- 使用基类 RegisterTab 统一注册
+    /// </summary>
+    public void AddNewTabWithApp(DeviceModel device, string? appPackageName, string? appDisplayName)
+    {
+        var newTab = new ScreenTabViewModel(device, appPackageName, appDisplayName);
         RegisterTab(newTab);
     }
 
