@@ -51,13 +51,6 @@
     <PackageReference Include="ppy.SDL3-CS" Version="2026.302.0" />
   </ItemGroup>
 
-
-  <ItemGroup>
-    <None Update="Scrcpy\scrcpy-server">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
   <ItemGroup>
     <Content Include="Language\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

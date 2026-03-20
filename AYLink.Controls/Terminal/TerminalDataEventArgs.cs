@@ -1,5 +1,7 @@
 // Original source: Iciclecreek.Avalonia.Terminal (MIT License)
-// See docs/licenses/Iciclecreek.Avalonia.Terminal.txt for license details.
+// Repository: https://github.com/tomlm/Iciclecreek.Avalonia.Terminal
+// Copyright (c) Tom Laird-McConnell. All rights reserved.
+// See Iciclecreek.Avalonia.Terminal.txt for license details.
 
 namespace AYLink.Controls.Terminal;
 

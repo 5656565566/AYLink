@@ -1,6 +1,7 @@
 // Original source: Iciclecreek.Avalonia.Terminal (MIT License)
+// Repository: https://github.com/tomlm/Iciclecreek.Avalonia.Terminal
 // Copyright (c) Tom Laird-McConnell. All rights reserved.
-// See docs/licenses/Iciclecreek.Avalonia.Terminal.txt for license details.
+// See Iciclecreek.Avalonia.Terminal.txt for license details.
 // Modified for AYLink: removed PTY dependencies, added external I/O API.
 
 using Avalonia;
