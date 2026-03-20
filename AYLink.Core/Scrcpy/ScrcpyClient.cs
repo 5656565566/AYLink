@@ -15,6 +15,7 @@ public class ScrcpyClient : IDisposable
 
     private Thread? _videoThread;
     private Thread? _audioThread;
+    private Thread? _controlRecvThread;
 
     private VideoDecoder? _videoDecoder;
     private AudioDecoder? _audioDecoder;
@@ -26,7 +27,7 @@ public class ScrcpyClient : IDisposable
 
     /// <summary>
     /// 当一帧视频被解码并转换为 BGRA 格式时触发
-    /// 参数: width, height, bgraDataPtr, rowBytes
+    /// 参数: width height bgraDataPtr rowBytes
     /// </summary>
     public event Action<int, int, IntPtr, int>? OnVideoFrameDecoded;
 
@@ -35,6 +36,18 @@ public class ScrcpyClient : IDisposable
     /// 参数: pcmData
     /// </summary>
     public event Action<byte[]>? OnAudioDataDecoded;
+
+    /// <summary>
+    /// 当接收到设备端发来的剪贴板内容时触发
+    /// 参数: 剪贴板文本
+    /// </summary>
+    public event Action<string>? OnDeviceClipboardReceived;
+
+    /// <summary>
+    /// 当接收到设备端成功设置剪贴板的 ACK (应答) 时触发
+    /// 参数: 序列号 sequence
+    /// </summary>
+    public event Action<ulong>? OnDeviceClipboardSetAck;
 
     public ScrcpyClient(DeviceModel deviceModel)
     {
@@ -138,6 +151,44 @@ public class ScrcpyClient : IDisposable
         {
             _deviceModel.ControlStream ??= [];
             _deviceModel.ControlStream.Add(_controlSocket);
+
+            _controlRecvThread = new Thread(ReceiveControlMessages) { IsBackground = true, Name = "ControlRecvThread" };
+            _controlRecvThread.Start();
+        }
+    }
+
+    private void ReceiveControlMessages()
+    {
+        try
+        {
+            using var stream = new NetworkStream(_controlSocket!, false);
+            using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true);
+
+            while (_isRunning && _controlSocket != null && _controlSocket.Connected)
+            {
+                var msg = Control.DeviceMsg.Deserialize(reader);
+                if (msg == null) break;
+
+                switch (msg.Type)
+                {
+                    case Control.DeviceMsgType.Clipboard:
+                        OnDeviceClipboardReceived?.Invoke(msg.Data as string ?? string.Empty);
+                        break;
+                    case Control.DeviceMsgType.AckSetClipboard:
+                        if (msg.Data is ulong seq)
+                        {
+                            OnDeviceClipboardSetAck?.Invoke(seq);
+                        }
+                        break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            if (_isRunning)
+            {
+                Debug.WriteLine($"Control receive error: {ex.Message}");
+            }
         }
     }
 
@@ -217,6 +268,7 @@ public class ScrcpyClient : IDisposable
 
         _videoThread?.Join(1000);
         _audioThread?.Join(1000);
+        _controlRecvThread?.Join(1000);
     }
 
     private static void SafeCloseSocket(Socket? socket)
