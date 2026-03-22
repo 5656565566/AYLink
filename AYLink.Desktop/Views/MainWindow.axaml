@@ -15,7 +15,7 @@
         Background="Transparent"
         ExtendClientAreaToDecorationsHint="True">
 
-    <Grid>
+    <Grid Margin="{Binding $parent[Window].OffScreenMargin}">
         <!-- 全局背景图 -->
         <Image x:Name="GlobalBackgroundImage" Stretch="UniformToFill" IsVisible="False">
             <Image.Effect>

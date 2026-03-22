@@ -1,35 +1,72 @@
 using Avalonia;
-using Avalonia.Input;
-using AYLink.Core.Scrcpy;
 using AYLink.Core.Scrcpy.Control;
+using System;
 using System.Collections.Generic;
 
 namespace AYLink.Desktop.Services.Input;
 
 /// <summary>
 /// 默认的注入模式输入处理器
-/// 负责将PC端的键鼠事件直接转换为Android的触摸和按键事件
+/// 负责将抽象输入事件转换为Android的触摸和按键事件并发送
 /// </summary>
 public class DefaultInputProcessor : IInputProcessor
 {
     private Size _screenSize;
     private readonly Dictionary<int, ulong> _pointerIdMap = [];
     private ulong _nextPointerId;
+    private IControlCommandSender? _sender;
+
+    public event Action<bool>? CursorLockRequested;
+
+    public void SetSender(IControlCommandSender? sender)
+    {
+        _sender = sender;
+    }
 
     public void UpdateScreenSize(Size size)
     {
         _screenSize = size;
     }
 
-    public void ProcessPointerPressed(PointerPressedEventArgs e, Point videoPoint, ScrcpyClient? client)
+    public void ProcessPointer(PointerInput input)
     {
-        if (client == null) return;
+        if (_sender == null) return;
 
-        int pointerHash = e.Pointer.GetHashCode();
-        if (!_pointerIdMap.TryGetValue(pointerHash, out ulong pointerId))
+        switch (input.EventType)
+        {
+            case PointerEventType.Pressed:
+                ProcessPointerPressed(input);
+                break;
+            case PointerEventType.Moved:
+                ProcessPointerMoved(input);
+                break;
+            case PointerEventType.Released:
+                ProcessPointerReleased(input);
+                break;
+            case PointerEventType.WheelChanged:
+                ProcessPointerWheelChanged(input);
+                break;
+            case PointerEventType.CaptureLost:
+                ProcessPointerCaptureLost(input);
+                break;
+        }
+    }
+
+    public void ProcessKey(KeyInput input)
+    {
+        if (_sender == null) return;
+        var keyId = GetKeyId(input.KeyName);
+        if (keyId == 0) return;
+
+        SendKey(input.EventType == KeyEventType.Down ? ControlMsgModel.AndroidKeyEventAction.Down : ControlMsgModel.AndroidKeyEventAction.Up, keyId);
+    }
+
+    private void ProcessPointerPressed(PointerInput input)
+    {
+        if (!_pointerIdMap.TryGetValue(input.PointerHash, out ulong pointerId))
         {
             pointerId = _nextPointerId++;
-            _pointerIdMap[pointerHash] = pointerId;
+            _pointerIdMap[input.PointerHash] = pointerId;
         }
 
         var touchMsg = new ControlMsgModel.ControlMsg
@@ -40,7 +77,7 @@ public class DefaultInputProcessor : IInputProcessor
                 Action = ControlMsgModel.AndroidMotionEventAction.Down,
                 PointerId = pointerId,
                 Position = new ControlMsgModel.ScPosition(
-                    (int)videoPoint.X, (int)videoPoint.Y,
+                    (int)input.Position.X, (int)input.Position.Y,
                     (ushort)_screenSize.Width, (ushort)_screenSize.Height),
                 Pressure = 1.0f,
                 ActionButton = (int)KeyCode.AndroidMotionEventButton.BUTTON_PRIMARY,
@@ -48,15 +85,12 @@ public class DefaultInputProcessor : IInputProcessor
             }
         };
 
-        client.SendControlCommand(touchMsg.Serialize());
+        _sender?.SendCommand(touchMsg.Serialize());
     }
 
-    public void ProcessPointerMoved(PointerEventArgs e, Point videoPoint, ScrcpyClient? client)
+    private void ProcessPointerMoved(PointerInput input)
     {
-        if (client == null) return;
-
-        int pointerHash = e.Pointer.GetHashCode();
-        if (!_pointerIdMap.TryGetValue(pointerHash, out ulong pointerId)) return;
+        if (!_pointerIdMap.TryGetValue(input.PointerHash, out ulong pointerId)) return;
 
         var touchMsg = new ControlMsgModel.ControlMsg
         {
@@ -66,7 +100,7 @@ public class DefaultInputProcessor : IInputProcessor
                 Action = ControlMsgModel.AndroidMotionEventAction.Move,
                 PointerId = pointerId,
                 Position = new ControlMsgModel.ScPosition(
-                    (int)videoPoint.X, (int)videoPoint.Y,
+                    (int)input.Position.X, (int)input.Position.Y,
                     (ushort)_screenSize.Width, (ushort)_screenSize.Height),
                 Pressure = 1.0f,
                 ActionButton = 0,
@@ -74,15 +108,12 @@ public class DefaultInputProcessor : IInputProcessor
             }
         };
 
-        client.SendControlCommand(touchMsg.Serialize());
+        _sender?.SendCommand(touchMsg.Serialize());
     }
 
-    public void ProcessPointerReleased(PointerReleasedEventArgs e, Point videoPoint, ScrcpyClient? client)
+    private void ProcessPointerReleased(PointerInput input)
     {
-        if (client == null) return;
-
-        int pointerHash = e.Pointer.GetHashCode();
-        if (!_pointerIdMap.TryGetValue(pointerHash, out ulong pointerId)) return;
+        if (!_pointerIdMap.TryGetValue(input.PointerHash, out ulong pointerId)) return;
 
         var touchMsg = new ControlMsgModel.ControlMsg
         {
@@ -92,7 +123,7 @@ public class DefaultInputProcessor : IInputProcessor
                 Action = ControlMsgModel.AndroidMotionEventAction.Up,
                 PointerId = pointerId,
                 Position = new ControlMsgModel.ScPosition(
-                    (int)videoPoint.X, (int)videoPoint.Y,
+                    (int)input.Position.X, (int)input.Position.Y,
                     (ushort)_screenSize.Width, (ushort)_screenSize.Height),
                 Pressure = 0.0f,
                 ActionButton = (int)KeyCode.AndroidMotionEventButton.BUTTON_PRIMARY,
@@ -100,76 +131,54 @@ public class DefaultInputProcessor : IInputProcessor
             }
         };
 
-        client.SendControlCommand(touchMsg.Serialize());
-        _pointerIdMap.Remove(pointerHash);
+        _sender?.SendCommand(touchMsg.Serialize());
+        _pointerIdMap.Remove(input.PointerHash);
     }
 
-    public void ProcessPointerWheelChanged(PointerWheelEventArgs e, Point videoPoint, ScrcpyClient? client)
+    private void ProcessPointerWheelChanged(PointerInput input)
     {
-        if (client == null) return;
-
         var controlMsg = new ControlMsgModel.ControlMsg
         {
             Type = ControlMsgModel.ControlMsgType.InjectScrollEvent,
             Data = new ControlMsgModel.InjectScrollData
             {
                 Position = new ControlMsgModel.ScPosition(
-                    (int)videoPoint.X, (int)videoPoint.Y,
+                    (int)input.Position.X, (int)input.Position.Y,
                     (ushort)_screenSize.Width, (ushort)_screenSize.Height),
-                VScroll = (float)-e.Delta.Y,
-                HScroll = (float)-e.Delta.X,
+                VScroll = (float)-input.WheelDelta.Y,
+                HScroll = (float)-input.WheelDelta.X,
                 Buttons = 0
             }
         };
-        client.SendControlCommand(controlMsg.Serialize());
-        e.Handled = true;
+        _sender?.SendCommand(controlMsg.Serialize());
     }
 
-    public void ProcessPointerCaptureLost(PointerCaptureLostEventArgs e, ScrcpyClient? client)
+    private void ProcessPointerCaptureLost(PointerInput input)
     {
-        int pointerHash = e.Pointer.GetHashCode();
-        if (_pointerIdMap.TryGetValue(pointerHash, out ulong pointerId))
+        if (_pointerIdMap.TryGetValue(input.PointerHash, out ulong pointerId))
         {
-            if (client != null)
+            var touchMsg = new ControlMsgModel.ControlMsg
             {
-                var touchMsg = new ControlMsgModel.ControlMsg
+                Type = ControlMsgModel.ControlMsgType.InjectTouchEvent,
+                Data = new ControlMsgModel.ControlMsg.InjectTouchData
                 {
-                    Type = ControlMsgModel.ControlMsgType.InjectTouchEvent,
-                    Data = new ControlMsgModel.ControlMsg.InjectTouchData
-                    {
-                        Action = ControlMsgModel.AndroidMotionEventAction.Up,
-                        PointerId = pointerId,
-                        Position = new ControlMsgModel.ScPosition(0, 0, (ushort)_screenSize.Width, (ushort)_screenSize.Height),
-                        Pressure = 0.0f,
-                        ActionButton = 0,
-                        Buttons = 0
-                    }
-                };
-                client.SendControlCommand(touchMsg.Serialize());
-            }
-            _pointerIdMap.Remove(pointerHash);
+                    Action = ControlMsgModel.AndroidMotionEventAction.Up,
+                    PointerId = pointerId,
+                    Position = new ControlMsgModel.ScPosition(0, 0, (ushort)_screenSize.Width, (ushort)_screenSize.Height),
+                    Pressure = 0.0f,
+                    ActionButton = 0,
+                    Buttons = 0
+                }
+            };
+            _sender?.SendCommand(touchMsg.Serialize());
+            _pointerIdMap.Remove(input.PointerHash);
         }
     }
 
-    public void ProcessKeyDown(KeyEventArgs e, ScrcpyClient? client)
-    {
-        if (client == null) return;
-        var keyId = GetKeyId(e.Key.ToString());
-        if (keyId == 0) return;
-        SendKey(client, ControlMsgModel.AndroidKeyEventAction.Down, keyId);
-    }
 
-    public void ProcessKeyUp(KeyEventArgs e, ScrcpyClient? client)
+    public void ClearAll()
     {
-        if (client == null) return;
-        var keyId = GetKeyId(e.Key.ToString());
-        if (keyId == 0) return;
-        SendKey(client, ControlMsgModel.AndroidKeyEventAction.Up, keyId);
-    }
-
-    public void ClearAll(ScrcpyClient? client)
-    {
-        if (client != null)
+        if (_sender != null)
         {
             foreach (var pointerId in _pointerIdMap.Values)
             {
@@ -186,7 +195,7 @@ public class DefaultInputProcessor : IInputProcessor
                         Buttons = 0
                     }
                 };
-                client.SendControlCommand(touchMsg.Serialize());
+                _sender.SendCommand(touchMsg.Serialize());
             }
         }
         _pointerIdMap.Clear();
@@ -195,10 +204,11 @@ public class DefaultInputProcessor : IInputProcessor
 
     public void Dispose()
     {
-        ClearAll(null);
+        ClearAll();
+        _sender = null;
     }
 
-    private static void SendKey(ScrcpyClient client, ControlMsgModel.AndroidKeyEventAction action, int keycode)
+    private void SendKey(ControlMsgModel.AndroidKeyEventAction action, int keycode)
     {
         var keyMsg = new ControlMsgModel.ControlMsg
         {
@@ -211,7 +221,7 @@ public class DefaultInputProcessor : IInputProcessor
                 MetaState = 0
             }
         };
-        client.SendControlCommand(keyMsg.Serialize());
+        _sender?.SendCommand(keyMsg.Serialize());
     }
 
     private static int GetKeyId(string name)

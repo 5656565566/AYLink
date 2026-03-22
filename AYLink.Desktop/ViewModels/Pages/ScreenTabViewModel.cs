@@ -5,6 +5,7 @@ using AYLink.Core.Utils;
 using AYLink.Desktop.Models;
 using AYLink.Desktop.Services;
 using AYLink.Desktop.Services.Audio;
+using AYLink.Desktop.Services.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -35,7 +36,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     [ObservableProperty]
     private Avalonia.Media.Imaging.WriteableBitmap? _videoSource;
 
-    public Services.Input.IInputProcessor InputProcessor { get; } = new Services.Input.DefaultInputProcessor();
+    public IInputProcessor InputProcessor { get; } = new DefaultInputProcessor();
 
     private ScrcpyClient? _scrcpyClient;
     private Size _screenSize;
@@ -119,6 +120,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         {
             _scrcpyClient = new ScrcpyClient(Device);
             
+            // 使用适配器将 ScrcpyClient 转换为 IControlCommandSender
+            InputProcessor.SetSender(new ScrcpyClientCommandSender(_scrcpyClient));
+
             // 订阅视频帧解码事件
             _scrcpyClient.OnVideoFrameDecoded += (width, height, bgraDataPtr, rowBytes) =>
             {
@@ -417,23 +421,31 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         _videoImage.RemoveHandler(InputElement.KeyDownEvent, VideoImage_KeyDown);
         _videoImage.RemoveHandler(InputElement.KeyUpEvent, VideoImage_KeyUp);
 
-        InputProcessor.ClearAll(_scrcpyClient);
+        InputProcessor.ClearAll();
         _isPointerCaptured = false;
     }
 
     private void VideoImage_KeyDown(object? sender, KeyEventArgs e)
     {
-        InputProcessor.ProcessKeyDown(e, _scrcpyClient);
+        InputProcessor.ProcessKey(new Services.Input.KeyInput
+        {
+            EventType = Services.Input.KeyEventType.Down,
+            KeyName = e.Key.ToString()
+        });
     }
 
     private void VideoImage_KeyUp(object? sender, KeyEventArgs e)
     {
-        InputProcessor.ProcessKeyUp(e, _scrcpyClient);
+        InputProcessor.ProcessKey(new Services.Input.KeyInput
+        {
+            EventType = Services.Input.KeyEventType.Up,
+            KeyName = e.Key.ToString()
+        });
     }
 
     private void VideoImage_SizeChanged(object? sender, SizeChangedEventArgs e)
     {
-        InputProcessor.ClearAll(_scrcpyClient);
+        InputProcessor.ClearAll();
         _isPointerCaptured = false;
         _screenSize = new Size(e.NewSize.Width, e.NewSize.Height);
         InputProcessor.UpdateScreenSize(_screenSize);
@@ -446,7 +458,12 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
 
-        InputProcessor.ProcessPointerPressed(e, point, _scrcpyClient);
+        InputProcessor.ProcessPointer(new Services.Input.PointerInput
+        {
+            EventType = Services.Input.PointerEventType.Pressed,
+            Position = point,
+            PointerHash = e.Pointer.GetHashCode()
+        });
 
         e.Pointer.Capture(_videoImage);
         _isPointerCaptured = true;
@@ -459,7 +476,13 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
 
-        InputProcessor.ProcessPointerWheelChanged(e, point, _scrcpyClient);
+        InputProcessor.ProcessPointer(new Services.Input.PointerInput
+        {
+            EventType = Services.Input.PointerEventType.WheelChanged,
+            Position = point,
+            WheelDelta = e.Delta
+        });
+        e.Handled = true;
     }
 
     private void VideoImage_PointerMoved(object? sender, PointerEventArgs e)
@@ -469,7 +492,12 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
 
-        InputProcessor.ProcessPointerMoved(e, point, _scrcpyClient);
+        InputProcessor.ProcessPointer(new Services.Input.PointerInput
+        {
+            EventType = Services.Input.PointerEventType.Moved,
+            Position = point,
+            PointerHash = e.Pointer.GetHashCode()
+        });
     }
 
     private void VideoImage_PointerReleased(object? sender, PointerReleasedEventArgs e)
@@ -479,7 +507,12 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
 
-        InputProcessor.ProcessPointerReleased(e, point, _scrcpyClient);
+        InputProcessor.ProcessPointer(new Services.Input.PointerInput
+        {
+            EventType = Services.Input.PointerEventType.Released,
+            Position = point,
+            PointerHash = e.Pointer.GetHashCode()
+        });
         
         e.Pointer.Capture(null);
         _isPointerCaptured = false;
@@ -487,7 +520,11 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void VideoImage_PointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
     {
-        InputProcessor.ProcessPointerCaptureLost(e, _scrcpyClient);
+        InputProcessor.ProcessPointer(new Services.Input.PointerInput
+        {
+            EventType = Services.Input.PointerEventType.CaptureLost,
+            PointerHash = e.Pointer.GetHashCode()
+        });
         e.Pointer.Capture(null);
         _isPointerCaptured = false;
     }
@@ -506,6 +543,26 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     }
 
     #endregion
+
+    /// <summary>
+    /// ScrcpyClient 到 IControlCommandSender 的适配器
+    /// 这样避免在 Core 层依赖 Desktop 层的接口
+    /// </summary>
+    private class ScrcpyClientCommandSender : Services.Input.IControlCommandSender
+    {
+        private readonly ScrcpyClient _client;
+        
+        public ScrcpyClientCommandSender(ScrcpyClient client)
+        {
+            _client = client;
+        }
+
+        public void SendCommand(byte[] controlMessage)
+        {
+            _client.SendControlCommand(controlMessage);
+        }
+    }
+
     public void Dispose()
     {
         Dispose(true);
