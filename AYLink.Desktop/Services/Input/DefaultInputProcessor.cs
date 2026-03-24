@@ -16,7 +16,11 @@ public class DefaultInputProcessor : IInputProcessor
     private ulong _nextPointerId;
     private IControlCommandSender? _sender;
 
-    public event Action<bool>? CursorLockRequested;
+    event Action<bool>? IInputProcessor.CursorLockRequested
+    {
+        add { }
+        remove { }
+    }
 
     public void SetSender(IControlCommandSender? sender)
     {
