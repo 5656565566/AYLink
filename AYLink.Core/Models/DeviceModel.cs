@@ -35,7 +35,9 @@ public class DeviceModel(DeviceData deviceData, AdbClient adbClient)
     /// <summary>
     /// 设备名称
     /// </summary>
-    public string Name { get; set; } = deviceData.Name == "" ? deviceData.Model : deviceData.Name;
+    public string Name { get; set; } =
+        (deviceData.Name == "" ? deviceData.Model : deviceData.Name) +
+        $" - {Math.Abs(deviceData.Serial.GetHashCode()) % 10000:D4}";
 
     /// <summary>
     /// 设备的唯一序列号

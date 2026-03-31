@@ -40,6 +40,7 @@ public static class VideoImageBehavior
         {
             image.AttachedToVisualTree += OnAttachedToVisualTree;
             image.DetachedFromVisualTree += OnDetachedFromVisualTree;
+            image.PropertyChanged += OnImagePropertyChanged;
 
             // 如果设置属性时控件已经在可视树上（例如模板重用）立即尝试 Attach
             if (image.GetVisualRoot() != null)
@@ -51,8 +52,24 @@ public static class VideoImageBehavior
         {
             image.AttachedToVisualTree -= OnAttachedToVisualTree;
             image.DetachedFromVisualTree -= OnDetachedFromVisualTree;
+            image.PropertyChanged -= OnImagePropertyChanged;
 
             TryDetach(image);
+        }
+    }
+
+    private static void OnImagePropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == StyledElement.DataContextProperty)
+        {
+            if (sender is Image image && image.GetVisualRoot() != null)
+            {
+                if (e.OldValue is ScreenTabViewModel oldVm)
+                {
+                    oldVm.DetachVideoImage();
+                }
+                TryAttach(image);
+            }
         }
     }
 

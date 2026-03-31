@@ -85,6 +85,12 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         {
             // 已连接状态下重新挂载（重排/视图切换）- 重新绑定输入事件
             SetupEventHandlers();
+            
+            // 强行刷新一次画面 防止视图复用时卡在上一帧旧图
+            Dispatcher.UIThread.Post(() =>
+            {
+                _videoImage?.InvalidateVisual();
+            });
         }
     }
 
@@ -127,12 +133,12 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             _scrcpyClient.OnVideoFrameDecoded += (width, height, bgraDataPtr, rowBytes) =>
             {
                 // 在回调中检查 _disposed 防止访问已释放的内存导致 AccessViolationException
-                if (_disposed || _videoImage == null) return;
+                if (_disposed) return;
 
                 Dispatcher.UIThread.Post(() =>
                 {
                     // 再次检查 - Post 到 UI 线程执行时可能已经被 Dispose
-                    if (_disposed || _videoImage == null) return;
+                    if (_disposed) return;
 
                     try
                     {

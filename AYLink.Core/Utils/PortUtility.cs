@@ -48,7 +48,7 @@ public class PortUtility
     // 返回指定范围内的随机未被占用端口
     public static int GetRandomUnusedPort(int minPort, int maxPort)
     {
-        Random random = new();
+        Random random = new(Guid.NewGuid().GetHashCode());
         int port;
         do
         {
