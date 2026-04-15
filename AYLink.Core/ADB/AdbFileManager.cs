@@ -2,12 +2,7 @@ using AdvancedSharpAdbClient;
 using AdvancedSharpAdbClient.DeviceCommands;
 using AdvancedSharpAdbClient.Models;
 using AdvancedSharpAdbClient.Receivers;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 using AYLink.Core.Models;
 using System.Diagnostics;

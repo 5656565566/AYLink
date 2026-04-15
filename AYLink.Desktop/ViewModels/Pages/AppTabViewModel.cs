@@ -174,7 +174,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
 
         if (filePaths == null || filePaths.Count == 0) return;
 
-        DialogHelper.ShowProgress(
+        var taskContext = DialogHelper.ShowProgress(
             localizer.GetString("AppTab.InstallAppTitle", "安装应用"),
             localizer.GetString("AppTab.PreparingInstall", "准备安装..."),
             isBlocking: true, isIndeterminate: false);
@@ -195,12 +195,12 @@ public partial class AppTabViewModel : TabItemViewModelBase
                     {
                         if (p.State == PackageInstallProgressState.Uploading)
                         {
-                            DialogHelper.UpdateProgress(p.UploadProgress, string.Format(localizer.GetString("AppTab.Uploading", "正在上传: {0}"), fileName));
+                            taskContext.UpdateProgress(p.UploadProgress, string.Format(localizer.GetString("AppTab.Uploading", "正在上传: {0}"), fileName));
                         }
 
                         if (p.State == PackageInstallProgressState.Installing)
                         {
-                            DialogHelper.UpdateProgress(p.UploadProgress, string.Format(localizer.GetString("AppTab.Installing", "正在安装: {0}"), fileName));
+                            taskContext.UpdateProgress(p.UploadProgress, string.Format(localizer.GetString("AppTab.Installing", "正在安装: {0}"), fileName));
                         }
                     }
 
@@ -214,7 +214,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
                 }
             });
 
-            DialogHelper.CloseProgress();
+            taskContext.Close();
             DialogHelper.ShowToast(
                 localizer.GetString("AppTab.InstallSuccessTitle", "安装成功"),
                 localizer.GetString("AppTab.InstallSuccessMessage", "APK 安装完成"),
@@ -225,7 +225,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
         }
         catch (Exception ex)
         {
-            DialogHelper.CloseProgress();
+            taskContext.Fail(string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
             await DialogHelper.ShowMessageAsync(
                 localizer.GetString("AppTab.InstallFailedTitle", "安装失败"),
                 string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
@@ -249,7 +249,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
 
         if (result != ContentDialogResult.Primary) return;
 
-        DialogHelper.ShowProgress(
+        var taskContext = DialogHelper.ShowProgress(
             localizer.GetString("AppTab.UninstallAppTitle", "卸载应用"),
             string.Format(localizer.GetString("AppTab.Uninstalling", "正在卸载 {0}..."), app.Name),
             isBlocking: true);
@@ -264,7 +264,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
                     CancellationToken.None);
             });
 
-            DialogHelper.CloseProgress();
+            taskContext.Close();
             DialogHelper.ShowToast(
                 localizer.GetString("AppTab.UninstallSuccessTitle", "卸载成功"),
                 string.Format(localizer.GetString("AppTab.UninstallSuccessMessage", "{0} 已卸载"), app.Name),
@@ -278,7 +278,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
         }
         catch (Exception ex)
         {
-            DialogHelper.CloseProgress();
+            taskContext.Fail(string.Format(localizer.GetString("AppTab.UninstallFailedMessage", "卸载应用时发生错误: {0}"), ex.Message));
             await DialogHelper.ShowMessageAsync(
                 localizer.GetString("AppTab.UninstallFailedTitle", "卸载失败"),
                 string.Format(localizer.GetString("AppTab.UninstallFailedMessage", "卸载应用时发生错误: {0}"), ex.Message));

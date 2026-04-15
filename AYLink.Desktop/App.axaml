@@ -7,6 +7,7 @@
              xmlns:i18n="using:AYLink.Desktop.Services.Localization"
              xmlns:views="using:AYLink.Desktop.Views.Pages"
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             xmlns:converters="using:AYLink.Desktop.Converters"
              x:Class="AYLink.Desktop.App"
              RequestedThemeVariant="Default">
 
@@ -17,6 +18,7 @@
     <Application.Resources>
         <!-- 本地化定位器 -->
         <i18n:Locator x:Key="Locator" />
+        <converters:ManagedTaskStatusToTextConverter x:Key="ManagedTaskStatusToTextConverter" />
 
         <!-- 重写 TabView 的 ControlTheme 实现内容区域透明 并为标签栏添加半透明底色 -->
         <ControlTheme x:Key="{x:Type ui:TabView}" TargetType="ui:TabView">
@@ -113,6 +115,9 @@
         </DataTemplate>
         <DataTemplate DataType="vm:ShellPageViewModel">
             <views:ShellPage />
+        </DataTemplate>
+        <DataTemplate DataType="vm:TaskCenterPageViewModel">
+            <views:TaskCenterPage />
         </DataTemplate>
         <DataTemplate DataType="vm:SettingsPageViewModel">
             <views:SettingsPage />

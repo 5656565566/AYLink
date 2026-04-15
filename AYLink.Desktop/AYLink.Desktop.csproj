@@ -57,12 +57,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="Language\template.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
-
+      <Content Update="Language\template.json">
+          <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </Content>
   </ItemGroup>
-    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+  
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+      <!-- 在 Release 模式下 直接排除 Design 目录下的所有代码 -->
+      <Compile Remove="ViewModels\Design\**\*.cs" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <SelfContained>true</SelfContained>
     <PublishReadyToRun>false</PublishReadyToRun>
     <PublishSingleFile>true</PublishSingleFile>

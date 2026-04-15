@@ -140,7 +140,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
         if (!CheckDeviceOnline()) return;
 
         var localizer = Services.Localization.LocalizationManager.Instance;
-        DialogHelper.ShowProgress(
+        var taskContext = DialogHelper.ShowProgress(
             localizer.GetString("DeviceItem.FetchingEncodersTitle", "获取中"),
             localizer.GetString("DeviceItem.FetchingEncodersMessage", "正在获取设备编码器列表..."),
             isBlocking: true);
@@ -148,7 +148,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
         ScrcpyTool tool = ScrcpyService.Instance.Tool;
         var encoders = await Task.Run(() => tool.GetEncoders(Device));
         
-        DialogHelper.CloseProgress();
+        taskContext.Close();
 
         if (encoders.Count > 0)
         {

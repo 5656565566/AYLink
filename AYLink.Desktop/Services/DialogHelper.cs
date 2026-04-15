@@ -8,8 +8,125 @@ using FluentAvalonia.UI.Controls;
 
 namespace AYLink.Desktop.Services;
 
+/// <summary>
+/// 对话与轻提示辅助类 - 统一封装消息框、Toast 与任务型进度提示
+/// </summary>
 public static class DialogHelper
 {
+    public interface ITaskContext
+    {
+        void UpdateProgress(double value, string? newMessage = null);
+        void Close(string? completedMessage = null);
+        void Fail(string? failedMessage = null);
+        void Cancel(string? cancelledMessage = null);
+    }
+
+    private class ProgressTaskContext : ITaskContext
+    {
+        public ContentDialog? Dialog { get; set; }
+        public ToastModel? Toast { get; set; }
+        public ManagedTaskItem? ManagedTask { get; set; }
+
+        public void UpdateProgress(double value, string? newMessage = null)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (Dialog?.Content is StackPanel panel)
+                {
+                    if (newMessage != null && panel.Children[0] is TextBlock tb)
+                    {
+                        tb.Text = newMessage;
+                    }
+                    if (panel.Children[1] is ProgressBar pb)
+                    {
+                        pb.IsIndeterminate = false;
+                        pb.Value = value;
+                    }
+                }
+
+                if (Toast != null)
+                {
+                    if (newMessage != null)
+                    {
+                        Toast.Content = newMessage;
+                    }
+                    Toast.IsIndeterminate = false;
+                    Toast.Progress = value;
+                }
+
+                TaskCenterService.Instance.UpdateTask(
+                    ManagedTask,
+                    progress: value,
+                    detail: newMessage,
+                    isIndeterminate: false,
+                    showProgress: true);
+            });
+        }
+
+        public void Close(string? completedMessage = null)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (Dialog != null)
+                {
+                    Dialog.Hide();
+                    Dialog = null;
+                }
+
+                if (Toast != null)
+                {
+                    ToastManager.Instance.Dismiss(Toast);
+                    Toast = null;
+                }
+
+                TaskCenterService.Instance.CompleteTask(ManagedTask, completedMessage);
+                ManagedTask = null;
+            });
+        }
+
+        public void Fail(string? failedMessage = null)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (Dialog != null)
+                {
+                    Dialog.Hide();
+                    Dialog = null;
+                }
+
+                if (Toast != null)
+                {
+                    ToastManager.Instance.Dismiss(Toast);
+                    Toast = null;
+                }
+
+                TaskCenterService.Instance.FailTask(ManagedTask, failedMessage);
+                ManagedTask = null;
+            });
+        }
+
+        public void Cancel(string? cancelledMessage = null)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (Dialog != null)
+                {
+                    Dialog.Hide();
+                    Dialog = null;
+                }
+
+                if (Toast != null)
+                {
+                    ToastManager.Instance.Dismiss(Toast);
+                    Toast = null;
+                }
+
+                TaskCenterService.Instance.CancelTask(ManagedTask, cancelledMessage);
+                ManagedTask = null;
+            });
+        }
+    }
+
     /// <summary>
     /// 显示一个阻塞的消息对话框 等待用户确认
     /// </summary>
@@ -45,33 +162,51 @@ public static class DialogHelper
     }
 
     /// <summary>
-    /// 显示一个非阻塞的 Toast 提示 (缩小版的对话框)
+    /// 显示一个非阻塞的 Toast 提示
     /// </summary>
     public static void ShowToast(string title, string message, InfoBarSeverity severity = InfoBarSeverity.Informational)
     {
         ToastManager.Instance.Show(title, message, severity);
     }
 
-    private static ContentDialog? _currentProgressDialog;
-    private static ToastModel? _currentProgressToast;
-
     /// <summary>
     /// 显示一个进度提示
     /// 如果 isBlocking 为 true 则显示一个模态对话框阻止用户操作
     /// 如果 isBlocking 为 false 则在右下角显示一个带进度条的 Toast
+    /// 同时自动向任务中心注册一个可跟踪任务 供任务页统一管理
     /// </summary>
     /// <param name="title">标题</param>
     /// <param name="message">提示消息</param>
     /// <param name="isBlocking">是否阻塞</param>
     /// <param name="isIndeterminate">进度条样式</param>
-    public static void ShowProgress(string title, string message, bool isBlocking = true, bool isIndeterminate = true)
+    /// <param name="source">任务来源模块</param>
+    /// <param name="cancelAction">取消动作</param>
+    public static ITaskContext ShowProgress(
+        string title,
+        string message,
+        bool isBlocking = true,
+        bool isIndeterminate = true,
+        string? source = null,
+        Action? cancelAction = null)
     {
+        var localizer = LocalizationManager.Instance;
+        var context = new ProgressTaskContext();
+
+        context.ManagedTask = TaskCenterService.Instance.StartTask(new ManagedTaskOptions
+        {
+            Title = title,
+            Description = message,
+            Source = source ?? localizer.GetString("TaskCenterPage.DefaultSource", "通用任务"),
+            IsCancelable = cancelAction != null,
+            IsIndeterminate = isIndeterminate,
+            ShowProgress = true,
+            CancelAction = cancelAction
+        });
+
         Dispatcher.UIThread.Post(async () =>
         {
             if (isBlocking)
             {
-                if (_currentProgressDialog != null) return;
-
                 var progressBar = new ProgressBar
                 {
                     IsIndeterminate = isIndeterminate,
@@ -84,7 +219,7 @@ public static class DialogHelper
                 panel.Children.Add(new TextBlock { Text = message, TextWrapping = Avalonia.Media.TextWrapping.Wrap });
                 panel.Children.Add(progressBar);
 
-                _currentProgressDialog = new ContentDialog
+                context.Dialog = new ContentDialog
                 {
                     Title = title,
                     Content = panel,
@@ -93,56 +228,22 @@ public static class DialogHelper
                     CloseButtonText = string.Empty // 隐藏关闭按钮 强制等待
                 };
 
-                await _currentProgressDialog.ShowAsync();
+                await context.Dialog.ShowAsync();
             }
             else
             {
-                if (_currentProgressToast != null) return;
-
-                _currentProgressToast = ToastManager.Instance.Show(
-                    title, 
-                    message, 
-                    InfoBarSeverity.Informational, 
+                context.Toast = ToastManager.Instance.Show(
+                    title,
+                    message,
+                    InfoBarSeverity.Informational,
                     TimeSpan.MaxValue // 不自动关闭
                 );
-                _currentProgressToast.ShowProgress = true;
-                _currentProgressToast.IsIndeterminate = isIndeterminate;
+                context.Toast.ShowProgress = true;
+                context.Toast.IsIndeterminate = isIndeterminate;
             }
         });
-    }
 
-    /// <summary>
-    /// 更新进度条的值 (0-100) 和消息
-    /// </summary>
-    /// <param name="value">更新的数值</param>
-    /// <param name="newMessage">更新的提示消息</param>
-    public static void UpdateProgress(double value, string? newMessage = null)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (_currentProgressDialog?.Content is StackPanel panel)
-            {
-                if (newMessage != null && panel.Children[0] is TextBlock tb)
-                {
-                    tb.Text = newMessage;
-                }
-                if (panel.Children[1] is ProgressBar pb)
-                {
-                    pb.IsIndeterminate = false;
-                    pb.Value = value;
-                }
-            }
-
-            if (_currentProgressToast != null)
-            {
-                if (newMessage != null)
-                {
-                    _currentProgressToast.Content = newMessage;
-                }
-                _currentProgressToast.IsIndeterminate = false;
-                _currentProgressToast.Progress = value;
-            }
-        });
+        return context;
     }
 
     /// <summary>
@@ -150,10 +251,10 @@ public static class DialogHelper
     /// </summary>
     /// <param name="title">标题</param>
     /// <param name="description">描述</param>
-    /// <param name="fields"></param>
+    /// <param name="fields">输入字段定义集合</param>
     /// <param name="primaryButtonText">确定按钮</param>
     /// <param name="secondaryButtonText">取消按钮</param>
-    /// <returns></returns>
+    /// <returns>对话框结果与输入值</returns>
     public static async Task<(ContentDialogResult Result, Dictionary<string, string> Data)> ShowInputDialogAsync(
         string title,
         string description,
@@ -178,26 +279,5 @@ public static class DialogHelper
 
         var result = await dialog.ShowAsync();
         return (result, inputDialog.GetResults());
-    }
-
-    /// <summary>
-    /// 关闭当前的进度提示
-    /// </summary>
-    public static void CloseProgress()
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (_currentProgressDialog != null)
-            {
-                _currentProgressDialog.Hide();
-                _currentProgressDialog = null;
-            }
-
-            if (_currentProgressToast != null)
-            {
-                ToastManager.Instance.Dismiss(_currentProgressToast);
-                _currentProgressToast = null;
-            }
-        });
     }
 }

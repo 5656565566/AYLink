@@ -63,6 +63,7 @@ public partial class MainWindowViewModel : ViewModelBase
         new("Screen",LocalizationManager.Instance.GetString("MainWindow.NavScreen", "投屏"), Symbol.Play),
         new("App",LocalizationManager.Instance.GetString("MainWindow.NavApp", "应用管理"), Symbol.Repair),
         new("Shell",LocalizationManager.Instance.GetString("MainWindow.NavShell", "终端"), Symbol.Code),
+        new("TaskCenter", LocalizationManager.Instance.GetString("MainWindow.NavTaskCenter", "任务管理"), Symbol.Clock),
     ];
 
     public MainWindowViewModel()
@@ -73,6 +74,7 @@ public partial class MainWindowViewModel : ViewModelBase
         RegisterPage(new ScreenPageViewModel());
         RegisterPage(new AppPageViewModel());
         RegisterPage(new ShellPageViewModel());
+        RegisterPage(new TaskCenterPageViewModel());
         RegisterPage(new SettingsPageViewModel());
         RegisterPage(new DeviceSettingViewModel());
 
