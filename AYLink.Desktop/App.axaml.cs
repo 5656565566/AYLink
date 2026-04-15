@@ -21,6 +21,11 @@ public partial class App : Application
         // 加载配置项
         AppConfig appConfig = _configManager.LoadConfig<AppConfig>("appConfig");
 
+        if (!string.IsNullOrWhiteSpace(appConfig.FFmpegBin))
+        {
+            FFmpeg.AutoGen.ffmpeg.RootPath = appConfig.FFmpegBin;  // TODO 要分离到 Core 库
+        }
+
         // 根据配置切换语言
         if (!string.IsNullOrWhiteSpace(appConfig.Language))
         {

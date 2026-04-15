@@ -11,6 +11,7 @@ using FluentAvalonia.UI.Controls;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -207,6 +208,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
     {
         _appConfig.FFmpegBin = value;
         SaveConfig();
+        FFmpeg.AutoGen.ffmpeg.RootPath = value; // TODO 要分离到 Core 库
     }
 
     #endregion
@@ -265,6 +267,29 @@ public partial class SettingsPageViewModel : PageViewModelBase
         }
     }
 
+    [RelayCommand]
+    private void OpenUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            ShowError("链接地址无效");
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            ShowError($"打开链接失败: {ex.Message}");
+        }
+    }
+ 
     [RelayCommand]
     private void ResetToDefaults()
     {

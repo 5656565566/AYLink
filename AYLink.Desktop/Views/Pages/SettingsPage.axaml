@@ -211,14 +211,23 @@
                 </ui:SettingsExpander.Footer>
             </ui:SettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.CheckForUpdates, DefaultText='检查更新'}" 
+            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.CheckForUpdates, DefaultText='检查更新'}"
                                 Description="{i18n:Tr SettingsPage.CheckForUpdatesDescription, DefaultText='获取最新版本的应用程序'}">
                 <ui:SettingsExpander.Footer>
                     <Button Content="{i18n:Tr SettingsPage.CheckNow, DefaultText='立即检查'}" Command="{Binding CheckForUpdatesCommand}"/>
                 </ui:SettingsExpander.Footer>
             </ui:SettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.ResetToDefaults, DefaultText='恢复默认设置'}" 
+            <ui:SettingsExpander Header="GitHub"
+                                Description="https://github.com/5656565566/AYLink">
+                <ui:SettingsExpander.Footer>
+                    <Button Content="{i18n:Tr SettingsPage.OpenGithubUrl, DefaultText='打开 GitHub 仓库'}"
+                            Command="{Binding OpenUrlCommand}"
+                            CommandParameter="https://github.com/5656565566/AYLink"/>
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+ 
+            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.ResetToDefaults, DefaultText='恢复默认设置'}"
                                 Description="{i18n:Tr SettingsPage.ResetToDefaultsDescription, DefaultText='将所有设置恢复为初始状态'}">
                 <ui:SettingsExpander.Footer>
                     <Button Content="{i18n:Tr SettingsPage.Reset, DefaultText='恢复'}" Command="{Binding ResetToDefaultsCommand}"/>

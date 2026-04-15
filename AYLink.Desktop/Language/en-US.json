@@ -297,6 +297,7 @@
     "CheckForUpdates": "Check for Updates",
     "CheckForUpdatesDescription": "Get the latest version of the application",
     "CheckNow": "Check Now",
+    "CheckUpdateFailed": "Check update failed",
     "ComponentVersions": "Component Versions",
     "Components": "Components",
     "FFmpegDirectory": "FFmpeg Directory",
@@ -308,6 +309,7 @@
     "LanguageDescription": "Select the application's display language",
     "NotSelected": "Not Selected",
     "OnSelectedLanguageChanged": "Some texts require a restart to update",
+    "OpenGithubUrl": "Open GitHub Repository",
     "OutputVolume": "Output Volume",
     "OutputVolumeDescription": "Adjust global audio output volume",
     "Random": "Random",
@@ -331,7 +333,10 @@
     "ThemeMode": "Theme Mode",
     "ThemeModeDescription": "Select the application's theme",
     "ThemeSystem": "Follow System",
-    "Title": "Settings"
+    "Title": "Settings",
+    "UpToDate": "Currently up to date",
+    "UpdateAvailable": "New version available: ",
+    "UpdateUrl": "Please go to GitHub to download the latest version"
   },
   "ShellPage": {
     "EmptyStateDescription": "Please select a device on the home page to start the terminal",

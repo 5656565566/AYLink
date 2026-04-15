@@ -297,6 +297,7 @@
     "CheckForUpdates": "检查更新",
     "CheckForUpdatesDescription": "获取最新版本的应用程序",
     "CheckNow": "立即检查",
+    "CheckUpdateFailed": "检查更新失败",
     "ComponentVersions": "组件版本",
     "Components": "组件",
     "FFmpegDirectory": "FFmpeg 目录",
@@ -308,6 +309,7 @@
     "LanguageDescription": "选择应用程序的显示语言",
     "NotSelected": "未选择",
     "OnSelectedLanguageChanged": "部分文本需要重启后更新",
+    "OpenGithubUrl": "打开 GitHub 仓库",
     "OutputVolume": "输出音量",
     "OutputVolumeDescription": "调整全局音频输出音量",
     "Random": "随机",
@@ -331,7 +333,10 @@
     "ThemeMode": "主题模式",
     "ThemeModeDescription": "选择应用程序的主题",
     "ThemeSystem": "跟随系统",
-    "Title": "设置"
+    "Title": "设置",
+    "UpToDate": "当前已是最新版本",
+    "UpdateAvailable": "发现新版本: ",
+    "UpdateUrl": "请前往 GitHub 下载最新版本"
   },
   "ShellPage": {
     "EmptyStateDescription": "请在首页选择一个设备来启动终端",
