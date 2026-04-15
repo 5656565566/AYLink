@@ -1,43 +1,43 @@
 using System;
-using AYLink.Desktop.Services;
-using AYLink.Desktop.ViewModels.Pages;
-using FluentAvalonia.UI.Controls;
 
-namespace AYLink.Desktop.ViewModels.Design;
+namespace AYLink.Desktop.Services.Design;
 
-/// <summary>
-/// 仅用于设计时预览的任务管理页 ViewModel
-/// </summary>
-public class DesignTaskCenterPageViewModel : TaskCenterPageViewModel
+public static class DebugMockDataInitializer
 {
-    public static DesignTaskCenterPageViewModel DesignInstance { get; } = new();
+    /// <summary>
+    /// 初始化所有服务的测试数据
+    /// </summary>
+    public static void InitializeAll()
+    {
+        InitializeTaskCenter();
+    }
 
-    public DesignTaskCenterPageViewModel()
+    /// <summary>
+    /// 初始化任务中心虚拟数据
+    /// </summary>
+    private static void InitializeTaskCenter()
     {
         var service = TaskCenterService.Instance;
 
-        // 仅在空的时候注入假数据 避免重复执行
-        if (service.Tasks.Count == 0)
+        // 如果已经有数据了 就不重复添加
+        if (service.Tasks.Count > 0)
         {
-            var now = DateTimeOffset.Now;
-            
-            service.Tasks.Add(new ManagedTaskItem
-            {
-                Title = "同步照片到电脑",
-                Description = "正在从 Pixel 设备导出照片",
-                Detail = "已处理 328 / 1200 张照片",
-                Source = "Pixel 8 Pro",
-                Status = ManagedTaskStatus.Running,
-                Severity = InfoBarSeverity.Informational,
-                Progress = 27,
-                ShowProgress = true,
-                IsIndeterminate = false,
-                IsCancelable = true,
-                CreatedAt = now.AddMinutes(-6),
-                StartedAt = now.AddMinutes(-6),
-                CancelAction = () => { }
-            });
+            return;
+        }
 
+        var now = DateTimeOffset.Now;
+
+        service.StartTask(new ManagedTaskOptions
+        {
+            Title = "同步照片到电脑",
+            Description = "正在从 Pixel 设备导出照片",
+            Source = "Pixel 8 Pro",
+            IsCancelable = true,
+            ShowProgress = true
+        });
+        
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
             service.Tasks.Add(new ManagedTaskItem
             {
                 Title = "安装测试 APK",
@@ -45,7 +45,7 @@ public class DesignTaskCenterPageViewModel : TaskCenterPageViewModel
                 Detail = "正在安装 base.apk",
                 Source = "Redmi K70",
                 Status = ManagedTaskStatus.Running,
-                Severity = InfoBarSeverity.Informational,
+                Severity = FluentAvalonia.UI.Controls.InfoBarSeverity.Informational,
                 Progress = 82,
                 ShowProgress = true,
                 IsIndeterminate = false,
@@ -62,7 +62,7 @@ public class DesignTaskCenterPageViewModel : TaskCenterPageViewModel
                 Detail = "已完成，共 214 个应用",
                 Source = "OnePlus 12",
                 Status = ManagedTaskStatus.Completed,
-                Severity = InfoBarSeverity.Success,
+                Severity = FluentAvalonia.UI.Controls.InfoBarSeverity.Success,
                 Progress = 100,
                 ShowProgress = true,
                 IsIndeterminate = false,
@@ -79,7 +79,7 @@ public class DesignTaskCenterPageViewModel : TaskCenterPageViewModel
                 Detail = "用户手动取消",
                 Source = "Galaxy S24",
                 Status = ManagedTaskStatus.Cancelled,
-                Severity = InfoBarSeverity.Warning,
+                Severity = FluentAvalonia.UI.Controls.InfoBarSeverity.Warning,
                 Progress = 41,
                 ShowProgress = true,
                 IsIndeterminate = false,
@@ -96,7 +96,7 @@ public class DesignTaskCenterPageViewModel : TaskCenterPageViewModel
                 Detail = "/sdcard/Android/data 访问失败",
                 Source = "MIX Fold 3",
                 Status = ManagedTaskStatus.Failed,
-                Severity = InfoBarSeverity.Error,
+                Severity = FluentAvalonia.UI.Controls.InfoBarSeverity.Error,
                 Progress = 64,
                 ShowProgress = true,
                 IsIndeterminate = false,
@@ -105,7 +105,7 @@ public class DesignTaskCenterPageViewModel : TaskCenterPageViewModel
                 StartedAt = now.AddMinutes(-10),
                 FinishedAt = now.AddMinutes(-9)
             });
-
+            
             service.Tasks.Add(new ManagedTaskItem
             {
                 Title = "无线连接设备",
@@ -113,7 +113,7 @@ public class DesignTaskCenterPageViewModel : TaskCenterPageViewModel
                 Detail = "等待设备确认配对",
                 Source = "vivo X100",
                 Status = ManagedTaskStatus.Running,
-                Severity = InfoBarSeverity.Informational,
+                Severity = FluentAvalonia.UI.Controls.InfoBarSeverity.Informational,
                 Progress = 0,
                 ShowProgress = true,
                 IsIndeterminate = true,
@@ -122,7 +122,6 @@ public class DesignTaskCenterPageViewModel : TaskCenterPageViewModel
                 StartedAt = now.AddMinutes(-1),
                 CancelAction = () => { }
             });
-        }
-        OnNavigatedTo(null);
+        });
     }
 }

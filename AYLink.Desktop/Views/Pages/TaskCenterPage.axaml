@@ -7,11 +7,9 @@
              xmlns:views="using:AYLink.Desktop.Views"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:i18n="using:AYLink.Desktop.Services.Localization"
-             xmlns:design="using:AYLink.Desktop.ViewModels.Design"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
              x:Class="AYLink.Desktop.Views.Pages.TaskCenterPage"
-             x:DataType="vm:TaskCenterPageViewModel"
-             d:DataContext="{x:Static design:DesignTaskCenterPageViewModel.DesignInstance}">
+             x:DataType="vm:TaskCenterPageViewModel">
 
     <UserControl.Resources>
         <DataTemplate x:Key="TaskCenterTabContentTemplate" x:DataType="vm:TaskCenterTabViewModel">
@@ -112,7 +110,7 @@
                                     <DataGridTemplateColumn Width="120">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate x:DataType="services:ManagedTaskItem">
-                                                <TextBlock Text="{Binding Status, Converter={StaticResource ManagedTaskStatusToTextConverter}}"/>
+                                                <TextBlock Text="{Binding Status, Converter={StaticResource ManagedTaskStatusToTextConverter}}" VerticalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>

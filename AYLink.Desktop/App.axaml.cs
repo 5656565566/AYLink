@@ -43,6 +43,10 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+#if DEBUG
+        AYLink.Desktop.Services.Design.DebugMockDataInitializer.InitializeAll();
+#endif
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // 避免从 Avalonia 和 CommunityToolkit 同时进行重复验证

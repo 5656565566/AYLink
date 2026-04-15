@@ -65,6 +65,7 @@
   <ItemGroup Condition="'$(Configuration)' == 'Release'">
       <!-- 在 Release 模式下 直接排除 Design 目录下的所有代码 -->
       <Compile Remove="ViewModels\Design\**\*.cs" />
+      <Compile Remove="Services\Design\**\*.cs" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
