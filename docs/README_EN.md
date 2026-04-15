@@ -1,6 +1,7 @@
 # AYLink (安易连)
 
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](../LICENSE)
+![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4.svg?logo=dotnet&logoColor=white)
 
 **English** | [简体中文](README.md)
 
