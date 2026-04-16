@@ -14,7 +14,7 @@
     <!-- FFmpeg 解码 -->
     <PackageReference Include="FFmpeg.AutoGen" Version="8.0.0.1" />
     <!-- 日志 -->
-    <PackageReference Include="NLog" Version="6.1.1" />
+    <PackageReference Include="NLog" Version="6.1.2" />
   </ItemGroup>
 
 </Project>
