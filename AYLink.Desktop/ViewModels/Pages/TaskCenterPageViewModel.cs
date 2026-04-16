@@ -214,21 +214,6 @@ public partial class TaskCenterTabViewModel : TabItemViewModelBase
     }
 
     /// <summary>
-    /// 获取任务状态显示文本
-    /// </summary>
-    public string GetStatusText(ManagedTaskStatus status)
-    {
-        return status switch
-        {
-            ManagedTaskStatus.Running => _localizer.GetString("TaskCenterPage.StatusRunning", "运行中"),
-            ManagedTaskStatus.Completed => _localizer.GetString("TaskCenterPage.StatusCompleted", "已完成"),
-            ManagedTaskStatus.Cancelled => _localizer.GetString("TaskCenterPage.StatusCancelled", "已取消"),
-            ManagedTaskStatus.Failed => _localizer.GetString("TaskCenterPage.StatusFailed", "失败"),
-            _ => status.ToString()
-        };
-    }
-
-    /// <summary>
     /// 从任务中心移除任务
     /// </summary>
     /// <param name="task">目标任务</param>
@@ -636,26 +621,23 @@ public partial class TaskCenterPageViewModel : TabbedPageViewModelBase<TaskCente
             DisplayName = _localizer.GetString("TaskCenterPage.StatusAll", "全部"),
             Value = null
         });
-        StatusFilterOptions.Add(new TaskStatusFilterOption
+        
+        var statuses = new[]
         {
-            DisplayName = _localizer.GetString("TaskCenterPage.StatusRunning", "运行中"),
-            Value = ManagedTaskStatus.Running
-        });
-        StatusFilterOptions.Add(new TaskStatusFilterOption
+            ManagedTaskStatus.Running,
+            ManagedTaskStatus.Completed,
+            ManagedTaskStatus.Cancelled,
+            ManagedTaskStatus.Failed
+        };
+
+        foreach (var status in statuses)
         {
-            DisplayName = _localizer.GetString("TaskCenterPage.StatusCompleted", "已完成"),
-            Value = ManagedTaskStatus.Completed
-        });
-        StatusFilterOptions.Add(new TaskStatusFilterOption
-        {
-            DisplayName = _localizer.GetString("TaskCenterPage.StatusCancelled", "已取消"),
-            Value = ManagedTaskStatus.Cancelled
-        });
-        StatusFilterOptions.Add(new TaskStatusFilterOption
-        {
-            DisplayName = _localizer.GetString("TaskCenterPage.StatusFailed", "失败"),
-            Value = ManagedTaskStatus.Failed
-        });
+            StatusFilterOptions.Add(new TaskStatusFilterOption
+            {
+                DisplayName = status.ToLocalizedString(),
+                Value = status
+            });
+        }
 
         SelectedStatusFilter = StatusFilterOptions.FirstOrDefault();
     }
@@ -723,7 +705,7 @@ public partial class TaskCenterPageViewModel : TabbedPageViewModelBase<TaskCente
                 args.Status,
                 args.SearchKeyword),
             TaskFilterKind.Status when args.Status.HasValue => new TaskCenterTabViewModel(
-                string.Format(_localizer.GetString("TaskCenterPage.StatusTabTitle", "状态：{0}"), GetStatusDisplayName(args.Status.Value)),
+                string.Format(_localizer.GetString("TaskCenterPage.StatusTabTitle", "状态：{0}"), args.Status.Value.ToLocalizedString()),
                 TaskFilterKind.Status,
                 null,
                 args.Status.Value,
@@ -763,7 +745,7 @@ public partial class TaskCenterPageViewModel : TabbedPageViewModelBase<TaskCente
 
         if (status.HasValue)
         {
-            parts.Add(string.Format(_localizer.GetString("TaskCenterPage.StatusTabPart", "状态：{0}"), GetStatusDisplayName(status.Value)));
+            parts.Add(string.Format(_localizer.GetString("TaskCenterPage.StatusTabPart", "状态：{0}"), status.Value.ToLocalizedString()));
         }
 
         return parts.Count > 0
@@ -789,20 +771,4 @@ public partial class TaskCenterPageViewModel : TabbedPageViewModelBase<TaskCente
         _pendingStatusFilter = status;
     }
 
-    /// <summary>
-    /// 获取任务状态显示文本
-    /// </summary>
-    /// <param name="status">任务状态</param>
-    /// <returns>显示名称</returns>
-    private string GetStatusDisplayName(ManagedTaskStatus status)
-    {
-        return status switch
-        {
-            ManagedTaskStatus.Running => _localizer.GetString("TaskCenterPage.StatusRunning", "运行中"),
-            ManagedTaskStatus.Completed => _localizer.GetString("TaskCenterPage.StatusCompleted", "已完成"),
-            ManagedTaskStatus.Cancelled => _localizer.GetString("TaskCenterPage.StatusCancelled", "已取消"),
-            ManagedTaskStatus.Failed => _localizer.GetString("TaskCenterPage.StatusFailed", "失败"),
-            _ => status.ToString()
-        };
-    }
 }

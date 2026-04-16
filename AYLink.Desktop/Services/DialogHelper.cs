@@ -21,6 +21,39 @@ public static class DialogHelper
         void Cancel(string? cancelledMessage = null);
     }
 
+    /// <summary>
+    /// 仅使用 Toast 提示的简单上下文（不记录到任务中心）
+    /// </summary>
+    private class SimpleToastTaskContext : ITaskContext
+    {
+        private readonly string _title;
+
+        public SimpleToastTaskContext(string title)
+        {
+            _title = title;
+        }
+
+        public void UpdateProgress(double value, string? newMessage = null)
+        {
+            // 短时任务不需要频繁更新 Toast 进度
+        }
+
+        public void Close(string? completedMessage = null)
+        {
+            ShowToast(_title, completedMessage ?? "操作完成", InfoBarSeverity.Success);
+        }
+
+        public void Fail(string? failedMessage = null)
+        {
+            ShowToast(_title, failedMessage ?? "操作失败", InfoBarSeverity.Error);
+        }
+
+        public void Cancel(string? cancelledMessage = null)
+        {
+            ShowToast(_title, cancelledMessage ?? "操作已取消", InfoBarSeverity.Warning);
+        }
+    }
+
     private class ProgressTaskContext : ITaskContext
     {
         public ContentDialog? Dialog { get; set; }
@@ -187,8 +220,16 @@ public static class DialogHelper
         bool isBlocking = true,
         bool isIndeterminate = true,
         string? source = null,
-        Action? cancelAction = null)
+        Action? cancelAction = null,
+        bool showInTaskCenter = true)
     {
+        if (!showInTaskCenter)
+        {
+            // 对于不记录到任务中心的短时任务，我们返回一个不依赖 ManagedTaskItem 的简单上下文，只弹 Toast
+            ShowToast(title, message, InfoBarSeverity.Informational);
+            return new SimpleToastTaskContext(title);
+        }
+
         var localizer = LocalizationManager.Instance;
         var context = new ProgressTaskContext();
 

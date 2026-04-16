@@ -87,7 +87,8 @@ public partial class HomePageViewModel : PageViewModelBase
                 var pairTaskContext = DialogHelper.ShowProgress(
                     localizer.GetString("HomePage.PairingTitle", "配对中"),
                     string.Format(localizer.GetString("HomePage.PairingMessage", "正在配对设备 {0}:{1}..."), ip, pairPort),
-                    isBlocking: true);
+                    isBlocking: true,
+                    showInTaskCenter: false);
                 bool pairSuccess = await AdbManager.PairWifiDevice(ip, pairPort, pairCode);
                 pairTaskContext.Close();
 
@@ -103,7 +104,8 @@ public partial class HomePageViewModel : PageViewModelBase
             var connectTaskContext = DialogHelper.ShowProgress(
                 localizer.GetString("HomePage.ConnectingTitle", "连接中"),
                 string.Format(localizer.GetString("HomePage.ConnectingMessage", "正在连接到 {0}:{1}..."), ip, port),
-                isBlocking: false);
+                isBlocking: false,
+                showInTaskCenter: false);
 
             var device = await AdbManager.Instance.ConnectDevice(ip, port);
             

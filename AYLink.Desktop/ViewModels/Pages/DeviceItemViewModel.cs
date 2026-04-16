@@ -2,7 +2,6 @@ using AYLink.Core.Models;
 using AYLink.Core.Scrcpy;
 using AYLink.Desktop.Models;
 using AYLink.Desktop.Services;
-using AYLink.Desktop.ViewModels.Pages;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentAvalonia.UI.Controls;
@@ -48,7 +47,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
             string.Format(localizer.GetString("DeviceItem.ConfirmDisconnectMessage", "确定要断开设备 {0} ({1}) 吗？"), Name, Serial),
             localizer.GetString("DeviceItem.DisconnectButton", "断开"),
             localizer.GetString("Dialog.Cancel", "取消"));
-        if (result == FluentAvalonia.UI.Controls.ContentDialogResult.Primary)
+        if (result == ContentDialogResult.Primary)
         {
             Core.ADB.AdbManager.Instance.DisconnectDevice(Serial);
             DialogHelper.ShowToast(
@@ -69,7 +68,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
             DialogHelper.ShowToast(
                 localizer.GetString("DeviceItem.DeviceOfflineTitle", "设备离线"),
                 localizer.GetString("DeviceItem.DeviceOfflineMessage", "无法连接到设备，请检查连接状态"),
-                FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+                InfoBarSeverity.Error);
             return false;
         }
         return true;
@@ -143,7 +142,8 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
         var taskContext = DialogHelper.ShowProgress(
             localizer.GetString("DeviceItem.FetchingEncodersTitle", "获取中"),
             localizer.GetString("DeviceItem.FetchingEncodersMessage", "正在获取设备编码器列表..."),
-            isBlocking: true);
+            isBlocking: true,
+            showInTaskCenter: false);
 
         ScrcpyTool tool = ScrcpyService.Instance.Tool;
         var encoders = await Task.Run(() => tool.GetEncoders(Device));
