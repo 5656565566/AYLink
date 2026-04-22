@@ -57,10 +57,9 @@ public partial class FileTabViewModel : TabItemViewModelBase
         if (file.IsDirectory)
         {
             var localizer = Services.Localization.LocalizationManager.Instance;
-            DialogHelper.ShowToast(
+            Services.Notifications.NotificationService.Instance.ShowWarning(
                 localizer.GetString("FilePage.NotSupportedTitle", "不支持"),
-                localizer.GetString("FilePage.NotSupportedMessage", "暂不支持直接传输文件夹"),
-                FluentAvalonia.UI.Controls.InfoBarSeverity.Warning);
+                localizer.GetString("FilePage.NotSupportedMessage", "暂不支持直接传输文件夹"));
             return;
         }
 
@@ -73,20 +72,35 @@ public partial class FileTabViewModel : TabItemViewModelBase
             : (targetPane.CurrentPath.EndsWith("/") ? $"{targetPane.CurrentPath}{file.Name}" : $"{targetPane.CurrentPath}/{file.Name}");
 
         var localizer2 = Services.Localization.LocalizationManager.Instance;
-        var taskContext = DialogHelper.ShowProgress(
-            localizer2.GetString("FilePage.TransferringTitle", "传输中"),
-            string.Format(localizer2.GetString("FilePage.TransferringMessage", "正在传输 {0}..."), file.Name),
-            isBlocking: false, isIndeterminate: false);
+        string title = localizer2.GetString("FilePage.TransferringTitle", "传输中");
+        string message = string.Format(localizer2.GetString("FilePage.TransferringMessage", "正在传输 {0}..."), file.Name);
+
+        var managedTask = Services.Tasks.TaskService.Instance.StartTask(new Services.Tasks.ManagedTaskOptions
+        {
+            Title = title,
+            Description = message,
+            Source = localizer2.GetString("TaskPage.DefaultSource", "通用任务"),
+            IsIndeterminate = false,
+            ShowProgress = true
+        });
+
+        var dialog = new Views.Dialogs.ProgressDialog();
+        _ = dialog.ShowAsync(title, message, isIndeterminate: false);
 
         try
         {
-            var progress = new System.Progress<double>(p => taskContext.UpdateProgress(p));
+            var progress = new System.Progress<double>(p =>
+            {
+                dialog.UpdateProgress(p);
+                Services.Tasks.TaskService.Instance.UpdateTask(managedTask, p);
+            });
 
             if (sourcePane.SelectedSource.IsLocal && targetPane.SelectedSource.IsLocal)
             {
                 // 本地到本地
                 await System.Threading.Tasks.Task.Run(() => System.IO.File.Copy(sourcePath, targetPath, true));
-                taskContext.UpdateProgress(100);
+                dialog.UpdateProgress(100);
+                Services.Tasks.TaskService.Instance.UpdateTask(managedTask, 100);
             }
             else if (sourcePane.SelectedSource.IsLocal && !targetPane.SelectedSource.IsLocal)
             {
@@ -110,36 +124,50 @@ public partial class FileTabViewModel : TabItemViewModelBase
                         $"cp \"{sourcePath}\" \"{targetPath}\"",
                         receiver,
                         default);
-                    taskContext.UpdateProgress(100);
+                    dialog.UpdateProgress(100);
+                    Services.Tasks.TaskService.Instance.UpdateTask(managedTask, 100);
                 }
                 else
                 {
                     // 不同设备，使用临时文件中转
                     string tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), file.Name);
-                    taskContext.UpdateProgress(0, localizer2.GetString("FilePage.DownloadingToTemp", "正在下载到临时目录..."));
-                    await sourcePane.SelectedSource.Device!.FileManager.DownloadFileAsync(sourcePath, tempFile, new System.Progress<double>(p => taskContext.UpdateProgress(p / 2)));
+                    string msg1 = localizer2.GetString("FilePage.DownloadingToTemp", "正在下载到临时目录...");
+                    dialog.UpdateProgress(0, msg1);
+                    Services.Tasks.TaskService.Instance.UpdateTask(managedTask, 0, msg1);
+                    await sourcePane.SelectedSource.Device!.FileManager.DownloadFileAsync(sourcePath, tempFile, new System.Progress<double>(p =>
+                    {
+                        dialog.UpdateProgress(p / 2);
+                        Services.Tasks.TaskService.Instance.UpdateTask(managedTask, p / 2);
+                    }));
                     
-                    taskContext.UpdateProgress(50, localizer2.GetString("FilePage.UploadingToTarget", "正在上传到目标设备..."));
-                    await targetPane.SelectedSource.Device!.FileManager.UploadFileAsync(tempFile, targetPath, new System.Progress<double>(p => taskContext.UpdateProgress(50 + p / 2)));
+                    string msg2 = localizer2.GetString("FilePage.UploadingToTarget", "正在上传到目标设备...");
+                    dialog.UpdateProgress(50, msg2);
+                    Services.Tasks.TaskService.Instance.UpdateTask(managedTask, 50, msg2);
+                    await targetPane.SelectedSource.Device!.FileManager.UploadFileAsync(tempFile, targetPath, new System.Progress<double>(p =>
+                    {
+                        dialog.UpdateProgress(50 + p / 2);
+                        Services.Tasks.TaskService.Instance.UpdateTask(managedTask, 50 + p / 2);
+                    }));
                     
                     System.IO.File.Delete(tempFile);
                 }
             }
 
-            taskContext.Close();
-            DialogHelper.ShowToast(
+            dialog.Hide();
+            string successMsg = string.Format(localizer2.GetString("FilePage.TransferCompleteMessage", "{0} 传输成功"), file.Name);
+            Services.Tasks.TaskService.Instance.CompleteTask(managedTask, successMsg);
+            Services.Notifications.NotificationService.Instance.ShowSuccess(
                 localizer2.GetString("FilePage.TransferCompleteTitle", "传输完成"),
-                string.Format(localizer2.GetString("FilePage.TransferCompleteMessage", "{0} 传输成功"), file.Name),
-                FluentAvalonia.UI.Controls.InfoBarSeverity.Success);
+                successMsg);
             await targetPane.LoadFilesAsync();
         }
         catch (System.Exception ex)
         {
-            taskContext.Fail(ex.Message);
-            DialogHelper.ShowToast(
+            dialog.Hide();
+            Services.Tasks.TaskService.Instance.FailTask(managedTask, ex.Message);
+            Services.Notifications.NotificationService.Instance.ShowError(
                 localizer2.GetString("FilePage.TransferFailedTitle", "传输失败"),
-                ex.Message,
-                FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+                ex.Message);
         }
     }
 }

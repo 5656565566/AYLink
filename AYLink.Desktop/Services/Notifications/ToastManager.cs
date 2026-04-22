@@ -5,7 +5,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using FluentAvalonia.UI.Controls;
 
-namespace AYLink.Desktop.Services;
+namespace AYLink.Desktop.Services.Notifications;
 
 public partial class ToastModel : ObservableObject
 {
@@ -22,20 +22,24 @@ public partial class ToastModel : ObservableObject
     public partial TimeSpan Duration { get; set; } = TimeSpan.FromSeconds(3);
 
     [ObservableProperty]
-    public partial double Progress { get; set; } = 0;
+    public partial double Progress { get; set; }
 
     [ObservableProperty]
-    public partial bool ShowProgress { get; set; } = false;
+    public partial bool ShowProgress { get; set; }
 
     [ObservableProperty]
-    public partial bool IsIndeterminate { get; set; } = false;
+    public partial bool IsIndeterminate { get; set; }
 }
 
-public class ToastManager
+public sealed class ToastManager
 {
     public static ToastManager Instance { get; } = new();
 
     public ObservableCollection<ToastModel> Toasts { get; } = new();
+
+    private ToastManager()
+    {
+    }
 
     public ToastModel Show(string title, string content, InfoBarSeverity severity = InfoBarSeverity.Informational, TimeSpan? duration = null)
     {
@@ -50,7 +54,7 @@ public class ToastManager
         Dispatcher.UIThread.Post(() =>
         {
             Toasts.Add(toast);
-            
+
             if (toast.Duration != TimeSpan.Zero && toast.Duration != TimeSpan.MaxValue)
             {
                 Task.Delay(toast.Duration).ContinueWith(_ =>

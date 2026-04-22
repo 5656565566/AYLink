@@ -112,19 +112,17 @@ public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNav
         if (!TryApplyValidatedInputs())
         {
             var localizer = Services.Localization.LocalizationManager.Instance;
-            DialogHelper.ShowToast(
+            Services.Notifications.NotificationService.Instance.ShowWarning(
                 localizer.GetString("Dialog.Warning", "警告"),
-                "请先修正输入错误后再保存",
-                InfoBarSeverity.Warning);
+                "请先修正输入错误后再保存");
             return false;
         }
 
         ConfigManager.Instance.SaveConfig(HashHelper.ToMd5Hash(_deviceSerial), DeviceConfig);
         var successLocalizer = Services.Localization.LocalizationManager.Instance;
-        DialogHelper.ShowToast(
+        Services.Notifications.NotificationService.Instance.ShowSuccess(
             successLocalizer.GetString("Dialog.Success", "成功"),
-            successLocalizer.GetString("DeviceSettingPage.SaveSuccess", "设备设置已保存"),
-            InfoBarSeverity.Success);
+            successLocalizer.GetString("DeviceSettingPage.SaveSuccess", "设备设置已保存"));
         return true;
     }
 

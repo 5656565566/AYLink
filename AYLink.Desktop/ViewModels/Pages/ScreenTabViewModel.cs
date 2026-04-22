@@ -270,7 +270,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             _scrcpyClient = null;
 
             var localizer = Services.Localization.LocalizationManager.Instance;
-            DialogHelper.ShowToast(localizer.GetString("ScreenTab.ConnectFailed", "连接失败"), ex.Message, InfoBarSeverity.Error);
+            Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("ScreenTab.ConnectFailed", "连接失败"), ex.Message);
         }
     }
 

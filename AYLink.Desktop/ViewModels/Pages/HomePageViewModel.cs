@@ -1,6 +1,6 @@
 using AYLink.Core.ADB;
 using AYLink.Desktop.Models;
-using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentAvalonia.UI.Controls;
@@ -59,7 +59,7 @@ public partial class HomePageViewModel : PageViewModelBase
             new() { Key = "pairCode", Watermark = localizer.GetString("HomePage.AddDevicePairCodeWatermark", "配对码（可选）") }
         };
 
-        var (result, data) = await DialogHelper.ShowInputDialogAsync(
+        var (result, data) = await DialogService.ShowInputDialogAsync(
             localizer.GetString("HomePage.AddDeviceTitle", "添加设备"),
             localizer.GetString("HomePage.AddDeviceDescription", "通过网络调试 (Wi-Fi) 连接设备"),
             fields,
@@ -67,12 +67,12 @@ public partial class HomePageViewModel : PageViewModelBase
             localizer.GetString("HomePage.AddDeviceCancel", "取消")
         );
 
-        if (result == ContentDialogResult.Primary)
+        if (result == ContentDialogResult.Primary && data != null)
         {
             string ip = data["ip"];
             if (string.IsNullOrWhiteSpace(ip))
             {
-                await DialogHelper.ShowMessageAsync(
+                await DialogService.ShowMessageAsync(
                     localizer.GetString("Dialog.Error", "错误"),
                     localizer.GetString("HomePage.AddDeviceIpEmpty", "IP 地址不能为空"));
                 return;
@@ -84,44 +84,42 @@ public partial class HomePageViewModel : PageViewModelBase
 
             if (int.TryParse(pairPortStr, out int pairPort) && !string.IsNullOrWhiteSpace(pairCode))
             {
-                var pairTaskContext = DialogHelper.ShowProgress(
+                var dialog = new Views.Dialogs.ProgressDialog();
+                _ = dialog.ShowAsync(
                     localizer.GetString("HomePage.PairingTitle", "配对中"),
-                    string.Format(localizer.GetString("HomePage.PairingMessage", "正在配对设备 {0}:{1}..."), ip, pairPort),
-                    isBlocking: true,
-                    showInTaskCenter: false);
+                    string.Format(localizer.GetString("HomePage.PairingMessage", "正在配对设备 {0}:{1}..."), ip, pairPort));
+                
                 bool pairSuccess = await AdbManager.PairWifiDevice(ip, pairPort, pairCode);
-                pairTaskContext.Close();
+                dialog.Hide();
 
                 if (!pairSuccess)
                 {
-                    await DialogHelper.ShowMessageAsync(
+                    await DialogService.ShowMessageAsync(
                         localizer.GetString("HomePage.PairFailedTitle", "配对失败"),
                         localizer.GetString("HomePage.PairFailedMessage", "请检查配对码和端口是否正确"));
                     return;
                 }
             }
 
-            var connectTaskContext = DialogHelper.ShowProgress(
+            var connectDialog = new Views.Dialogs.ProgressDialog();
+            _ = connectDialog.ShowAsync(
                 localizer.GetString("HomePage.ConnectingTitle", "连接中"),
-                string.Format(localizer.GetString("HomePage.ConnectingMessage", "正在连接到 {0}:{1}..."), ip, port),
-                isBlocking: false,
-                showInTaskCenter: false);
+                string.Format(localizer.GetString("HomePage.ConnectingMessage", "正在连接到 {0}:{1}..."), ip, port));
 
             var device = await AdbManager.Instance.ConnectDevice(ip, port);
             
-            connectTaskContext.Close();
+            connectDialog.Hide();
 
             if (device != null)
             {
-                DialogHelper.ShowToast(
+                NotificationService.Instance.ShowSuccess(
                     localizer.GetString("HomePage.ConnectSuccessTitle", "连接成功"),
-                    string.Format(localizer.GetString("HomePage.ConnectSuccessMessage", "已连接到 {0}:{1}"), ip, port),
-                    InfoBarSeverity.Success);
+                    string.Format(localizer.GetString("HomePage.ConnectSuccessMessage", "已连接到 {0}:{1}"), ip, port));
                 await RefreshDevices();
             }
             else
             {
-                await DialogHelper.ShowMessageAsync(
+                await DialogService.ShowMessageAsync(
                     localizer.GetString("HomePage.ConnectFailedTitle", "连接失败"),
                     string.Format(localizer.GetString("HomePage.ConnectFailedMessage", "无法连接到 {0}:{1}，请检查设备是否开启了网络调试"), ip, port));
             }
@@ -177,7 +175,7 @@ public partial class HomePageViewModel : PageViewModelBase
             ? string.Format(localizer.GetString("HomePage.DisconnectSingleMessage", "确定要断开设备 {0} 吗？"), itemsToDelete[0].Name)
             : string.Format(localizer.GetString("HomePage.DisconnectMultipleMessage", "确定要断开选中的 {0} 台设备吗？"), itemsToDelete.Count);
 
-        var result = await DialogHelper.ShowMessageAsync(
+        var result = await DialogService.ShowMessageAsync(
             localizer.GetString("HomePage.DisconnectConfirmTitle", "确认断开"),
             message,
             localizer.GetString("HomePage.DisconnectConfirmButton", "断开"),
@@ -190,7 +188,7 @@ public partial class HomePageViewModel : PageViewModelBase
             {
                 AdbManager.Instance.DisconnectDevice(vm.Serial);
             }
-            DialogHelper.ShowToast(
+            NotificationService.Instance.ShowSuccess(
                 localizer.GetString("HomePage.DisconnectedTitle", "已断开"),
                 string.Format(localizer.GetString("HomePage.DisconnectedMessage", "已断开 {0} 台设备的连接"), itemsToDelete.Count));
             await RefreshDevices();
@@ -204,10 +202,9 @@ public partial class HomePageViewModel : PageViewModelBase
     private void RunScript()
     {
         var localizer = Services.Localization.LocalizationManager.Instance;
-        DialogHelper.ShowToast(
+        NotificationService.Instance.ShowWarning(
             localizer.GetString("Dialog.Tip", "提示"),
-            localizer.GetString("HomePage.ScriptNotImplemented", "脚本功能尚未实现"),
-            InfoBarSeverity.Warning);
+            localizer.GetString("HomePage.ScriptNotImplemented", "脚本功能尚未实现"));
     }
 
     /// <summary>
@@ -217,10 +214,9 @@ public partial class HomePageViewModel : PageViewModelBase
     private void SyncControl()
     {
         var localizer = Services.Localization.LocalizationManager.Instance;
-        DialogHelper.ShowToast(
+        NotificationService.Instance.ShowWarning(
             localizer.GetString("Dialog.Tip", "提示"),
-            localizer.GetString("HomePage.SyncControlNotImplemented", "同步控制功能尚未实现"),
-            InfoBarSeverity.Warning);
+            localizer.GetString("HomePage.SyncControlNotImplemented", "同步控制功能尚未实现"));
     }
 
     /// <summary>
@@ -232,7 +228,7 @@ public partial class HomePageViewModel : PageViewModelBase
         IsMultiSelectMode = !IsMultiSelectMode;
         
         string msg = IsMultiSelectMode ? "已开启多选模式" : "已退出多选模式";
-        DialogHelper.ShowToast("状态切换", msg, InfoBarSeverity.Informational);
+        NotificationService.Instance.ShowInfo("状态切换", msg);
     }
 
     /// <summary>

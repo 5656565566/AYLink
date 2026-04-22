@@ -254,7 +254,7 @@
     "NavScreen": "投屏",
     "NavSetting": "设置",
     "NavShell": "终端",
-    "NavTaskCenter": "任务管理",
+    "NavTask": "任务管理",
     "Title": "安易连"
   },
   "ScreenPage": {
@@ -353,7 +353,7 @@
     "SessionDisconnected": "会话已断开",
     "SessionStartFailed": "会话启动失败: {0}"
   },
-  "TaskCenterPage": {
+  "TaskPage": {
     "ApplyFilter": "筛选",
     "CancelTask": "取消任务",
     "ClearInactiveTasks": "清空未活跃事件",

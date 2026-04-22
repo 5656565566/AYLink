@@ -4,9 +4,10 @@ using AdvancedSharpAdbClient.Receivers;
 using AYLink.Core.Models;
 using AYLink.Core.Scrcpy;
 using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Notifications;
+using AYLink.Desktop.Services.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FluentAvalonia.UI.Controls;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -62,6 +63,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
     /// 全应用列表
     /// </summary>
     private readonly List<AppInfo> _masterAppList = [];
+    private readonly NotificationService _notifications = NotificationService.Instance;
 
     public AppTabViewModel(DeviceModel device)
     {
@@ -100,10 +102,9 @@ public partial class AppTabViewModel : TabItemViewModelBase
         {
             var localizer = Services.Localization.LocalizationManager.Instance;
             StatusMessage = string.Format(localizer.GetString("AppTab.LoadFailedStatus", "加载失败: {0}"), ex.Message);
-            DialogHelper.ShowToast(
+            _notifications.ShowError(
                 localizer.GetString("AppTab.LoadFailedTitle", "加载失败"),
-                string.Format(localizer.GetString("AppTab.LoadFailedMessage", "获取应用列表失败: {0}"), ex.Message),
-                InfoBarSeverity.Error);
+                string.Format(localizer.GetString("AppTab.LoadFailedMessage", "获取应用列表失败: {0}"), ex.Message));
         }
         finally
         {
@@ -165,19 +166,28 @@ public partial class AppTabViewModel : TabItemViewModelBase
         var localizer = Services.Localization.LocalizationManager.Instance;
         if (Device == null)
         {
-            DialogHelper.ShowToast(
+            _notifications.ShowWarning(
                 localizer.GetString("Dialog.Tip", "提示"),
-                localizer.GetString("AppTab.SelectDeviceFirst", "请先选择设备"),
-                InfoBarSeverity.Warning);
+                localizer.GetString("AppTab.SelectDeviceFirst", "请先选择设备"));
             return;
         }
 
         if (filePaths == null || filePaths.Count == 0) return;
 
-        var taskContext = DialogHelper.ShowProgress(
-            localizer.GetString("AppTab.InstallAppTitle", "安装应用"),
-            localizer.GetString("AppTab.PreparingInstall", "准备安装..."),
-            isBlocking: true, isIndeterminate: false);
+        string title = localizer.GetString("AppTab.InstallAppTitle", "安装应用");
+        string message = localizer.GetString("AppTab.PreparingInstall", "准备安装...");
+
+        var managedTask = TaskService.Instance.StartTask(new ManagedTaskOptions
+        {
+            Title = title,
+            Description = message,
+            Source = localizer.GetString("TaskPage.DefaultSource", "通用任务"),
+            IsIndeterminate = false,
+            ShowProgress = true
+        });
+
+        var dialog = new Views.Dialogs.ProgressDialog();
+        _ = dialog.ShowAsync(title, message, isIndeterminate: false);
 
         try
         {
@@ -193,14 +203,20 @@ public partial class AppTabViewModel : TabItemViewModelBase
 
                     void callback(InstallProgressEventArgs p)
                     {
+                        string msg = string.Empty;
                         if (p.State == PackageInstallProgressState.Uploading)
                         {
-                            taskContext.UpdateProgress(p.UploadProgress, string.Format(localizer.GetString("AppTab.Uploading", "正在上传: {0}"), fileName));
+                            msg = string.Format(localizer.GetString("AppTab.Uploading", "正在上传: {0}"), fileName);
+                        }
+                        else if (p.State == PackageInstallProgressState.Installing)
+                        {
+                            msg = string.Format(localizer.GetString("AppTab.Installing", "正在安装: {0}"), fileName);
                         }
 
-                        if (p.State == PackageInstallProgressState.Installing)
+                        if (!string.IsNullOrEmpty(msg))
                         {
-                            taskContext.UpdateProgress(p.UploadProgress, string.Format(localizer.GetString("AppTab.Installing", "正在安装: {0}"), fileName));
+                            dialog.UpdateProgress(p.UploadProgress, msg);
+                            TaskService.Instance.UpdateTask(managedTask, p.UploadProgress, msg);
                         }
                     }
 
@@ -214,19 +230,20 @@ public partial class AppTabViewModel : TabItemViewModelBase
                 }
             });
 
-            taskContext.Close();
-            DialogHelper.ShowToast(
+            dialog.Hide();
+            TaskService.Instance.CompleteTask(managedTask, localizer.GetString("AppTab.InstallSuccessMessage", "APK 安装完成"));
+            _notifications.ShowSuccess(
                 localizer.GetString("AppTab.InstallSuccessTitle", "安装成功"),
-                localizer.GetString("AppTab.InstallSuccessMessage", "APK 安装完成"),
-                InfoBarSeverity.Success);
+                localizer.GetString("AppTab.InstallSuccessMessage", "APK 安装完成"));
 
             // 刷新应用列表
             await LoadAppsAsync();
         }
         catch (Exception ex)
         {
-            taskContext.Fail(string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
-            await DialogHelper.ShowMessageAsync(
+            dialog.Hide();
+            TaskService.Instance.FailTask(managedTask, string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
+            _notifications.ShowError(
                 localizer.GetString("AppTab.InstallFailedTitle", "安装失败"),
                 string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
         }
@@ -241,18 +258,28 @@ public partial class AppTabViewModel : TabItemViewModelBase
         if (Device == null || app == null) return;
 
         var localizer = Services.Localization.LocalizationManager.Instance;
-        var result = await DialogHelper.ShowMessageAsync(
+        var result = await DialogService.ShowMessageAsync(
             localizer.GetString("AppTab.ConfirmUninstallTitle", "确认卸载"),
             string.Format(localizer.GetString("AppTab.ConfirmUninstallMessage", "确定要卸载 {0} ({1}) 吗？"), app.Name, app.PackageName),
             localizer.GetString("AppTab.UninstallButton", "卸载"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != ContentDialogResult.Primary) return;
+        if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary) return;
 
-        var taskContext = DialogHelper.ShowProgress(
-            localizer.GetString("AppTab.UninstallAppTitle", "卸载应用"),
-            string.Format(localizer.GetString("AppTab.Uninstalling", "正在卸载 {0}..."), app.Name),
-            isBlocking: true);
+        string title = localizer.GetString("AppTab.UninstallAppTitle", "卸载应用");
+        string message = string.Format(localizer.GetString("AppTab.Uninstalling", "正在卸载 {0}..."), app.Name);
+
+        var managedTask = TaskService.Instance.StartTask(new ManagedTaskOptions
+        {
+            Title = title,
+            Description = message,
+            Source = localizer.GetString("TaskPage.DefaultSource", "通用任务"),
+            IsIndeterminate = true,
+            ShowProgress = true
+        });
+
+        var dialog = new Views.Dialogs.ProgressDialog();
+        _ = dialog.ShowAsync(title, message, isIndeterminate: true);
 
         try
         {
@@ -264,11 +291,12 @@ public partial class AppTabViewModel : TabItemViewModelBase
                     CancellationToken.None);
             });
 
-            taskContext.Close();
-            DialogHelper.ShowToast(
+            dialog.Hide();
+            string successMsg = string.Format(localizer.GetString("AppTab.UninstallSuccessMessage", "{0} 已卸载"), app.Name);
+            TaskService.Instance.CompleteTask(managedTask, successMsg);
+            _notifications.ShowSuccess(
                 localizer.GetString("AppTab.UninstallSuccessTitle", "卸载成功"),
-                string.Format(localizer.GetString("AppTab.UninstallSuccessMessage", "{0} 已卸载"), app.Name),
-                InfoBarSeverity.Success);
+                successMsg);
 
             // 从列表中移除
             _masterAppList.Remove(app);
@@ -278,8 +306,9 @@ public partial class AppTabViewModel : TabItemViewModelBase
         }
         catch (Exception ex)
         {
-            taskContext.Fail(string.Format(localizer.GetString("AppTab.UninstallFailedMessage", "卸载应用时发生错误: {0}"), ex.Message));
-            await DialogHelper.ShowMessageAsync(
+            dialog.Hide();
+            TaskService.Instance.FailTask(managedTask, string.Format(localizer.GetString("AppTab.UninstallFailedMessage", "卸载应用时发生错误: {0}"), ex.Message));
+            _notifications.ShowError(
                 localizer.GetString("AppTab.UninstallFailedTitle", "卸载失败"),
                 string.Format(localizer.GetString("AppTab.UninstallFailedMessage", "卸载应用时发生错误: {0}"), ex.Message));
         }
@@ -304,17 +333,15 @@ public partial class AppTabViewModel : TabItemViewModelBase
                     Device.DeviceData,
                     receiver);
             });
-            DialogHelper.ShowToast(
+            _notifications.ShowSuccess(
                 localizer.GetString("AppTab.LaunchSuccessTitle", "启动成功"),
-                string.Format(localizer.GetString("AppTab.LaunchSuccessMessage", "{0} 已启动"), app.Name),
-                InfoBarSeverity.Success);
+                string.Format(localizer.GetString("AppTab.LaunchSuccessMessage", "{0} 已启动"), app.Name));
         }
         catch (Exception ex)
         {
-            DialogHelper.ShowToast(
+            _notifications.ShowError(
                 localizer.GetString("AppTab.LaunchFailedTitle", "启动失败"),
-                string.Format(localizer.GetString("AppTab.LaunchFailedMessage", "启动应用失败: {0}"), ex.Message),
-                InfoBarSeverity.Error);
+                string.Format(localizer.GetString("AppTab.LaunchFailedMessage", "启动应用失败: {0}"), ex.Message));
         }
     }
 
@@ -354,18 +381,16 @@ public partial class AppTabViewModel : TabItemViewModelBase
             if (clipboard != null)
             {
                 await clipboard.SetTextAsync(app.PackageName);
-                DialogHelper.ShowToast(
+                _notifications.ShowSuccess(
                     localizer.GetString("AppTab.CopySuccessTitle", "已复制"),
-                    string.Format(localizer.GetString("AppTab.CopySuccessMessage", "包名 {0} 已复制到剪贴板"), app.PackageName),
-                    InfoBarSeverity.Success);
+                    string.Format(localizer.GetString("AppTab.CopySuccessMessage", "包名 {0} 已复制到剪贴板"), app.PackageName));
             }
         }
         catch (Exception ex)
         {
-            DialogHelper.ShowToast(
+            _notifications.ShowError(
                 localizer.GetString("AppTab.CopyFailedTitle", "复制失败"),
-                string.Format(localizer.GetString("AppTab.CopyFailedMessage", "复制包名失败: {0}"), ex.Message),
-                InfoBarSeverity.Error);
+                string.Format(localizer.GetString("AppTab.CopyFailedMessage", "复制包名失败: {0}"), ex.Message));
         }
     }
 
@@ -390,17 +415,15 @@ public partial class AppTabViewModel : TabItemViewModelBase
                     receiver);
             });
 
-            DialogHelper.ShowToast(
+            _notifications.ShowInfo(
                 localizer.GetString("AppTab.AppInfoOpenedTitle", "应用信息"),
-                string.Format(localizer.GetString("AppTab.AppInfoOpenedMessage", "已在设备上打开 {0} 的应用信息"), app.Name),
-                InfoBarSeverity.Informational);
+                string.Format(localizer.GetString("AppTab.AppInfoOpenedMessage", "已在设备上打开 {0} 的应用信息"), app.Name));
         }
         catch (Exception ex)
         {
-            DialogHelper.ShowToast(
+            _notifications.ShowError(
                 localizer.GetString("AppTab.AppInfoFailedTitle", "打开失败"),
-                string.Format(localizer.GetString("AppTab.AppInfoFailedMessage", "打开应用信息失败: {0}"), ex.Message),
-                InfoBarSeverity.Error);
+                string.Format(localizer.GetString("AppTab.AppInfoFailedMessage", "打开应用信息失败: {0}"), ex.Message));
         }
     }
 }

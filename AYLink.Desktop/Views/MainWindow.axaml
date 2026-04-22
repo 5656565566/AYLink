@@ -58,7 +58,7 @@
                         <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Code}"/>
                     </ui:NavigationViewItem.IconSource>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavTaskCenter, DefaultText='任务管理'}" Tag="TaskCenter" Margin="1.1">
+                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavTask, DefaultText='任务管理'}" Tag="Task" Margin="1.1">
                     <ui:NavigationViewItem.IconSource>
                         <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Clock}"/>
                     </ui:NavigationViewItem.IconSource>

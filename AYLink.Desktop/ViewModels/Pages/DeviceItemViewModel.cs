@@ -1,7 +1,7 @@
 using AYLink.Core.Models;
 using AYLink.Core.Scrcpy;
 using AYLink.Desktop.Models;
-using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentAvalonia.UI.Controls;
@@ -42,7 +42,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
     private async Task DeleteDevice()
     {
         var localizer = Services.Localization.LocalizationManager.Instance;
-        var result = await DialogHelper.ShowMessageAsync(
+        var result = await Services.Notifications.DialogService.ShowMessageAsync(
             localizer.GetString("DeviceItem.ConfirmDisconnectTitle", "确认断开"),
             string.Format(localizer.GetString("DeviceItem.ConfirmDisconnectMessage", "确定要断开设备 {0} ({1}) 吗？"), Name, Serial),
             localizer.GetString("DeviceItem.DisconnectButton", "断开"),
@@ -50,7 +50,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
         if (result == ContentDialogResult.Primary)
         {
             Core.ADB.AdbManager.Instance.DisconnectDevice(Serial);
-            DialogHelper.ShowToast(
+            Services.Notifications.NotificationService.Instance.ShowInfo(
                 localizer.GetString("DeviceItem.DisconnectedTitle", "已断开"),
                 string.Format(localizer.GetString("DeviceItem.DisconnectedMessage", "设备 {0} 已断开连接"), Name));
             if (_refreshAction != null)
@@ -65,10 +65,9 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
         if (!Core.ADB.AdbManager.Instance.IsDeviceTrulyOnline(Device.Serial))
         {
             var localizer = Services.Localization.LocalizationManager.Instance;
-            DialogHelper.ShowToast(
+            Services.Notifications.NotificationService.Instance.ShowError(
                 localizer.GetString("DeviceItem.DeviceOfflineTitle", "设备离线"),
-                localizer.GetString("DeviceItem.DeviceOfflineMessage", "无法连接到设备，请检查连接状态"),
-                InfoBarSeverity.Error);
+                localizer.GetString("DeviceItem.DeviceOfflineMessage", "无法连接到设备，请检查连接状态"));
             return false;
         }
         return true;
@@ -139,29 +138,28 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
         if (!CheckDeviceOnline()) return;
 
         var localizer = Services.Localization.LocalizationManager.Instance;
-        var taskContext = DialogHelper.ShowProgress(
-            localizer.GetString("DeviceItem.FetchingEncodersTitle", "获取中"),
-            localizer.GetString("DeviceItem.FetchingEncodersMessage", "正在获取设备编码器列表..."),
-            isBlocking: true,
-            showInTaskCenter: false);
+        string title = localizer.GetString("DeviceItem.FetchingEncodersTitle", "获取中");
+        string message = localizer.GetString("DeviceItem.FetchingEncodersMessage", "正在获取设备编码器列表...");
+
+        var dialog = new Views.Dialogs.ProgressDialog();
+        _ = dialog.ShowAsync(title, message, isIndeterminate: true);
 
         ScrcpyTool tool = ScrcpyService.Instance.Tool;
         var encoders = await Task.Run(() => tool.GetEncoders(Device));
         
-        taskContext.Close();
+        dialog.Hide();
 
         if (encoders.Count > 0)
         {
-            await DialogHelper.ShowMessageAsync(
+            await DialogService.ShowMessageAsync(
                 localizer.GetString("DeviceItem.EncoderListTitle", "编码器列表"),
                 string.Join("\n", encoders));
         }
         else
         {
-            DialogHelper.ShowToast(
+            NotificationService.Instance.ShowWarning(
                 localizer.GetString("Dialog.Tip", "提示"),
-                localizer.GetString("DeviceItem.NoEncodersFound", "未找到可用的编码器"),
-                InfoBarSeverity.Warning);
+                localizer.GetString("DeviceItem.NoEncodersFound", "未找到可用的编码器"));
         }
     }
 
@@ -193,7 +191,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
         };
 
         // 调用对话框
-        var (result, data) = await DialogHelper.ShowInputDialogAsync(
+        var (result, data) = await DialogService.ShowInputDialogAsync(
             localizer.GetString("DeviceItem.NewDisplayTitle", "新建虚拟显示器"),
             "",
             fields: fields,
@@ -207,10 +205,9 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
             {
                 // 校验 1920x1080/420 这种格式
                 if (!Regex.IsMatch(inputRes, @"^\d+x\d+/\d+$")) {
-                    DialogHelper.ShowToast(
+                    NotificationService.Instance.ShowWarning(
                         localizer.GetString("Dialog.Tip", "提示"),
-                        localizer.GetString("DeviceItem.InvalidResolution", "错误的分辨率"),
-                        InfoBarSeverity.Warning);
+                        localizer.GetString("DeviceItem.InvalidResolution", "错误的分辨率"));
                     return;
                 }
 

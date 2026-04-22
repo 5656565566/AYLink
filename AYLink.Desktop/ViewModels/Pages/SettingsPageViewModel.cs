@@ -352,7 +352,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
 
     private static void ShowToast(string titleKey, string defaultTitle, string message, InfoBarSeverity severity)
     {
-        DialogHelper.ShowToast(LocalizationManager.Instance.GetString(titleKey, defaultTitle), message, severity);
+        Services.Notifications.ToastManager.Instance.Show(LocalizationManager.Instance.GetString(titleKey, defaultTitle), message, severity);
     }
 
     #endregion

@@ -37,10 +37,9 @@ public partial class FilePageViewModel : TabbedPageViewModelBase<FileTabViewMode
         if (Tabs.Count <= 1)
         {
             var localizer = Services.Localization.LocalizationManager.Instance;
-            DialogHelper.ShowToast(
+            Services.Notifications.NotificationService.Instance.ShowInfo(
                 localizer.GetString("FilePage.CannotCloseTitle", "无法关闭"),
-                localizer.GetString("FilePage.CannotCloseMessage", "至少要保留一个标签页"),
-                InfoBarSeverity.Informational);
+                localizer.GetString("FilePage.CannotCloseMessage", "至少要保留一个标签页"));
             return false; // 阻止关闭
         }
         return true;

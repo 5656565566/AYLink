@@ -1,7 +1,7 @@
 using AYLink.Core.ADB;
 using AYLink.Core.Models;
 using AYLink.Desktop.Models;
-using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
@@ -107,7 +107,7 @@ public partial class FilePaneViewModel : ViewModelBase
         if (file == null || file.Name == "..") return;
 
         var localizer = Services.Localization.LocalizationManager.Instance;
-        var result = await DialogHelper.ShowMessageAsync(
+        var result = await DialogService.ShowMessageAsync(
             localizer.GetString("FilePage.ConfirmDeleteTitle", "确认删除"),
             string.Format(localizer.GetString("FilePage.ConfirmDeleteMessage", "确定要删除 {0} 吗？"), file.Name),
             localizer.GetString("FilePage.DeleteButton", "删除"),
@@ -140,26 +140,23 @@ public partial class FilePaneViewModel : ViewModelBase
 
             if (success)
             {
-                DialogHelper.ShowToast(
+                NotificationService.Instance.ShowSuccess(
                     localizer.GetString("FilePage.DeleteSuccessTitle", "删除成功"),
-                    string.Format(localizer.GetString("FilePage.DeleteSuccessMessage", "{0} 已被删除"), file.Name),
-                    FluentAvalonia.UI.Controls.InfoBarSeverity.Success);
+                    string.Format(localizer.GetString("FilePage.DeleteSuccessMessage", "{0} 已被删除"), file.Name));
                 await LoadFilesAsync();
             }
             else
             {
-                DialogHelper.ShowToast(
+                NotificationService.Instance.ShowError(
                     localizer.GetString("FilePage.DeleteFailedTitle", "删除失败"),
-                    string.Format(localizer.GetString("FilePage.DeleteFailedMessage", "无法删除 {0}"), file.Name),
-                    FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+                    string.Format(localizer.GetString("FilePage.DeleteFailedMessage", "无法删除 {0}"), file.Name));
             }
         }
         catch (Exception ex)
         {
-            DialogHelper.ShowToast(
+            NotificationService.Instance.ShowError(
                 localizer.GetString("FilePage.DeleteErrorTitle", "删除出错"),
-                ex.Message,
-                FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+                ex.Message);
         }
     }
 
@@ -199,10 +196,9 @@ public partial class FilePaneViewModel : ViewModelBase
         catch (Exception ex)
         {
             var localizer = Services.Localization.LocalizationManager.Instance;
-            DialogHelper.ShowToast(
+            NotificationService.Instance.ShowError(
                 localizer.GetString("FilePage.LoadFailedTitle", "加载失败"),
-                ex.Message,
-                FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+                ex.Message);
         }
         finally
         {
@@ -306,7 +302,7 @@ public partial class FilePaneViewModel : ViewModelBase
         if (file == null || file.Name == "..") return;
 
         var localizer = Services.Localization.LocalizationManager.Instance;
-        var result = await DialogHelper.ShowMessageAsync(
+        var result = await DialogService.ShowMessageAsync(
             localizer.GetString("FilePage.ConfirmDeleteTitle", "确认删除"),
             string.Format(localizer.GetString("FilePage.ConfirmDeleteMessage", "确定要删除 {0} 吗？"), file.Name),
             localizer.GetString("FilePage.DeleteButton", "删除"),
@@ -339,26 +335,23 @@ public partial class FilePaneViewModel : ViewModelBase
 
             if (success)
             {
-                DialogHelper.ShowToast(
+                NotificationService.Instance.ShowSuccess(
                     localizer.GetString("FilePage.DeleteSuccessTitle", "删除成功"),
-                    string.Format(localizer.GetString("FilePage.DeleteSuccessMessage", "{0} 已被删除"), file.Name),
-                    FluentAvalonia.UI.Controls.InfoBarSeverity.Success);
+                    string.Format(localizer.GetString("FilePage.DeleteSuccessMessage", "{0} 已被删除"), file.Name));
                 await LoadFilesAsync();
             }
             else
             {
-                DialogHelper.ShowToast(
+                NotificationService.Instance.ShowError(
                     localizer.GetString("FilePage.DeleteFailedTitle", "删除失败"),
-                    string.Format(localizer.GetString("FilePage.DeleteFailedMessage", "无法删除 {0}"), file.Name),
-                    FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+                    string.Format(localizer.GetString("FilePage.DeleteFailedMessage", "无法删除 {0}"), file.Name));
             }
         }
         catch (Exception ex)
         {
-            DialogHelper.ShowToast(
+            NotificationService.Instance.ShowError(
                 localizer.GetString("FilePage.DeleteErrorTitle", "删除出错"),
-                ex.Message,
-                FluentAvalonia.UI.Controls.InfoBarSeverity.Error);
+                ex.Message);
         }
     }
 }

@@ -47,10 +47,9 @@ public partial class AppPage : UserControl
         var localizer = Services.Localization.LocalizationManager.Instance;
         if (tabVm?.Device == null)
         {
-            Services.DialogHelper.ShowToast(
+            Services.Notifications.NotificationService.Instance.ShowWarning(
                 localizer.GetString("Dialog.Tip", "提示"),
-                localizer.GetString("AppPage.SelectDeviceFirst", "请先选择设备"),
-                InfoBarSeverity.Warning);
+                localizer.GetString("AppPage.SelectDeviceFirst", "请先选择设备"));
             return;
         }
 

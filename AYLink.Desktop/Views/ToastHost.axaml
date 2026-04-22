@@ -3,18 +3,18 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
-             xmlns:services="using:AYLink.Desktop.Services"
+             xmlns:notifications="using:AYLink.Desktop.Services.Notifications"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AYLink.Desktop.Views.ToastHost">
 
-    <ItemsControl ItemsSource="{Binding Toasts, Source={x:Static services:ToastManager.Instance}}">
+    <ItemsControl ItemsSource="{Binding Toasts, Source={x:Static notifications:ToastManager.Instance}}">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
                 <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="20"/>
             </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="services:ToastModel">
+            <DataTemplate x:DataType="notifications:ToastModel">
                 <ui:InfoBar Title="{Binding Title}"
                             Message="{Binding Content}"
                             Severity="{Binding Severity}"

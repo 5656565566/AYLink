@@ -254,7 +254,7 @@
     "NavScreen": "Screen Mirroring",
     "NavSetting": "Settings",
     "NavShell": "Terminal",
-    "NavTaskCenter": "Task Center",
+    "NavTask": "Task Center",
     "Title": "AYLink"
   },
   "ScreenPage": {
@@ -353,7 +353,7 @@
     "SessionDisconnected": "Session disconnected",
     "SessionStartFailed": "Failed to start session: {0}"
   },
-  "TaskCenterPage": {
+  "TaskPage": {
     "ApplyFilter": "Apply Filter",
     "CancelTask": "Cancel Task",
     "ClearInactiveTasks": "Clear Inactive Tasks",

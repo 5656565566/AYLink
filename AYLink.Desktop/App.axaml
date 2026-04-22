@@ -116,8 +116,8 @@
         <DataTemplate DataType="vm:ShellPageViewModel">
             <views:ShellPage />
         </DataTemplate>
-        <DataTemplate DataType="vm:TaskCenterPageViewModel">
-            <views:TaskCenterPage />
+        <DataTemplate DataType="vm:TaskPageViewModel">
+            <views:TaskPage />
         </DataTemplate>
         <DataTemplate DataType="vm:SettingsPageViewModel">
             <views:SettingsPage />
