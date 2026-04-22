@@ -26,7 +26,7 @@ public abstract partial class PageViewModelBase : ViewModelBase
     /// 页面是否处于活跃状态
     /// </summary>
     [ObservableProperty]
-    private bool _isActive;
+    public partial bool IsActive { get; set; }
 
     /// <summary>
     /// 页面被导航到时调用（可携带参数）

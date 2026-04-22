@@ -11,16 +11,16 @@ namespace AYLink.Desktop.ViewModels;
 public abstract partial class TabItemViewModelBase : ViewModelBase
 {
     [ObservableProperty]
-    private string _title = "";
+    public partial string Title { get; set; } = "";
 
     [ObservableProperty]
-    private DeviceModel? _device;
+    public partial DeviceModel? Device { get; set; }
 
     [ObservableProperty]
-    private string _statusMessage = "";
+    public partial string StatusMessage { get; set; } = "";
 
     [ObservableProperty]
-    private bool _isClosable = true;
+    public partial bool IsClosable { get; set; } = true;
 
     /// <summary>
     /// 关闭请求事件 - 由 TabbedPageViewModelBase 订阅

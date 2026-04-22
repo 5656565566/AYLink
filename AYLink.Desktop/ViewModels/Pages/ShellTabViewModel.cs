@@ -15,7 +15,7 @@ namespace AYLink.Desktop.ViewModels.Pages;
 public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
 {
     [ObservableProperty]
-    private bool _isConnected;
+    public partial bool IsConnected { get; set; }
 
     private CancellationTokenSource? _sessionCts;
     private IAdbSocket? _adbSocket;

@@ -15,22 +15,22 @@ namespace AYLink.Desktop.ViewModels.Pages;
 public partial class FilePaneViewModel : ViewModelBase
 {
     [ObservableProperty]
-    private ObservableCollection<FileSource> _availableSources = [];
+    public partial ObservableCollection<FileSource> AvailableSources { get; set; } = [];
 
     [ObservableProperty]
-    private FileSource? _selectedSource;
+    public partial FileSource? SelectedSource { get; set; }
 
     [ObservableProperty]
-    private string _currentPath = string.Empty;
+    public partial string CurrentPath { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private ObservableCollection<FileSystemModel> _files = [];
+    public partial ObservableCollection<FileSystemModel> Files { get; set; } = [];
 
     [ObservableProperty]
-    private FileSystemModel? _selectedFile;
+    public partial FileSystemModel? SelectedFile { get; set; }
 
     [ObservableProperty]
-    private bool _isLoading;
+    public partial bool IsLoading { get; set; }
 
     public FilePaneViewModel()
     {

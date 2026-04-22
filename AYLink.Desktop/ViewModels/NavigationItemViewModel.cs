@@ -24,5 +24,5 @@ public partial class NavigationItemViewModel(string pageKey, string localization
     public Symbol Icon { get; } = icon;
 
     [ObservableProperty]
-    private bool _isSelected;
+    public partial bool IsSelected { get; set; }
 }

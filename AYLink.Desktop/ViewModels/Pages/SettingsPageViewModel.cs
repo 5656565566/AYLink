@@ -40,34 +40,30 @@ public partial class SettingsPageViewModel : PageViewModelBase
     {
         _appConfig = _configManager.LoadConfig<AppConfig>("appConfig");
         LoadAdbVersionAsync();
-
-        _outputVolume = _appConfig.GlobalVolume;
-        _scrcpyServer = _appConfig.ScrcpyServer;
-        _adb = _appConfig.Adb;
-        _fFmpegBin = _appConfig.FFmpegBin;
-        _scrcpyVersion = _appConfig.ScrcpyVersion;
-
-        // 配置中 null 对应 UI 上的"系统默认"翻译文本
-        _selectedAudioOutputDevice = _appConfig.AudioOutputDevice
+        OutputVolume = _appConfig.GlobalVolume;
+        ScrcpyServer = _appConfig.ScrcpyServer;
+        Adb = _appConfig.Adb;
+        FFmpegBin = _appConfig.FFmpegBin;
+        ScrcpyVersion = _appConfig.ScrcpyVersion;
+        SelectedAudioOutputDevice = _appConfig.AudioOutputDevice
             ?? LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认");
-
-        _enableAcrylic = _appConfig.EnableAcrylic;
-        _enableBackgroundImage = _appConfig.EnableBackgroundImage;
-        _isRandomBackground = _appConfig.BackgroundImageMode == "Random";
-        _specificBackgroundImagePath = _appConfig.SpecificBackgroundImagePath;
+        EnableAcrylic = _appConfig.EnableAcrylic;
+        EnableBackgroundImage = _appConfig.EnableBackgroundImage;
+        IsRandomBackground = _appConfig.BackgroundImageMode == "Random";
+        SpecificBackgroundImagePath = _appConfig.SpecificBackgroundImagePath;
 
         if (Color.TryParse(_appConfig.AccentColor, out var color))
         {
-            _accentColor = color;
+            AccentColor = color;
         }
 
         var themeMode = Enum.TryParse<ThemeMode>(_appConfig.ThemeMode, out var parsedMode) ? parsedMode : ThemeMode.Default;
-        _selectedThemeMode = _themeMap[themeMode];
+        SelectedThemeMode = _themeMap[themeMode];
 
         // 初始化语言列表
         var availableLanguages = LocalizationManager.Instance.ListAvailableLanguages();
         foreach (var lang in availableLanguages) Languages.Add(lang);
-        _selectedLanguage = availableLanguages.FirstOrDefault(l => l.Culture == _appConfig.Language) ?? availableLanguages.First();
+        SelectedLanguage = availableLanguages.FirstOrDefault(l => l.Culture == _appConfig.Language) ?? availableLanguages.First();
 
         // 初始化音频设备列表
         AudioOutputDevices.Add(LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认"));
@@ -91,22 +87,53 @@ public partial class SettingsPageViewModel : PageViewModelBase
 
     #region 观察属性
 
-    [ObservableProperty] private bool _isAutoStartEnabled;
-    [ObservableProperty] private double _outputVolume;
-    [ObservableProperty] private string? _selectedAudioOutputDevice;
-    [ObservableProperty] private LanguageInfo _selectedLanguage;
-    [ObservableProperty] private string _selectedThemeMode = LocalizationManager.Instance.GetString("SettingsPage.ThemeSystem", "跟随系统");
-    [ObservableProperty] private Color _accentColor = Colors.BlueViolet;
-    [ObservableProperty] private bool _enableAcrylic;
-    [ObservableProperty] private bool _enableBackgroundImage;
-    [ObservableProperty] private bool _isRandomBackground;
-    [ObservableProperty] private string? _specificBackgroundImagePath;
-    [ObservableProperty] private string _scrcpyVersion;
-    [ObservableProperty] private string _scrcpyServer;
-    [ObservableProperty] private string _adb;
-    [ObservableProperty] private string _fFmpegBin;
-    [ObservableProperty] private string _adbVersion = "Unknown";
-    [ObservableProperty] private string _appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "Unknown";
+    [ObservableProperty]
+    public partial bool IsAutoStartEnabled { get; set; }
+
+    [ObservableProperty]
+    public partial double OutputVolume { get; set; }
+
+    [ObservableProperty]
+    public partial string? SelectedAudioOutputDevice { get; set; }
+
+    [ObservableProperty]
+    public partial LanguageInfo SelectedLanguage { get; set; }
+
+    [ObservableProperty]
+    public partial string SelectedThemeMode { get; set; } = LocalizationManager.Instance.GetString("SettingsPage.ThemeSystem", "跟随系统");
+
+    [ObservableProperty]
+    public partial Color AccentColor { get; set; } = Colors.BlueViolet;
+
+    [ObservableProperty]
+    public partial bool EnableAcrylic { get; set; }
+
+    [ObservableProperty]
+    public partial bool EnableBackgroundImage { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsRandomBackground { get; set; }
+
+    [ObservableProperty]
+    public partial string? SpecificBackgroundImagePath { get; set; }
+
+    [ObservableProperty]
+    public partial string ScrcpyVersion { get; set; }
+
+    [ObservableProperty]
+    public partial string ScrcpyServer { get; set; }
+
+    [ObservableProperty]
+    public partial string Adb { get; set; }
+
+    [ObservableProperty]
+    public partial string FFmpegBin { get; set; }
+
+    [ObservableProperty]
+    public partial string AdbVersion { get; set; } = "Unknown";
+
+    [ObservableProperty]
+    public partial string AppVersion { get; set; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "Unknown";
 
     #endregion
 
@@ -130,6 +157,9 @@ public partial class SettingsPageViewModel : PageViewModelBase
     partial void OnSelectedLanguageChanged(LanguageInfo value)
     {
         if (value == null) return;
+
+        if (value.Culture == _appConfig.Language) return;
+
         _appConfig.Language = value.Culture;
         SaveConfig();
 
@@ -142,7 +172,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
         var mode = _themeMap.FirstOrDefault(x => x.Value == value).Key;
         _appConfig.ThemeMode = mode.ToString();
         SaveConfig();
-        ThemeManager.SetTheme(mode, _accentColor);
+        ThemeManager.SetTheme(mode, AccentColor);
     }
 
     partial void OnAccentColorChanged(Color value)
@@ -150,7 +180,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
         _appConfig.AccentColor = value.ToString();
         SaveConfig();
 
-        var mode = _themeMap.FirstOrDefault(x => x.Value == _selectedThemeMode).Key;
+        var mode = _themeMap.FirstOrDefault(x => x.Value == SelectedThemeMode).Key;
         ThemeManager.SetTheme(mode, value);
     }
 

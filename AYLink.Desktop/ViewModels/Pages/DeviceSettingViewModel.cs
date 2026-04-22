@@ -22,15 +22,15 @@ public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNav
     public override string Title => Services.Localization.LocalizationManager.Instance.GetString("DeviceSettingPage.Title", "设备设置");
 
     [ObservableProperty]
-    private string _deviceName = string.Empty;
+    public partial string DeviceName { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private DeviceConfig _deviceConfig = new();
+    public partial DeviceConfig DeviceConfig { get; set; } = new();
 
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Services.Localization.LocalizedRegularExpression(@"^\d*$", "DeviceSettings.InvalidResolution", "请输入合适的分辨率(长边) 例如 1920")]
-    private string _maxSizeInput = string.Empty;
+    public partial string MaxSizeInput { get; set; } = string.Empty;
 
     partial void OnMaxSizeInputChanged(string value)
     {
@@ -43,7 +43,7 @@ public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNav
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Services.Localization.LocalizedRegularExpression(@"^\d*$", "DeviceSettings.InvalidBitRate", "请输入合适的码率 例如 8000000")]
-    private string _videoBitRateInput = string.Empty;
+    public partial string VideoBitRateInput { get; set; } = string.Empty;
 
     partial void OnVideoBitRateInputChanged(string value)
     {
@@ -56,7 +56,7 @@ public partial class DeviceSettingViewModel : PageViewModelBase<DeviceSettingNav
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Services.Localization.LocalizedRegularExpression(@"^\d*\.?\d*$", "DeviceSettings.InvalidFps", "请输入合适的帧数 例如 60 或 59.94")]
-    private string _maxFpsInput = string.Empty;
+    public partial string MaxFpsInput { get; set; } = string.Empty;
 
     partial void OnMaxFpsInputChanged(string value)
     {

@@ -10,25 +10,25 @@ namespace AYLink.Desktop.Services;
 public partial class ToastModel : ObservableObject
 {
     [ObservableProperty]
-    private string _title = string.Empty;
+    public partial string Title { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _content = string.Empty;
+    public partial string Content { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private InfoBarSeverity _severity = InfoBarSeverity.Informational;
+    public partial InfoBarSeverity Severity { get; set; } = InfoBarSeverity.Informational;
 
     [ObservableProperty]
-    private TimeSpan _duration = TimeSpan.FromSeconds(3);
+    public partial TimeSpan Duration { get; set; } = TimeSpan.FromSeconds(3);
 
     [ObservableProperty]
-    private double _progress = 0;
+    public partial double Progress { get; set; } = 0;
 
     [ObservableProperty]
-    private bool _showProgress = false;
+    public partial bool ShowProgress { get; set; } = false;
 
     [ObservableProperty]
-    private bool _isIndeterminate = false;
+    public partial bool IsIndeterminate { get; set; } = false;
 }
 
 public class ToastManager

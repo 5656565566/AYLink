@@ -39,19 +39,19 @@ public partial class MainWindowViewModel : ViewModelBase
     /// 当前显示的页面 ViewModel
     /// </summary>
     [ObservableProperty]
-    private PageViewModelBase? _currentPage;
+    public partial PageViewModelBase? CurrentPage { get; set; }
 
     /// <summary>
     /// 当前选中的页面 Key，用于同步 NavigationView 选中状态
     /// </summary>
     [ObservableProperty]
-    private string _selectedPageKey = "Home";
+    public partial string SelectedPageKey { get; set; } = "Home";
 
     /// <summary>
     /// 是否选中了 Settings
     /// </summary>
     [ObservableProperty]
-    private bool _isSettingsSelected;
+    public partial bool IsSettingsSelected { get; set; }
 
     /// <summary>
     /// 导航菜单项集合 - 供 View 层数据绑定

@@ -16,7 +16,7 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
     where TTab : TabItemViewModelBase
 {
     [ObservableProperty]
-    private ObservableCollection<TTab> _tabs = [];
+    public partial ObservableCollection<TTab> Tabs { get; set; } = [];
 
     IEnumerable ITabbedPageViewModel.Tabs => Tabs;
     object? ITabbedPageViewModel.SelectedTab

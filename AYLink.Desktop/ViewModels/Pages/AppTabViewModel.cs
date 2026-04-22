@@ -26,37 +26,37 @@ public partial class AppTabViewModel : TabItemViewModelBase
     /// 当前显示的应用列表（经过搜索过滤）
     /// </summary>
     [ObservableProperty]
-    private ObservableCollection<AppInfo> _apps = [];
+    public partial ObservableCollection<AppInfo> Apps { get; set; } = [];
 
     /// <summary>
     /// 选中的应用
     /// </summary>
     [ObservableProperty]
-    private AppInfo? _selectedApp;
+    public partial AppInfo? SelectedApp { get; set; }
 
     /// <summary>
     /// 搜索关键词
     /// </summary>
     [ObservableProperty]
-    private string _searchText = string.Empty;
+    public partial string SearchText { get; set; } = string.Empty;
 
     /// <summary>
     /// 是否正在加载
     /// </summary>
     [ObservableProperty]
-    private bool _isLoading;
+    public partial bool IsLoading { get; set; }
 
     /// <summary>
     /// 是否有应用数据（控制空状态提示）
     /// </summary>
     [ObservableProperty]
-    private bool _hasApps;
+    public partial bool HasApps { get; set; }
 
     /// <summary>
     /// 应用数量文本
     /// </summary>
     [ObservableProperty]
-    private string _appCountText = string.Empty;
+    public partial string AppCountText { get; set; } = string.Empty;
 
     /// <summary>
     /// 全应用列表

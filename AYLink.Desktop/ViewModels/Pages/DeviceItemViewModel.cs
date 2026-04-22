@@ -25,7 +25,7 @@ public partial class DeviceItemViewModel(DeviceModel device, System.Func<Task>? 
     /// 设备数据模型
     /// </summary>
     [ObservableProperty]
-    private DeviceModel _device = device;
+    public partial DeviceModel Device { get; set; } = device;
 
     public string Name => Device.Name;
     public string Serial => Device.Serial;

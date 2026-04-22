@@ -63,7 +63,7 @@ public partial class TaskCenterTabViewModel : TabItemViewModelBase
     /// 当前选中的任务
     /// </summary>
     [ObservableProperty]
-    private ManagedTaskItem? _selectedTask;
+    public partial ManagedTaskItem? SelectedTask { get; set; }
 
     /// <summary>
     /// 筛选维度
@@ -416,19 +416,19 @@ public partial class TaskCenterPageViewModel : TabbedPageViewModelBase<TaskCente
     /// 顶部搜索关键字
     /// </summary>
     [ObservableProperty]
-    private string _searchText = string.Empty;
+    public partial string SearchText { get; set; } = string.Empty;
 
     /// <summary>
     /// 顶部来源筛选输入
     /// </summary>
     [ObservableProperty]
-    private string _sourceFilterText = string.Empty;
+    public partial string SourceFilterText { get; set; } = string.Empty;
 
     /// <summary>
     /// 状态筛选下拉选中项
     /// </summary>
     [ObservableProperty]
-    private TaskStatusFilterOption? _selectedStatusFilter;
+    public partial TaskStatusFilterOption? SelectedStatusFilter { get; set; }
 
     /// <summary>
     /// 状态下拉选项集合

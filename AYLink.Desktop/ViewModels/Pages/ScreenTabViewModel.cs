@@ -28,14 +28,13 @@ namespace AYLink.Desktop.ViewModels.Pages;
 public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 {
     [ObservableProperty]
-    private bool _isConnected;
+    public partial bool IsConnected { get; set; }
 
     [ObservableProperty]
-    private bool _isSidebarVisible = true;
+    public partial bool IsSidebarVisible { get; set; } = true;
 
     [ObservableProperty]
-    private Avalonia.Media.Imaging.WriteableBitmap? _videoSource;
-
+    public partial Avalonia.Media.Imaging.WriteableBitmap? VideoSource { get; set; }
     public IInputProcessor InputProcessor { get; } = new DefaultInputProcessor();
 
     private ScrcpyClient? _scrcpyClient;

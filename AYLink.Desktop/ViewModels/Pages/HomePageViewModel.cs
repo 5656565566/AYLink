@@ -28,19 +28,19 @@ public partial class HomePageViewModel : PageViewModelBase
     /// 是否有设备连接（控制空状态提示的显示）
     /// </summary>
     [ObservableProperty]
-    private bool _hasDevices;
+    public partial bool HasDevices { get; set; }
 
     /// <summary>
     /// 当前选中的设备分组索引
     /// </summary>
     [ObservableProperty]
-    private int _selectedGroupIndex;
+    public partial int SelectedGroupIndex { get; set; }
 
     /// <summary>
     /// 是否开启多选模式
     /// </summary>
     [ObservableProperty]
-    private bool _isMultiSelectMode;
+    public partial bool IsMultiSelectMode { get; set; }
 
     // 页面级命令
 

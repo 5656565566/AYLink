@@ -28,85 +28,85 @@ public partial class ManagedTaskItem : ObservableObject
     /// 任务唯一标识
     /// </summary>
     [ObservableProperty]
-    private string _id = Guid.NewGuid().ToString("N");
+    public partial string Id { get; set; } = Guid.NewGuid().ToString("N");
 
     /// <summary>
     /// 任务标题
     /// </summary>
     [ObservableProperty]
-    private string _title = string.Empty;
+    public partial string Title { get; set; } = string.Empty;
 
     /// <summary>
     /// 任务简介
     /// </summary>
     [ObservableProperty]
-    private string _description = string.Empty;
+    public partial string Description { get; set; } = string.Empty;
 
     /// <summary>
     /// 任务详情/最新进度描述
     /// </summary>
     [ObservableProperty]
-    private string _detail = string.Empty;
+    public partial string Detail { get; set; } = string.Empty;
 
     /// <summary>
     /// 任务来源模块（当前也用作筛选标签）
     /// </summary>
     [ObservableProperty]
-    private string _source = string.Empty;
+    public partial string Source { get; set; } = string.Empty;
 
     /// <summary>
     /// 当前任务状态
     /// </summary>
     [ObservableProperty]
-    private ManagedTaskStatus _status = ManagedTaskStatus.Running;
+    public partial ManagedTaskStatus Status { get; set; } = ManagedTaskStatus.Running;
 
     /// <summary>
     /// 与状态对应的提示级别 供页面/Toast 复用
     /// </summary>
     [ObservableProperty]
-    private InfoBarSeverity _severity = InfoBarSeverity.Informational;
+    public partial InfoBarSeverity Severity { get; set; } = InfoBarSeverity.Informational;
 
     /// <summary>
     /// 当前进度值（0-100）
     /// </summary>
     [ObservableProperty]
-    private double _progress;
+    public partial double Progress { get; set; }
 
     /// <summary>
     /// 是否显示进度条
     /// </summary>
     [ObservableProperty]
-    private bool _showProgress = true;
+    public partial bool ShowProgress { get; set; } = true;
 
     /// <summary>
     /// 当前是否为不定进度
     /// </summary>
     [ObservableProperty]
-    private bool _isIndeterminate = true;
+    public partial bool IsIndeterminate { get; set; } = true;
 
     /// <summary>
     /// 当前任务是否允许取消
     /// </summary>
     [ObservableProperty]
-    private bool _isCancelable;
+    public partial bool IsCancelable { get; set; }
 
     /// <summary>
     /// 创建时间
     /// </summary>
     [ObservableProperty]
-    private DateTimeOffset _createdAt = DateTimeOffset.Now;
+    public partial DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
 
     /// <summary>
     /// 开始时间
     /// </summary>
     [ObservableProperty]
-    private DateTimeOffset? _startedAt = DateTimeOffset.Now;
+    public partial DateTimeOffset? StartedAt { get; set; } = DateTimeOffset.Now;
 
     /// <summary>
     /// 结束时间
     /// </summary>
     [ObservableProperty]
-    private DateTimeOffset? _finishedAt;
+    public partial DateTimeOffset? FinishedAt { get; set; }
 
     /// <summary>
     /// 取消任务时执行的委托
