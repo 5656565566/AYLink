@@ -116,14 +116,36 @@ def print_summary(flat_keys: dict[str, str]) -> None:
         print(f"  {group}: {groups[group]} keys")
 
 
+def flatten_nested_dict(data: dict, prefix: str = "") -> dict[str, str]:
+    """将嵌套 JSON 结构展平为点分隔键，仅收集真实翻译键"""
+    flat: dict[str, str] = {}
+
+    for key, value in data.items():
+        if key == "LanguageName":
+            continue
+
+        full_key = f"{prefix}.{key}" if prefix else key
+        if isinstance(value, dict):
+            flat.update(flatten_nested_dict(value, full_key))
+        elif prefix:
+            flat[full_key] = value
+
+    return flat
+
+
+
 def sync_language_file(template_dict: dict, lang_file_path: Path) -> None:
-    """将模板中的新键同步到现有的语言文件中，保持现有翻译不变"""
+    """将模板中的新键同步到现有的语言文件中 保持现有翻译不变 并提示过期键"""
     try:
         with open(lang_file_path, "r", encoding="utf-8") as f:
             existing_data = json.load(f)
     except Exception as e:
         print(f"  Warning: Failed to read {lang_file_path}: {e}", file=sys.stderr)
         return
+
+    template_flat_keys = set(flatten_nested_dict(template_dict).keys())
+    existing_flat_keys = set(flatten_nested_dict(existing_data).keys())
+    stale_keys = sorted(existing_flat_keys - template_flat_keys)
 
     def merge(tmpl, exist):
         result = OrderedDict()
@@ -135,20 +157,24 @@ def sync_language_file(template_dict: dict, lang_file_path: Path) -> None:
                     result[k] = exist[k]
             else:
                 result[k] = v
-        
+
         # 保留旧文件中存在但模板中没有的键（防止意外丢失数据）
         for k, v in exist.items():
             if k not in result:
                 result[k] = v
-                
+
         return result
 
     merged_data = merge(template_dict, existing_data)
-    
+
     with open(lang_file_path, "w", encoding="utf-8") as f:
         json.dump(merged_data, f, ensure_ascii=False, indent=2)
         f.write("\n")
     print(f"  Synced: {lang_file_path.name}")
+    if stale_keys:
+        print(f"  Warning: {lang_file_path.name} contains {len(stale_keys)} stale keys:")
+        for key in stale_keys:
+            print(f"    - {key}")
 
 
 def main():
