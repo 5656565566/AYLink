@@ -21,6 +21,7 @@ public partial class TaskItem : ObservableObject
     public partial string Source { get; set; } = string.Empty;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
     public partial TaskItemStatus Status { get; set; } = TaskItemStatus.Running;
 
     [ObservableProperty]
@@ -30,6 +31,7 @@ public partial class TaskItem : ObservableObject
     public partial bool IsIndeterminate { get; set; } = true;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
     public partial bool IsCancelable { get; set; }
 
     [ObservableProperty]
@@ -39,4 +41,13 @@ public partial class TaskItem : ObservableObject
     public partial DateTimeOffset? FinishedAt { get; set; }
 
     public Action? CancelAction { get; set; }
+
+    public bool CanCancel => IsCancelable && Status == TaskItemStatus.Running && CancelAction != null;
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand(CanExecute = nameof(CanCancel))]
+    private void Cancel()
+    {
+        CancelAction?.Invoke();
+    }
+
 }

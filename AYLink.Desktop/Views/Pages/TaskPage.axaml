@@ -3,16 +3,201 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
-             mc:Ignorable="d"
-             d:DesignWidth="1000"
-             d:DesignHeight="640"
+             xmlns:services="using:AYLink.Desktop.Services"
+             xmlns:tasks="using:AYLink.Desktop.Services.Tasks"
+             xmlns:views="using:AYLink.Desktop.Views"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
              x:Class="AYLink.Desktop.Views.Pages.TaskPage"
              x:DataType="vm:TaskPageViewModel">
 
-    <Grid>
-        <TextBlock Text=""
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   Opacity="0.6"/>
-    </Grid>
+    <UserControl.Resources>
+        <!-- 标签页内容模板 -->
+        <DataTemplate x:Key="TaskTabContentTemplate" x:DataType="vm:TaskTabViewModel">
+            <Grid RowDefinitions="Auto,*">
+                <!-- 顶部 CommandBar -->
+                <ui:CommandBar Grid.Row="0"
+                               DefaultLabelPosition="Right"
+                               Background="Transparent">
+                    
+                    <!-- 左侧：搜索与筛选条件 -->
+                    <ui:CommandBar.Content>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="8,0,0,0"
+                                    Spacing="8">
+                            <ui:CommandBarButton Label="{i18n:Tr TaskPage.Search, DefaultText='搜索'}"
+                                                 Command="{Binding SearchCommand}"
+                                                 VerticalAlignment="Center">
+                                <ui:CommandBarButton.IconSource>
+                                    <ui:SymbolIconSource Symbol="Find"/>
+                                </ui:CommandBarButton.IconSource>
+                            </ui:CommandBarButton>
+
+                            <TextBox Text="{Binding SearchText}"
+                                     Watermark="{i18n:Tr TaskPage.SearchWatermark, DefaultText='搜索任务名称或任务来源...'}"
+                                     Width="260"
+                                     VerticalAlignment="Center"
+                                     KeyDown="SearchBox_KeyDown"/>
+
+                            <ComboBox Width="140"
+                                      Height="32"
+                                      VerticalAlignment="Center"
+                                      ItemsSource="{Binding StatusFilterOptions}"
+                                      SelectedItem="{Binding SelectedStatusFilter}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TaskStatusFilterOption">
+                                        <TextBlock Text="{Binding DisplayName}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </ui:CommandBar.Content>
+
+                    <!-- 右侧：全局动作按钮 -->
+                    <ui:CommandBar.PrimaryCommands>
+                        <ui:CommandBarButton Label="{i18n:Tr TaskPage.ClearFilter, DefaultText='清空条件'}"
+                                             Command="{Binding ClearFilterCommand}"
+                                             VerticalAlignment="Center">
+                            <ui:CommandBarButton.IconSource>
+                                <ui:SymbolIconSource Symbol="Clear"/>
+                            </ui:CommandBarButton.IconSource>
+                        </ui:CommandBarButton>
+
+                        <ui:CommandBarButton Label="{i18n:Tr TaskPage.CreateNewTab, DefaultText='新标签页'}"
+                                             Command="{Binding CreateNewTabCommand}"
+                                             VerticalAlignment="Center">
+                            <ui:CommandBarButton.IconSource>
+                                <ui:SymbolIconSource Symbol="Page"/>
+                            </ui:CommandBarButton.IconSource>
+                        </ui:CommandBarButton>
+
+                        <ui:CommandBarSeparator/>
+
+                        <ui:CommandBarButton Label="{i18n:Tr TaskPage.Refresh, DefaultText='刷新'}"
+                                             Command="{Binding RefreshCommand}"
+                                             VerticalAlignment="Center">
+                            <ui:CommandBarButton.IconSource>
+                                <ui:SymbolIconSource Symbol="Refresh"/>
+                            </ui:CommandBarButton.IconSource>
+                        </ui:CommandBarButton>
+                    </ui:CommandBar.PrimaryCommands>
+                </ui:CommandBar>
+
+                <!-- 主内容区域：始终显示表头 + DataGrid -->
+                <Border Grid.Row="1"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Margin="6,12,6,0"
+                        Padding="0">
+                    <Grid RowDefinitions="Auto,*">
+                        <!-- 表头 -->
+                        <Border Grid.Row="0"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="0,0,0,1"
+                                Padding="12,8">
+                            <Grid ColumnDefinitions="150,160,120,180,*">
+                                <TextBlock Grid.Column="0" Text="{i18n:Tr TaskPage.ColumnTitle, DefaultText='任务名称'}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                                <TextBlock Grid.Column="1" Text="{i18n:Tr TaskPage.ColumnSource, DefaultText='任务来源'}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                                <TextBlock Grid.Column="2" Text="{i18n:Tr TaskPage.ColumnStatus, DefaultText='状态'}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                                <TextBlock Grid.Column="3" Text="{i18n:Tr TaskPage.ColumnProgress, DefaultText='进度'}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                                <TextBlock Grid.Column="4" Text="{i18n:Tr TaskPage.ColumnDetail, DefaultText='详情'}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="1">
+                            <!-- 任务列表 -->
+                            <DataGrid x:Name="TaskGrid"
+                                      ItemsSource="{Binding FilteredTasks}"
+                                      SelectedItem="{Binding SelectedTask}"
+                                      AutoGenerateColumns="False"
+                                      CanUserSortColumns="True"
+                                      GridLinesVisibility="Horizontal"
+                                      HeadersVisibility="None"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      IsReadOnly="True"
+                                      IsVisible="{Binding HasTasks}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding Title}" Width="150"/>
+                                    <DataGridTextColumn Binding="{Binding Source}" Width="160"/>
+                                    <DataGridTemplateColumn Width="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="tasks:TaskItem">
+                                                <TextBlock Text="{Binding Status, Converter={StaticResource ManagedTaskStatusToTextConverter}}" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Binding="{Binding Progress, StringFormat={}{0:F0}%}" Width="180"/>
+                                    <DataGridTextColumn Binding="{Binding Detail}" Width="*"/>
+                                </DataGrid.Columns>
+
+                                <!-- 右键菜单 -->
+                                <DataGrid.ContextFlyout>
+                                    <MenuFlyout>
+                                        <MenuItem Header="{i18n:Tr TaskPage.CancelTask, DefaultText='取消任务'}"
+                                                  Command="{Binding CancelTaskCommand}"
+                                                  CommandParameter="{Binding SelectedTask}"
+                                                  IsVisible="{Binding SelectedTask.CanCancel}"/>
+                                        <MenuItem Header="{i18n:Tr TaskPage.RemoveTask, DefaultText='移除任务'}"
+                                                  Command="{Binding RemoveTaskCommand}"
+                                                  CommandParameter="{Binding SelectedTask}"
+                                                  IsVisible="{Binding SelectedTask, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        <MenuItem Header="-" />
+                                        <MenuItem Header="{i18n:Tr TaskPage.FillSourceFilter, DefaultText='按选中来源过滤'}"
+                                                  Command="{Binding FillSourceFilterCommand}"
+                                                  CommandParameter="{Binding SelectedTask}"
+                                                  IsVisible="{Binding SelectedTask, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        <MenuItem Header="{i18n:Tr TaskPage.FillStatusFilter, DefaultText='按选中状态过滤'}"
+                                                  Command="{Binding FillStatusFilterCommand}"
+                                                  CommandParameter="{Binding SelectedTask}"
+                                                  IsVisible="{Binding SelectedTask, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        <MenuItem Header="{i18n:Tr TaskPage.ClearInactiveTasks, DefaultText='清空未活跃事件'}"
+                                                  Command="{Binding ClearInactiveTasksCommand}"/>
+                                    </MenuFlyout>
+                                </DataGrid.ContextFlyout>
+                            </DataGrid>
+
+                            <!-- 空状态提示 -->
+                            <StackPanel IsVisible="{Binding !HasTasks}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="12"
+                                        Opacity="0.55">
+                                <ui:SymbolIcon Symbol="Clock" FontSize="48"/>
+                                <TextBlock Text="{Binding EmptyMessage}"
+                                           Theme="{StaticResource SubtitleTextBlockStyle}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <!-- 状态栏模板 -->
+        <DataTemplate x:Key="TaskStatusBarTemplate" x:DataType="vm:TaskTabViewModel">
+            <!-- 统一在右侧显示 靠右对齐 -->
+            <StackPanel Orientation="Horizontal"
+                        Spacing="16"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center">
+                <!-- 任务数量摘要 -->
+                <TextBlock Text="{Binding SummaryText}"
+                           Theme="{StaticResource CaptionTextBlockStyle}"
+                           Opacity="0.6"/>
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <views:TabbedPageView TabContentTemplate="{StaticResource TaskTabContentTemplate}"
+                          StatusBarTemplate="{StaticResource TaskStatusBarTemplate}"
+                          ShowStatusBar="True">
+        <views:TabbedPageView.EmptyStateIcon>
+            <ui:SymbolIcon Symbol="Clock" FontSize="64"/>
+        </views:TabbedPageView.EmptyStateIcon>
+    </views:TabbedPageView>
 </UserControl>

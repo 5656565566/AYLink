@@ -1,5 +1,4 @@
 using Avalonia.Data.Converters;
-using AYLink.Desktop.Services.Localization;
 using AYLink.Desktop.Services.Tasks;
 using System;
 using System.Globalization;
@@ -10,7 +9,7 @@ public class ManagedTaskStatusToTextConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is not ManagedTaskStatus status)
+        if (value is not TaskItemStatus status)
         {
             return string.Empty;
         }

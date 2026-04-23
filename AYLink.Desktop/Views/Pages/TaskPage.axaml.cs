@@ -11,4 +11,13 @@ public partial class TaskPage : UserControl
     {
         InitializeComponent();
     }
+
+    private void SearchBox_KeyDown(object? sender, Avalonia.Input.KeyEventArgs e)
+    {
+        if (e.Key == Avalonia.Input.Key.Enter && sender is TextBox textBox && textBox.DataContext is ViewModels.Pages.TaskTabViewModel vm)
+        {
+            vm.SearchText = textBox.Text ?? string.Empty;
+            vm.SearchCommand.Execute(null);
+        }
+    }
 }

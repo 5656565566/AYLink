@@ -75,13 +75,12 @@ public partial class FileTabViewModel : TabItemViewModelBase
         string title = localizer2.GetString("FilePage.TransferringTitle", "传输中");
         string message = string.Format(localizer2.GetString("FilePage.TransferringMessage", "正在传输 {0}..."), file.Name);
 
-        var managedTask = Services.Tasks.TaskService.Instance.StartTask(new Services.Tasks.ManagedTaskOptions
+        var managedTask = Services.Tasks.TaskService.Instance.Start(new Services.Tasks.TaskStartOptions
         {
             Title = title,
             Description = message,
             Source = localizer2.GetString("TaskPage.DefaultSource", "通用任务"),
-            IsIndeterminate = false,
-            ShowProgress = true
+            IsIndeterminate = false
         });
 
         var dialog = new Views.Dialogs.ProgressDialog();
@@ -92,7 +91,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
             var progress = new System.Progress<double>(p =>
             {
                 dialog.UpdateProgress(p);
-                Services.Tasks.TaskService.Instance.UpdateTask(managedTask, p);
+                Services.Tasks.TaskService.Instance.Update(managedTask, p);
             });
 
             if (sourcePane.SelectedSource.IsLocal && targetPane.SelectedSource.IsLocal)
@@ -100,7 +99,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
                 // 本地到本地
                 await System.Threading.Tasks.Task.Run(() => System.IO.File.Copy(sourcePath, targetPath, true));
                 dialog.UpdateProgress(100);
-                Services.Tasks.TaskService.Instance.UpdateTask(managedTask, 100);
+                Services.Tasks.TaskService.Instance.Update(managedTask, 100);
             }
             else if (sourcePane.SelectedSource.IsLocal && !targetPane.SelectedSource.IsLocal)
             {
@@ -125,7 +124,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
                         receiver,
                         default);
                     dialog.UpdateProgress(100);
-                    Services.Tasks.TaskService.Instance.UpdateTask(managedTask, 100);
+                    Services.Tasks.TaskService.Instance.Update(managedTask, 100);
                 }
                 else
                 {
@@ -133,20 +132,20 @@ public partial class FileTabViewModel : TabItemViewModelBase
                     string tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), file.Name);
                     string msg1 = localizer2.GetString("FilePage.DownloadingToTemp", "正在下载到临时目录...");
                     dialog.UpdateProgress(0, msg1);
-                    Services.Tasks.TaskService.Instance.UpdateTask(managedTask, 0, msg1);
+                    Services.Tasks.TaskService.Instance.Update(managedTask, 0, msg1);
                     await sourcePane.SelectedSource.Device!.FileManager.DownloadFileAsync(sourcePath, tempFile, new System.Progress<double>(p =>
                     {
                         dialog.UpdateProgress(p / 2);
-                        Services.Tasks.TaskService.Instance.UpdateTask(managedTask, p / 2);
+                        Services.Tasks.TaskService.Instance.Update(managedTask, p / 2);
                     }));
                     
                     string msg2 = localizer2.GetString("FilePage.UploadingToTarget", "正在上传到目标设备...");
                     dialog.UpdateProgress(50, msg2);
-                    Services.Tasks.TaskService.Instance.UpdateTask(managedTask, 50, msg2);
+                    Services.Tasks.TaskService.Instance.Update(managedTask, 50, msg2);
                     await targetPane.SelectedSource.Device!.FileManager.UploadFileAsync(tempFile, targetPath, new System.Progress<double>(p =>
                     {
                         dialog.UpdateProgress(50 + p / 2);
-                        Services.Tasks.TaskService.Instance.UpdateTask(managedTask, 50 + p / 2);
+                        Services.Tasks.TaskService.Instance.Update(managedTask, 50 + p / 2);
                     }));
                     
                     System.IO.File.Delete(tempFile);
@@ -155,7 +154,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
 
             dialog.Hide();
             string successMsg = string.Format(localizer2.GetString("FilePage.TransferCompleteMessage", "{0} 传输成功"), file.Name);
-            Services.Tasks.TaskService.Instance.CompleteTask(managedTask, successMsg);
+            Services.Tasks.TaskService.Instance.Complete(managedTask, successMsg);
             Services.Notifications.NotificationService.Instance.ShowSuccess(
                 localizer2.GetString("FilePage.TransferCompleteTitle", "传输完成"),
                 successMsg);
@@ -164,7 +163,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
         catch (System.Exception ex)
         {
             dialog.Hide();
-            Services.Tasks.TaskService.Instance.FailTask(managedTask, ex.Message);
+            Services.Tasks.TaskService.Instance.Fail(managedTask, ex.Message);
             Services.Notifications.NotificationService.Instance.ShowError(
                 localizer2.GetString("FilePage.TransferFailedTitle", "传输失败"),
                 ex.Message);

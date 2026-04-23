@@ -177,13 +177,12 @@ public partial class AppTabViewModel : TabItemViewModelBase
         string title = localizer.GetString("AppTab.InstallAppTitle", "安装应用");
         string message = localizer.GetString("AppTab.PreparingInstall", "准备安装...");
 
-        var managedTask = TaskService.Instance.StartTask(new ManagedTaskOptions
+        var managedTask = TaskService.Instance.Start(new TaskStartOptions
         {
             Title = title,
             Description = message,
             Source = localizer.GetString("TaskPage.DefaultSource", "通用任务"),
-            IsIndeterminate = false,
-            ShowProgress = true
+            IsIndeterminate = false
         });
 
         var dialog = new Views.Dialogs.ProgressDialog();
@@ -216,7 +215,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
                         if (!string.IsNullOrEmpty(msg))
                         {
                             dialog.UpdateProgress(p.UploadProgress, msg);
-                            TaskService.Instance.UpdateTask(managedTask, p.UploadProgress, msg);
+                            TaskService.Instance.Update(managedTask, p.UploadProgress, msg);
                         }
                     }
 
@@ -231,7 +230,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
             });
 
             dialog.Hide();
-            TaskService.Instance.CompleteTask(managedTask, localizer.GetString("AppTab.InstallSuccessMessage", "APK 安装完成"));
+            TaskService.Instance.Complete(managedTask, localizer.GetString("AppTab.InstallSuccessMessage", "APK 安装完成"));
             _notifications.ShowSuccess(
                 localizer.GetString("AppTab.InstallSuccessTitle", "安装成功"),
                 localizer.GetString("AppTab.InstallSuccessMessage", "APK 安装完成"));
@@ -242,7 +241,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
         catch (Exception ex)
         {
             dialog.Hide();
-            TaskService.Instance.FailTask(managedTask, string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
+            TaskService.Instance.Fail(managedTask, string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
             _notifications.ShowError(
                 localizer.GetString("AppTab.InstallFailedTitle", "安装失败"),
                 string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
@@ -269,13 +268,12 @@ public partial class AppTabViewModel : TabItemViewModelBase
         string title = localizer.GetString("AppTab.UninstallAppTitle", "卸载应用");
         string message = string.Format(localizer.GetString("AppTab.Uninstalling", "正在卸载 {0}..."), app.Name);
 
-        var managedTask = TaskService.Instance.StartTask(new ManagedTaskOptions
+        var managedTask = TaskService.Instance.Start(new TaskStartOptions
         {
             Title = title,
             Description = message,
             Source = localizer.GetString("TaskPage.DefaultSource", "通用任务"),
-            IsIndeterminate = true,
-            ShowProgress = true
+            IsIndeterminate = true
         });
 
         var dialog = new Views.Dialogs.ProgressDialog();
@@ -293,7 +291,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
 
             dialog.Hide();
             string successMsg = string.Format(localizer.GetString("AppTab.UninstallSuccessMessage", "{0} 已卸载"), app.Name);
-            TaskService.Instance.CompleteTask(managedTask, successMsg);
+            TaskService.Instance.Complete(managedTask, successMsg);
             _notifications.ShowSuccess(
                 localizer.GetString("AppTab.UninstallSuccessTitle", "卸载成功"),
                 successMsg);
@@ -307,7 +305,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
         catch (Exception ex)
         {
             dialog.Hide();
-            TaskService.Instance.FailTask(managedTask, string.Format(localizer.GetString("AppTab.UninstallFailedMessage", "卸载应用时发生错误: {0}"), ex.Message));
+            TaskService.Instance.Fail(managedTask, string.Format(localizer.GetString("AppTab.UninstallFailedMessage", "卸载应用时发生错误: {0}"), ex.Message));
             _notifications.ShowError(
                 localizer.GetString("AppTab.UninstallFailedTitle", "卸载失败"),
                 string.Format(localizer.GetString("AppTab.UninstallFailedMessage", "卸载应用时发生错误: {0}"), ex.Message));

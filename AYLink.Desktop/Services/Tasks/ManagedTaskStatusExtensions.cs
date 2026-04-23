@@ -2,17 +2,17 @@ using AYLink.Desktop.Services.Localization;
 
 namespace AYLink.Desktop.Services.Tasks;
 
-public static class ManagedTaskStatusExtensions
+public static class TaskItemStatusExtensions
 {
-    public static string ToLocalizedString(this ManagedTaskStatus status)
+    public static string ToLocalizedString(this TaskItemStatus status)
     {
         var localizer = LocalizationManager.Instance;
         return status switch
         {
-            ManagedTaskStatus.Running => localizer.GetString("TaskPage.StatusRunning", "运行中"),
-            ManagedTaskStatus.Completed => localizer.GetString("TaskPage.StatusCompleted", "已完成"),
-            ManagedTaskStatus.Cancelled => localizer.GetString("TaskPage.StatusCancelled", "已取消"),
-            ManagedTaskStatus.Failed => localizer.GetString("TaskPage.StatusFailed", "失败"),
+            TaskItemStatus.Running => localizer.GetString("TaskPage.StatusRunning", "运行中"),
+            TaskItemStatus.Completed => localizer.GetString("TaskPage.StatusCompleted", "已完成"),
+            TaskItemStatus.Cancelled => localizer.GetString("TaskPage.StatusCancelled", "已取消"),
+            TaskItemStatus.Failed => localizer.GetString("TaskPage.StatusFailed", "失败"),
             _ => status.ToString()
         };
     }
