@@ -149,7 +149,11 @@ public partial class SettingsPageViewModel : PageViewModelBase
     partial void OnSelectedAudioOutputDeviceChanged(string? value)
     {
         var isDefault = value == LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认");
-        _appConfig.AudioOutputDevice = isDefault ? null : value;
+        var targetDevice = isDefault ? null : value;
+        
+        if (targetDevice == _appConfig.AudioOutputDevice) return;
+
+        _appConfig.AudioOutputDevice = targetDevice;
         _audioPlayer.ConfigureAudioDevice(_appConfig.AudioOutputDevice);
         SaveConfig();
     }
@@ -298,7 +302,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
     }
 
     [RelayCommand]
-    private void OpenUrl(string? url)
+    private static void OpenUrl(string? url)
     {
         if (string.IsNullOrWhiteSpace(url))
         {

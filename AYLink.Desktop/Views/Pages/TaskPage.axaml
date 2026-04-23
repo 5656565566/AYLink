@@ -8,6 +8,7 @@
              xmlns:views="using:AYLink.Desktop.Views"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             xmlns:controls="using:AYLink.Controls"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
              x:Class="AYLink.Desktop.Views.Pages.TaskPage"
              x:DataType="vm:TaskPageViewModel">
@@ -41,17 +42,17 @@
                                      VerticalAlignment="Center"
                                      KeyDown="SearchBox_KeyDown"/>
 
-                            <ComboBox Width="140"
+                            <controls:SafeComboBox Width="140"
                                       Height="32"
                                       VerticalAlignment="Center"
                                       ItemsSource="{Binding StatusFilterOptions}"
                                       SelectedItem="{Binding SelectedStatusFilter}">
-                                <ComboBox.ItemTemplate>
+                                <controls:SafeComboBox.ItemTemplate>
                                     <DataTemplate x:DataType="vm:TaskStatusFilterOption">
                                         <TextBlock Text="{Binding DisplayName}"/>
                                     </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                                </controls:SafeComboBox.ItemTemplate>
+                            </controls:SafeComboBox>
                         </StackPanel>
                     </ui:CommandBar.Content>
 
