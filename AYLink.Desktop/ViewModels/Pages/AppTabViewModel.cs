@@ -161,7 +161,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
     /// 安装 APK（由 View 调用 传入文件路径列表）
     /// </summary>
     [RelayCommand]
-    private async Task InstallApkAsync(IReadOnlyList<string>? filePaths)
+    private void InstallApk(IReadOnlyList<string>? filePaths)
     {
         var localizer = Services.Localization.LocalizationManager.Instance;
         if (Device == null)
@@ -177,24 +177,34 @@ public partial class AppTabViewModel : TabItemViewModelBase
         string title = localizer.GetString("AppTab.InstallAppTitle", "安装应用");
         string message = localizer.GetString("AppTab.PreparingInstall", "准备安装...");
 
+        var cts = new CancellationTokenSource();
+
         var managedTask = TaskService.Instance.Start(new TaskStartOptions
         {
             Title = title,
             Description = message,
             Source = localizer.GetString("TaskPage.DefaultSource", "通用任务"),
-            IsIndeterminate = false
+            IsIndeterminate = false,
+            IsCancelable = true,
+            CancelAction = cts.Cancel
         });
 
-        var dialog = new Views.Dialogs.ProgressDialog();
-        _ = dialog.ShowAsync(title, message, isIndeterminate: false);
+        // 使用 Toast 通知替代阻塞式对话框
+        var toast = ToastManager.Instance.ShowProgress(
+            title, message,
+            isIndeterminate: false,
+            cancelAction: cts.Cancel);
 
-        try
+        var device = Device;
+
+        _ = Task.Run(async () =>
         {
-            await Task.Run(async () =>
+            try
             {
                 foreach (var filePath in filePaths)
                 {
                     if (string.IsNullOrEmpty(filePath)) continue;
+                    cts.Token.ThrowIfCancellationRequested();
 
                     var fileName = Path.GetFileName(filePath);
 
@@ -214,38 +224,42 @@ public partial class AppTabViewModel : TabItemViewModelBase
 
                         if (!string.IsNullOrEmpty(msg))
                         {
-                            dialog.UpdateProgress(p.UploadProgress, msg);
+                            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                            {
+                                toast.Content = msg;
+                                toast.Progress = p.UploadProgress;
+                                toast.IsIndeterminate = false;
+                            });
                             TaskService.Instance.Update(managedTask, p.UploadProgress, msg);
                         }
                     }
 
                     await AdbClient.Instance.InstallAsync(
-                        Device.DeviceData,
+                        device.DeviceData,
                         stream,
                         callback,
-                        CancellationToken.None,
+                        cts.Token,
                         "-r"
                     );
                 }
-            });
 
-            dialog.Hide();
-            TaskService.Instance.Complete(managedTask, localizer.GetString("AppTab.InstallSuccessMessage", "APK 安装完成"));
-            _notifications.ShowSuccess(
-                localizer.GetString("AppTab.InstallSuccessTitle", "安装成功"),
-                localizer.GetString("AppTab.InstallSuccessMessage", "APK 安装完成"));
+                ToastManager.Instance.Dismiss(toast);
+                TaskService.Instance.Complete(managedTask, localizer.GetString("AppTab.InstallSuccessMessage", "APK 安装完成"));
 
-            // 刷新应用列表
-            await LoadAppsAsync();
-        }
-        catch (Exception ex)
-        {
-            dialog.Hide();
-            TaskService.Instance.Fail(managedTask, string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
-            _notifications.ShowError(
-                localizer.GetString("AppTab.InstallFailedTitle", "安装失败"),
-                string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
-        }
+                // 刷新应用列表
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => LoadAppsAsync());
+            }
+            catch (OperationCanceledException)
+            {
+                ToastManager.Instance.Dismiss(toast);
+                TaskService.Instance.Cancel(managedTask, localizer.GetString("AppTab.InstallCancelledMessage", "安装已取消"));
+            }
+            catch (Exception ex)
+            {
+                ToastManager.Instance.Dismiss(toast);
+                TaskService.Instance.Fail(managedTask, string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
+            }
+        });
     }
 
     /// <summary>
@@ -276,40 +290,40 @@ public partial class AppTabViewModel : TabItemViewModelBase
             IsIndeterminate = true
         });
 
-        var dialog = new Views.Dialogs.ProgressDialog();
-        _ = dialog.ShowAsync(title, message, isIndeterminate: true);
+        // 使用 Toast 通知替代阻塞式对话框
+        var toast = ToastManager.Instance.ShowProgress(
+            title, message,
+            isIndeterminate: true);
 
-        try
+        var device = Device; // 捕获引用
+
+        _ = Task.Run(async () =>
         {
-            await Task.Run(async () =>
+            try
             {
                 await AdbClient.Instance.UninstallAsync(
-                    Device.DeviceData,
+                    device.DeviceData,
                     app.PackageName,
                     CancellationToken.None);
-            });
 
-            dialog.Hide();
-            string successMsg = string.Format(localizer.GetString("AppTab.UninstallSuccessMessage", "{0} 已卸载"), app.Name);
-            TaskService.Instance.Complete(managedTask, successMsg);
-            _notifications.ShowSuccess(
-                localizer.GetString("AppTab.UninstallSuccessTitle", "卸载成功"),
-                successMsg);
+                ToastManager.Instance.Dismiss(toast);
+                string successMsg = string.Format(localizer.GetString("AppTab.UninstallSuccessMessage", "{0} 已卸载"), app.Name);
+                TaskService.Instance.Complete(managedTask, successMsg);
 
-            // 从列表中移除
-            _masterAppList.Remove(app);
-            Apps.Remove(app);
-            HasApps = Apps.Count > 0;
-            StatusMessage = HasApps ? string.Format(localizer.GetString("AppTab.AppCount", "共 {0} 个应用"), Apps.Count) : localizer.GetString("AppTab.NoAppsFound", "未找到应用");
-        }
-        catch (Exception ex)
-        {
-            dialog.Hide();
-            TaskService.Instance.Fail(managedTask, string.Format(localizer.GetString("AppTab.UninstallFailedMessage", "卸载应用时发生错误: {0}"), ex.Message));
-            _notifications.ShowError(
-                localizer.GetString("AppTab.UninstallFailedTitle", "卸载失败"),
-                string.Format(localizer.GetString("AppTab.UninstallFailedMessage", "卸载应用时发生错误: {0}"), ex.Message));
-        }
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    _masterAppList.Remove(app);
+                    Apps.Remove(app);
+                    HasApps = Apps.Count > 0;
+                    StatusMessage = HasApps ? string.Format(localizer.GetString("AppTab.AppCount", "共 {0} 个应用"), Apps.Count) : localizer.GetString("AppTab.NoAppsFound", "未找到应用");
+                });
+            }
+            catch (Exception ex)
+            {
+                ToastManager.Instance.Dismiss(toast);
+                TaskService.Instance.Fail(managedTask, string.Format(localizer.GetString("AppTab.UninstallFailedMessage", "卸载应用时发生错误: {0}"), ex.Message));
+            }
+        });
     }
 
     /// <summary>

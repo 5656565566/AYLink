@@ -4,8 +4,6 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using AYLink.Core.Models;
 using AYLink.Desktop.ViewModels.Pages;
-using FluentAvalonia.UI.Controls;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace AYLink.Desktop.Views.Pages;
@@ -77,7 +75,7 @@ public partial class AppPage : UserControl
 
             if (filePaths.Count > 0)
             {
-                await tabVm.InstallApkCommand.ExecuteAsync(filePaths);
+                tabVm.InstallApkCommand.Execute(filePaths);
             }
         }
     }
