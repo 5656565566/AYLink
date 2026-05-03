@@ -1,4 +1,5 @@
 using AYLink.Core.Models;
+using System;
 using System.Collections;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,7 +13,7 @@ namespace AYLink.Desktop.ViewModels;
 /// 提供 Tabs、SelectedTab、AddNewTab、关闭/导航等通用逻辑
 /// </summary>
 /// <typeparam name="TTab">具体的标签页 ViewModel 类型</typeparam>
-public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase, ITabbedPageViewModel
+public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase, ITabbedPageViewModel, IDisposable
     where TTab : TabItemViewModelBase
 {
     [ObservableProperty]
@@ -111,6 +112,10 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
     protected void RegisterTab(TTab tab)
     {
         tab.OnCloseRequested += OnTabCloseRequested;
+        if (tab is ITabLifecycleAware lifecycleAware)
+        {
+            lifecycleAware.OnAttachedToHost();
+        }
         Tabs.Add(tab);
         SelectedTab = tab;
     }
@@ -125,6 +130,10 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
         if (!Tabs.Contains(typedTab)) return false;
 
         typedTab.OnCloseRequested -= OnTabCloseRequested;
+        if (typedTab is ITabLifecycleAware lifecycleAware)
+        {
+            lifecycleAware.OnDetachedFromHost();
+        }
         Tabs.Remove(typedTab);
 
         if (Tabs.Count == 0)
@@ -140,13 +149,17 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
     }
 
     /// <summary>
-    /// 将外部 Tab 插入集合（用于从独立窗口合并回来），支持任意 TabItemViewModelBase 类型
+    /// 将外部 Tab 插入集合（用于从独立窗口合并回来）支持任意 TabItemViewModelBase 类型
     /// </summary>
     public bool AttachTab(TabItemViewModelBase tab, int index = -1)
     {
         if (tab is not TTab typedTab) return false;
 
         typedTab.OnCloseRequested += OnTabCloseRequested;
+        if (typedTab is ITabLifecycleAware lifecycleAware)
+        {
+            lifecycleAware.OnAttachedToHost();
+        }
         if (index >= 0 && index <= Tabs.Count)
             Tabs.Insert(index, typedTab);
         else
@@ -176,8 +189,16 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
         if (!OnTabClosing(typedTab)) return;
 
         typedTab.OnCloseRequested -= OnTabCloseRequested;
-        OnTabClosed(typedTab);
+        if (typedTab is ITabLifecycleAware lifecycleAware)
+        {
+            lifecycleAware.OnDetachedFromHost();
+        }
         Tabs.Remove(typedTab);
+        OnTabClosed(typedTab);
+        if (typedTab is ITabLifecycleAware disposableLifecycleAware)
+        {
+            disposableLifecycleAware.Dispose();
+        }
 
         if (Tabs.Count == 0)
         {
@@ -209,5 +230,21 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
             }
             AddNewTabCommand.Execute(device);
         }
+    }
+
+    public virtual void Dispose()
+    {
+        foreach (var tab in Tabs.ToList())
+        {
+            tab.OnCloseRequested -= OnTabCloseRequested;
+            if (tab is ITabLifecycleAware lifecycleAware)
+            {
+                lifecycleAware.OnDetachedFromHost();
+                lifecycleAware.Dispose();
+            }
+        }
+
+        Tabs.Clear();
+        ForceSetSelectedTab(null);
     }
 }

@@ -8,7 +8,7 @@ namespace AYLink.Desktop.ViewModels.Pages;
 /// <summary>
 /// 投屏页 ViewModel - 支持多设备标签页
 /// </summary>
-public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabViewModel>, IDisposable
+public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabViewModel>
 {
     public override string PageKey => "Screen";
     public override string Title => Services.Localization.LocalizationManager.Instance.GetString("ScreenPage.Title", "投屏");
@@ -50,14 +50,14 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
     /// 释放所有标签页资源（关闭 Scrcpy 进程、音频流等）
     /// 在主窗口关闭时调用 防止进程泄露 
     /// </summary>
-    public void Dispose()
+    public override void Dispose()
     {
-        foreach (var tab in Tabs.ToArray())
+        foreach (var tab in Tabs)
         {
             tab.Dispose();
         }
-        Tabs.Clear();
-        ForceSetSelectedTab(null);
+
+        base.Dispose();
         GC.SuppressFinalize(this);
     }
 }

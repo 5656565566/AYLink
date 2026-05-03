@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,7 +29,7 @@ public class TaskStatusFilterOption
     public TaskItemStatus? Value { get; set; }
 }
 
-public partial class TaskTabViewModel : TabItemViewModelBase
+public partial class TaskTabViewModel : TabItemViewModelBase, ITabLifecycleAware
 {
     private static readonly HashSet<string> RefreshRelevantProperties =
     [
@@ -45,6 +46,8 @@ public partial class TaskTabViewModel : TabItemViewModelBase
     private readonly IUiDispatcher _uiDispatcher = UiDispatcher.Instance;
     private TaskFilterDefinition _activeFilterDefinition = new();
     private bool _refreshPending;
+    private bool _isAttachedToHost;
+    private bool _disposed;
 
     public ObservableCollection<TaskItem> FilteredTasks { get; } = [];
 
@@ -132,7 +135,18 @@ public partial class TaskTabViewModel : TabItemViewModelBase
         }
 
         ActiveFilterDefinition = filterDefinition ?? new TaskFilterDefinition();
+    }
 
+    public void OnAttachedToHost()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        if (_isAttachedToHost)
+        {
+            return;
+        }
+
+        _isAttachedToHost = true;
         _taskService.Items.CollectionChanged += OnTasksCollectionChanged;
 
         foreach (var task in _taskService.Items)
@@ -140,7 +154,37 @@ public partial class TaskTabViewModel : TabItemViewModelBase
             SubscribeTask(task);
         }
 
-        RefreshTasks();
+        RequestRefreshTasks(forceImmediate: true);
+    }
+
+    public void OnDetachedFromHost()
+    {
+        if (!_isAttachedToHost)
+        {
+            return;
+        }
+
+        _isAttachedToHost = false;
+        _refreshPending = false;
+        _taskService.Items.CollectionChanged -= OnTasksCollectionChanged;
+
+        foreach (var task in _taskService.Items)
+        {
+            UnsubscribeTask(task);
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        OnDetachedFromHost();
+        _disposed = true;
+        FilteredTasks.Clear();
+        SelectedTask = null;
     }
 
     private void InitializeStatusFilterOptions()
@@ -314,11 +358,6 @@ public partial class TaskTabViewModel : TabItemViewModelBase
 
     protected override void CloseTab()
     {
-        _taskService.Items.CollectionChanged -= OnTasksCollectionChanged;
-        foreach (var task in _taskService.Items)
-        {
-            UnsubscribeTask(task);
-        }
         base.CloseTab();
     }
 
@@ -343,10 +382,23 @@ public partial class TaskTabViewModel : TabItemViewModelBase
 
     private void RequestRefreshTasks(bool forceImmediate = false)
     {
+        if (_disposed || !_isAttachedToHost)
+        {
+            return;
+        }
+
         if (forceImmediate)
         {
             _refreshPending = false;
-            _uiDispatcher.Post(RefreshTasks);
+            _uiDispatcher.Post(() =>
+            {
+                if (_disposed || !_isAttachedToHost)
+                {
+                    return;
+                }
+
+                RefreshTasks();
+            });
             return;
         }
 
@@ -359,6 +411,11 @@ public partial class TaskTabViewModel : TabItemViewModelBase
         _uiDispatcher.Post(() =>
         {
             _refreshPending = false;
+            if (_disposed || !_isAttachedToHost)
+            {
+                return;
+            }
+
             RefreshTasks();
         });
     }

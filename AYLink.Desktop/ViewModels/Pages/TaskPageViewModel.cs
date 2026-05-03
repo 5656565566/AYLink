@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AYLink.Core.Models;
@@ -6,7 +7,7 @@ using AYLink.Desktop.Services.Tasks;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
-public partial class TaskPageViewModel : TabbedPageViewModelBase<TaskTabViewModel>
+public partial class TaskPageViewModel : TabbedPageViewModelBase<TaskTabViewModel>, IDisposable
 {
     private readonly LocalizationManager _localizer = LocalizationManager.Instance;
 
@@ -92,5 +93,15 @@ public partial class TaskPageViewModel : TabbedPageViewModelBase<TaskTabViewMode
     protected override TaskTabViewModel CreateTab(DeviceModel device)
     {
         return CreateOverviewTab();
+    }
+
+    public override void Dispose()
+    {
+        foreach (var tab in Tabs)
+        {
+            tab.NewTabRequested -= OnNewTabRequested;
+        }
+
+        base.Dispose();
     }
 }
