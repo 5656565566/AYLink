@@ -132,9 +132,31 @@ public sealed class TaskService
         Finish(item, TaskItemStatus.Cancelled, detail, isError: false);
     }
 
-    public void Remove(TaskItem? item)
+    public void RequestRemove(TaskItem? item)
     {
         if (item == null)
+        {
+            return;
+        }
+
+        if (item.Status == TaskItemStatus.Running)
+        {
+            if (!item.CanCancel)
+            {
+                return;
+            }
+
+            _uiDispatcher.Post(() => item.RemoveWhenStopped = true);
+            item.CancelCommand.Execute(null);
+            return;
+        }
+
+        Remove(item);
+    }
+
+    public void Remove(TaskItem? item)
+    {
+        if (item == null || item.Status == TaskItemStatus.Running)
         {
             return;
         }
@@ -160,6 +182,12 @@ public sealed class TaskService
             if (detail != null)
             {
                 item.Detail = detail;
+            }
+
+            if (item.RemoveWhenStopped)
+            {
+                item.RemoveWhenStopped = false;
+                Items.Remove(item);
             }
         });
 

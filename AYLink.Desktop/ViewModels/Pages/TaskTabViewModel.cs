@@ -274,7 +274,7 @@ public partial class TaskTabViewModel : TabItemViewModelBase
     [RelayCommand]
     private void RemoveTask(TaskItem? task)
     {
-        _taskService.Remove(task);
+        _taskService.RequestRemove(task);
     }
 
     [RelayCommand]

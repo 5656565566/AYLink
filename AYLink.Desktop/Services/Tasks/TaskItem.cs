@@ -35,6 +35,9 @@ public partial class TaskItem : ObservableObject
     public partial bool IsCancelable { get; set; }
 
     [ObservableProperty]
+    public partial bool RemoveWhenStopped { get; set; }
+    
+    [ObservableProperty]
     public partial DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
 
     [ObservableProperty]
