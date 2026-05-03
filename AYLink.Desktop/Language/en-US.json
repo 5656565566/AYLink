@@ -34,10 +34,10 @@
     "CopySuccessMessage": "Package name {0} copied to clipboard",
     "CopySuccessTitle": "Copied",
     "InstallAppTitle": "Install App",
+    "InstallCancelledMessage": "安装已取消",
     "InstallFailedMessage": "Error occurred while installing app: {0}",
-    "InstallFailedTitle": "Installation Failed",
+    "InstallInProgressMessage": "当前设备正在安装应用，请等待当前任务完成",
     "InstallSuccessMessage": "APK installation complete",
-    "InstallSuccessTitle": "Installation Successful",
     "Installing": "Installing: {0}",
     "LaunchFailedMessage": "Failed to launch app: {0}",
     "LaunchFailedTitle": "Launch Failed",
@@ -54,11 +54,13 @@
     "UninstallAppTitle": "Uninstall App",
     "UninstallButton": "Uninstall",
     "UninstallFailedMessage": "Error occurred while uninstalling app: {0}",
-    "UninstallFailedTitle": "Uninstall Failed",
     "UninstallSuccessMessage": "{0} uninstalled",
-    "UninstallSuccessTitle": "Uninstall Successful",
     "Uninstalling": "Uninstalling {0}...",
-    "Uploading": "Uploading: {0}"
+    "Uploading": "Uploading: {0}",
+    "InstallFailedTitle": "Installation Failed",
+    "InstallSuccessTitle": "Installation Successful",
+    "UninstallFailedTitle": "Uninstall Failed",
+    "UninstallSuccessTitle": "Uninstall Successful"
   },
   "DeviceItem": {
     "ConfirmDisconnectMessage": "Are you sure you want to disconnect device {0} ({1})?",
@@ -386,6 +388,9 @@
     "StatusRunning": "Running",
     "StatusTabPart": "Status: {0}",
     "Title": "Task Center"
+  },
+  "Toast": {
+    "Cancelling": "Cancelling......"
   },
   "IsBeta": true
 }

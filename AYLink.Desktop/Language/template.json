@@ -34,10 +34,10 @@
     "CopySuccessMessage": "包名 {0} 已复制到剪贴板",
     "CopySuccessTitle": "已复制",
     "InstallAppTitle": "安装应用",
+    "InstallCancelledMessage": "安装已取消",
     "InstallFailedMessage": "安装应用时发生错误: {0}",
-    "InstallFailedTitle": "安装失败",
+    "InstallInProgressMessage": "当前设备正在安装应用，请等待当前任务完成",
     "InstallSuccessMessage": "APK 安装完成",
-    "InstallSuccessTitle": "安装成功",
     "Installing": "正在安装: {0}",
     "LaunchFailedMessage": "启动应用失败: {0}",
     "LaunchFailedTitle": "启动失败",
@@ -54,9 +54,7 @@
     "UninstallAppTitle": "卸载应用",
     "UninstallButton": "卸载",
     "UninstallFailedMessage": "卸载应用时发生错误: {0}",
-    "UninstallFailedTitle": "卸载失败",
     "UninstallSuccessMessage": "{0} 已卸载",
-    "UninstallSuccessTitle": "卸载成功",
     "Uninstalling": "正在卸载 {0}...",
     "Uploading": "正在上传: {0}"
   },
@@ -386,5 +384,8 @@
     "StatusRunning": "运行中",
     "StatusTabPart": "状态：{0}",
     "Title": "任务管理"
+  },
+  "Toast": {
+    "Cancelling": "正在取消..."
   }
 }
