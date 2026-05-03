@@ -65,7 +65,7 @@ jobs:
       - name: Download and extract FFmpeg (Windows arm64)
         if: matrix.rid == 'win-arm64'
         run: |
-          curl -L -o ffmpeg.zip https://iris-download.home56.top/ffmpeg-n8.1-latest-win64-lgpl-shared-8.1.zip
+          curl -L -o ffmpeg.zip https://iris-download.home56.top/ffmpeg-n8.1-latest-winarm64-lgpl-shared-8.1.zip
           7z e ffmpeg.zip -o./publish_output -r swscale-9.dll swresample-6.dll avutil-60.dll avcodec-62.dll
           rm ffmpeg.zip
         shell: bash
