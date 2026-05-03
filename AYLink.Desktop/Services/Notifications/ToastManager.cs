@@ -2,7 +2,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentAvalonia.UI.Controls;
@@ -48,6 +47,8 @@ public sealed class ToastManager
 {
     public static ToastManager Instance { get; } = new();
 
+    private readonly IUiDispatcher _uiDispatcher = UiDispatcher.Instance;
+
     public ObservableCollection<ToastModel> Toasts { get; } = new();
 
     private ToastManager()
@@ -64,7 +65,7 @@ public sealed class ToastManager
             Duration = duration ?? TimeSpan.FromSeconds(3)
         };
 
-        Dispatcher.UIThread.Post(() =>
+        _uiDispatcher.Post(() =>
         {
             Toasts.Add(toast);
 
@@ -72,7 +73,7 @@ public sealed class ToastManager
             {
                 Task.Delay(toast.Duration).ContinueWith(_ =>
                 {
-                    Dispatcher.UIThread.Post(() =>
+                    _uiDispatcher.Post(() =>
                     {
                         Toasts.Remove(toast);
                     });
@@ -81,6 +82,14 @@ public sealed class ToastManager
         });
 
         return toast;
+    }
+
+    public void Update(ToastModel toast, Action<ToastModel> update)
+    {
+        ArgumentNullException.ThrowIfNull(toast);
+        ArgumentNullException.ThrowIfNull(update);
+
+        _uiDispatcher.Post(() => update(toast));
     }
 
     /// <summary>
@@ -113,18 +122,21 @@ public sealed class ToastManager
             toast.CancelCommand = new RelayCommand(() =>
             {
                 cancelAction();
-                toast.IsCancelable = false;
-                toast.Content = Localization.LocalizationManager.Instance
-                    .GetString("Toast.Cancelling", "正在取消...");
+                Update(toast, currentToast =>
+                {
+                    currentToast.IsCancelable = false;
+                    currentToast.Content = Localization.LocalizationManager.Instance
+                        .GetString("Toast.Cancelling", "正在取消...");
+                });
             });
         }
 
-        Dispatcher.UIThread.Post(() => Toasts.Add(toast));
+        _uiDispatcher.Post(() => Toasts.Add(toast));
         return toast;
     }
 
     public void Dismiss(ToastModel toast)
     {
-        Dispatcher.UIThread.Post(() => Toasts.Remove(toast));
+        _uiDispatcher.Post(() => Toasts.Remove(toast));
     }
 }

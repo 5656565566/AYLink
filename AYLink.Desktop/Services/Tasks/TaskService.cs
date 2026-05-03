@@ -1,11 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Linq;
-using Avalonia.Threading;
 using AYLink.Desktop.Services.Notifications;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using FluentAvalonia.UI.Controls;
 
 namespace AYLink.Desktop.Services.Tasks;
 
@@ -22,6 +17,8 @@ public interface ITaskContext
 
 public sealed class TaskService
 {
+    private readonly IUiDispatcher _uiDispatcher = UiDispatcher.Instance;
+
     private sealed class TaskContext(TaskItem task) : ITaskContext
     {
         private readonly TaskItem _task = task;
@@ -72,7 +69,7 @@ public sealed class TaskService
             CreatedAt = DateTimeOffset.Now
         };
 
-        Dispatcher.UIThread.Post(() => Items.Insert(0, item));
+        _uiDispatcher.Post(() => Items.Insert(0, item));
         _notifications.ShowInfo("任务开始", item.Title);
         return item;
     }
@@ -106,7 +103,7 @@ public sealed class TaskService
             return;
         }
 
-        Dispatcher.UIThread.Post(() =>
+        _uiDispatcher.Post(() =>
         {
             if (progress.HasValue)
             {
@@ -142,7 +139,7 @@ public sealed class TaskService
             return;
         }
 
-        Dispatcher.UIThread.Post(() => Items.Remove(item));
+        _uiDispatcher.Post(() => Items.Remove(item));
     }
 
     private void Finish(TaskItem? item, TaskItemStatus status, string? detail, bool isError)
@@ -152,7 +149,7 @@ public sealed class TaskService
             return;
         }
 
-        Dispatcher.UIThread.Post(() =>
+        _uiDispatcher.Post(() =>
         {
             item.Status = status;
             item.IsCancelable = false;

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
+using AYLink.Desktop.Services;
 using AYLink.Desktop.Services.Tasks;
 using AYLink.Desktop.Services.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,16 +15,10 @@ public enum TaskFilterKind
     NewTab
 }
 
-public sealed class TaskFilterDefinition
+public sealed class TaskFilterDefinition(string? searchKeyword = null, TaskItemStatus? statusFilter = null)
 {
-    public TaskFilterDefinition(string? searchKeyword = null, TaskItemStatus? statusFilter = null)
-    {
-        SearchKeyword = searchKeyword?.Trim() ?? string.Empty;
-        StatusFilter = statusFilter;
-    }
-
-    public string SearchKeyword { get; }
-    public TaskItemStatus? StatusFilter { get; }
+    public string SearchKeyword { get; } = searchKeyword?.Trim() ?? string.Empty;
+    public TaskItemStatus? StatusFilter { get; } = statusFilter;
     public bool HasCriteria => !string.IsNullOrWhiteSpace(SearchKeyword) || StatusFilter.HasValue;
 }
 
@@ -35,9 +30,21 @@ public class TaskStatusFilterOption
 
 public partial class TaskTabViewModel : TabItemViewModelBase
 {
+    private static readonly HashSet<string> RefreshRelevantProperties =
+    [
+        nameof(TaskItem.Status),
+        nameof(TaskItem.IsCancelable),
+        nameof(TaskItem.Source),
+        nameof(TaskItem.Title),
+        nameof(TaskItem.CreatedAt),
+        nameof(TaskItem.FinishedAt)
+    ];
+
     private readonly LocalizationManager _localizer = LocalizationManager.Instance;
     private readonly TaskService _taskService = TaskService.Instance;
+    private readonly IUiDispatcher _uiDispatcher = UiDispatcher.Instance;
     private TaskFilterDefinition _activeFilterDefinition = new();
+    private bool _refreshPending;
 
     public ObservableCollection<TaskItem> FilteredTasks { get; } = [];
 
@@ -81,7 +88,7 @@ public partial class TaskTabViewModel : TabItemViewModelBase
         {
             if (SetProperty(ref _activeFilterDefinition, value))
             {
-                RefreshTasks();
+                RequestRefreshTasks(forceImmediate: true);
                 OnPropertyChanged(nameof(FilterDescription));
             }
         }
@@ -248,7 +255,7 @@ public partial class TaskTabViewModel : TabItemViewModelBase
     [RelayCommand]
     private void Refresh()
     {
-        RefreshTasks();
+        RequestRefreshTasks(forceImmediate: true);
     }
 
     [RelayCommand]
@@ -327,17 +334,33 @@ public partial class TaskTabViewModel : TabItemViewModelBase
         }
         if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
         {
-            RefreshTasks();
+            RequestRefreshTasks(forceImmediate: true);
             return;
         }
 
-        _ = RefreshTasksDeferredAsync();
+        RequestRefreshTasks();
     }
 
-    private async System.Threading.Tasks.Task RefreshTasksDeferredAsync()
+    private void RequestRefreshTasks(bool forceImmediate = false)
     {
-        await System.Threading.Tasks.Task.Yield();
-        RefreshTasks();
+        if (forceImmediate)
+        {
+            _refreshPending = false;
+            _uiDispatcher.Post(RefreshTasks);
+            return;
+        }
+
+        if (_refreshPending)
+        {
+            return;
+        }
+
+        _refreshPending = true;
+        _uiDispatcher.Post(() =>
+        {
+            _refreshPending = false;
+            RefreshTasks();
+        });
     }
 
     private void SubscribeTask(TaskItem task)
@@ -352,15 +375,23 @@ public partial class TaskTabViewModel : TabItemViewModelBase
 
     private void OnTaskPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(TaskItem.Status)
-            or nameof(TaskItem.Detail)
-            or nameof(TaskItem.Progress)
-            or nameof(TaskItem.IsIndeterminate)
-            or nameof(TaskItem.IsCancelable)
-            or nameof(TaskItem.Source)
-            or nameof(TaskItem.Title))
+        if (string.IsNullOrEmpty(e.PropertyName))
         {
-            _ = RefreshTasksDeferredAsync();
+            RequestRefreshTasks(forceImmediate: true);
+            return;
+        }
+
+        if (RefreshRelevantProperties.Contains(e.PropertyName))
+        {
+            RequestRefreshTasks();
+            return;
+        }
+
+        if (e.PropertyName is nameof(TaskItem.Detail)
+            or nameof(TaskItem.Progress)
+            or nameof(TaskItem.IsIndeterminate))
+        {
+            NotifyStateChanged();
         }
     }
 

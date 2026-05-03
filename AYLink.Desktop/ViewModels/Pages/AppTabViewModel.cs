@@ -64,6 +64,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
     /// </summary>
     private readonly List<AppInfo> _masterAppList = [];
     private readonly NotificationService _notifications = NotificationService.Instance;
+    private readonly IUiDispatcher _uiDispatcher = UiDispatcher.Instance;
 
     public AppTabViewModel(DeviceModel device)
     {
@@ -190,7 +191,8 @@ public partial class AppTabViewModel : TabItemViewModelBase
         });
 
         // 使用 Toast 通知替代阻塞式对话框
-        var toast = ToastManager.Instance.ShowProgress(
+        var toastManager = ToastManager.Instance;
+        var toast = toastManager.ShowProgress(
             title, message,
             isIndeterminate: false,
             cancelAction: cts.Cancel);
@@ -224,11 +226,11 @@ public partial class AppTabViewModel : TabItemViewModelBase
 
                         if (!string.IsNullOrEmpty(msg))
                         {
-                            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                            toastManager.Update(toast, currentToast =>
                             {
-                                toast.Content = msg;
-                                toast.Progress = p.UploadProgress;
-                                toast.IsIndeterminate = false;
+                                currentToast.Content = msg;
+                                currentToast.Progress = p.UploadProgress;
+                                currentToast.IsIndeterminate = false;
                             });
                             TaskService.Instance.Update(managedTask, p.UploadProgress, msg);
                         }
@@ -247,7 +249,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
                 TaskService.Instance.Complete(managedTask, localizer.GetString("AppTab.InstallSuccessMessage", "APK 安装完成"));
 
                 // 刷新应用列表
-                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => LoadAppsAsync());
+                await _uiDispatcher.InvokeAsync(LoadAppsAsync);
             }
             catch (OperationCanceledException)
             {
@@ -310,7 +312,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
                 string successMsg = string.Format(localizer.GetString("AppTab.UninstallSuccessMessage", "{0} 已卸载"), app.Name);
                 TaskService.Instance.Complete(managedTask, successMsg);
 
-                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                await _uiDispatcher.InvokeAsync(() =>
                 {
                     _masterAppList.Remove(app);
                     Apps.Remove(app);
