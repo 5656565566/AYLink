@@ -48,6 +48,12 @@ public partial class AppTabViewModel : TabItemViewModelBase
     public partial bool IsLoading { get; set; }
 
     /// <summary>
+    /// 当前设备是否正在安装应用
+    /// </summary>
+    [ObservableProperty]
+    private bool _isInstalling;
+
+    /// <summary>
     /// 是否有应用数据（控制空状态提示）
     /// </summary>
     [ObservableProperty]
@@ -175,6 +181,16 @@ public partial class AppTabViewModel : TabItemViewModelBase
 
         if (filePaths == null || filePaths.Count == 0) return;
 
+        if (IsInstalling)
+        {
+            _notifications.ShowWarning(
+                localizer.GetString("Dialog.Tip", "提示"),
+                localizer.GetString("AppTab.InstallInProgressMessage", "当前设备正在安装应用，请等待当前任务完成"));
+            return;
+        }
+
+        IsInstalling = true;
+
         string title = localizer.GetString("AppTab.InstallAppTitle", "安装应用");
         string message = localizer.GetString("AppTab.PreparingInstall", "准备安装...");
 
@@ -260,6 +276,10 @@ public partial class AppTabViewModel : TabItemViewModelBase
             {
                 ToastManager.Instance.Dismiss(toast);
                 TaskService.Instance.Fail(managedTask, string.Format(localizer.GetString("AppTab.InstallFailedMessage", "安装应用时发生错误: {0}"), ex.Message));
+            }
+            finally
+            {
+                _uiDispatcher.Post(() => IsInstalling = false);
             }
         });
     }

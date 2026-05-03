@@ -43,7 +43,8 @@
                     <!-- 右侧：安装、刷新 -->
                     <ui:CommandBar.PrimaryCommands>
                         <ui:CommandBarButton Label="{i18n:Tr AppPage.InstallApp, DefaultText='安装 APK'}"
-                                             Click="InstallAppBtn_Click">
+                                             Click="InstallAppBtn_Click"
+                                             IsEnabled="{Binding IsInstalling, Converter={x:Static BoolConverters.Not}}">
                             <ui:CommandBarButton.IconSource>
                                 <ui:SymbolIconSource Symbol="Add"/>
                             </ui:CommandBarButton.IconSource>
