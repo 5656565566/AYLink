@@ -1,6 +1,7 @@
 using AdvancedSharpAdbClient.DeviceCommands;
 using AYLink.Core.Models;
-using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Notifications;
+using AYLink.Desktop.Services.Tasks;
 using CommunityToolkit.Mvvm.Input;
 
 namespace AYLink.Desktop.ViewModels.Pages;
@@ -57,7 +58,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
         if (file.IsDirectory)
         {
             var localizer = Services.Localization.LocalizationManager.Instance;
-            Services.Notifications.NotificationService.Instance.ShowWarning(
+            NotificationService.Instance.ShowWarning(
                 localizer.GetString("FilePage.NotSupportedTitle", "不支持"),
                 localizer.GetString("FilePage.NotSupportedMessage", "暂不支持直接传输文件夹"));
             return;
@@ -75,7 +76,9 @@ public partial class FileTabViewModel : TabItemViewModelBase
         string title = localizer2.GetString("FilePage.TransferringTitle", "传输中");
         string message = string.Format(localizer2.GetString("FilePage.TransferringMessage", "正在传输 {0}..."), file.Name);
 
-        var managedTask = Services.Tasks.TaskService.Instance.Start(new Services.Tasks.TaskStartOptions
+        var taskService = TaskService.Instance;
+        var toastManager = ToastManager.Instance;
+        var managedTask = taskService.Start(new TaskStartOptions
         {
             Title = title,
             Description = message,
@@ -83,23 +86,33 @@ public partial class FileTabViewModel : TabItemViewModelBase
             IsIndeterminate = false
         });
 
-        var dialog = new Views.Dialogs.ProgressDialog();
-        _ = dialog.ShowAsync(title, message, isIndeterminate: false);
+        var toast = toastManager.ShowProgress(
+            title,
+            message,
+            isIndeterminate: false);
 
         try
         {
             var progress = new System.Progress<double>(p =>
             {
-                dialog.UpdateProgress(p);
-                Services.Tasks.TaskService.Instance.Update(managedTask, p);
+                toastManager.Update(toast, currentToast =>
+                {
+                    currentToast.Progress = p;
+                    currentToast.IsIndeterminate = false;
+                });
+                taskService.Update(managedTask, p);
             });
 
             if (sourcePane.SelectedSource.IsLocal && targetPane.SelectedSource.IsLocal)
             {
                 // 本地到本地
                 await System.Threading.Tasks.Task.Run(() => System.IO.File.Copy(sourcePath, targetPath, true));
-                dialog.UpdateProgress(100);
-                Services.Tasks.TaskService.Instance.Update(managedTask, 100);
+                toastManager.Update(toast, currentToast =>
+                {
+                    currentToast.Progress = 100;
+                    currentToast.IsIndeterminate = false;
+                });
+                taskService.Update(managedTask, 100);
             }
             else if (sourcePane.SelectedSource.IsLocal && !targetPane.SelectedSource.IsLocal)
             {
@@ -123,48 +136,70 @@ public partial class FileTabViewModel : TabItemViewModelBase
                         $"cp \"{sourcePath}\" \"{targetPath}\"",
                         receiver,
                         default);
-                    dialog.UpdateProgress(100);
-                    Services.Tasks.TaskService.Instance.Update(managedTask, 100);
+                    toastManager.Update(toast, currentToast =>
+                    {
+                        currentToast.Progress = 100;
+                        currentToast.IsIndeterminate = false;
+                    });
+                    taskService.Update(managedTask, 100);
                 }
                 else
                 {
-                    // 不同设备，使用临时文件中转
+                    // 不同设备 使用临时文件中转
                     string tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), file.Name);
                     string msg1 = localizer2.GetString("FilePage.DownloadingToTemp", "正在下载到临时目录...");
-                    dialog.UpdateProgress(0, msg1);
-                    Services.Tasks.TaskService.Instance.Update(managedTask, 0, msg1);
+                    toastManager.Update(toast, currentToast =>
+                    {
+                        currentToast.Content = msg1;
+                        currentToast.Progress = 0;
+                        currentToast.IsIndeterminate = false;
+                    });
+                    taskService.Update(managedTask, 0, msg1);
                     await sourcePane.SelectedSource.Device!.FileManager.DownloadFileAsync(sourcePath, tempFile, new System.Progress<double>(p =>
                     {
-                        dialog.UpdateProgress(p / 2);
-                        Services.Tasks.TaskService.Instance.Update(managedTask, p / 2);
+                        toastManager.Update(toast, currentToast =>
+                        {
+                            currentToast.Progress = p / 2;
+                            currentToast.IsIndeterminate = false;
+                        });
+                        taskService.Update(managedTask, p / 2);
                     }));
                     
                     string msg2 = localizer2.GetString("FilePage.UploadingToTarget", "正在上传到目标设备...");
-                    dialog.UpdateProgress(50, msg2);
-                    Services.Tasks.TaskService.Instance.Update(managedTask, 50, msg2);
+                    toastManager.Update(toast, currentToast =>
+                    {
+                        currentToast.Content = msg2;
+                        currentToast.Progress = 50;
+                        currentToast.IsIndeterminate = false;
+                    });
+                    taskService.Update(managedTask, 50, msg2);
                     await targetPane.SelectedSource.Device!.FileManager.UploadFileAsync(tempFile, targetPath, new System.Progress<double>(p =>
                     {
-                        dialog.UpdateProgress(50 + p / 2);
-                        Services.Tasks.TaskService.Instance.Update(managedTask, 50 + p / 2);
+                        toastManager.Update(toast, currentToast =>
+                        {
+                            currentToast.Progress = 50 + p / 2;
+                            currentToast.IsIndeterminate = false;
+                        });
+                        taskService.Update(managedTask, 50 + p / 2);
                     }));
                     
                     System.IO.File.Delete(tempFile);
                 }
             }
 
-            dialog.Hide();
+            toastManager.Dismiss(toast);
             string successMsg = string.Format(localizer2.GetString("FilePage.TransferCompleteMessage", "{0} 传输成功"), file.Name);
-            Services.Tasks.TaskService.Instance.Complete(managedTask, successMsg);
-            Services.Notifications.NotificationService.Instance.ShowSuccess(
+            taskService.Complete(managedTask, successMsg);
+            NotificationService.Instance.ShowSuccess(
                 localizer2.GetString("FilePage.TransferCompleteTitle", "传输完成"),
                 successMsg);
             await targetPane.LoadFilesAsync();
         }
         catch (System.Exception ex)
         {
-            dialog.Hide();
-            Services.Tasks.TaskService.Instance.Fail(managedTask, ex.Message);
-            Services.Notifications.NotificationService.Instance.ShowError(
+            toastManager.Dismiss(toast);
+            taskService.Fail(managedTask, ex.Message);
+            NotificationService.Instance.ShowError(
                 localizer2.GetString("FilePage.TransferFailedTitle", "传输失败"),
                 ex.Message);
         }
