@@ -148,8 +148,9 @@ public partial class SettingsPageViewModel : PageViewModelBase
 
     partial void OnSelectedAudioOutputDeviceChanged(string? value)
     {
-        var isDefault = value == LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认");
-        var targetDevice = isDefault ? null : value;
+        var systemDefaultText = LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认");
+        var normalizedValue = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        var targetDevice = normalizedValue == systemDefaultText ? null : normalizedValue;
         
         if (targetDevice == _appConfig.AudioOutputDevice) return;
 

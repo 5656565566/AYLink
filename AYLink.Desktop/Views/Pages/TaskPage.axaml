@@ -3,7 +3,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
-             xmlns:services="using:AYLink.Desktop.Services"
              xmlns:tasks="using:AYLink.Desktop.Services.Tasks"
              xmlns:views="using:AYLink.Desktop.Views"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
