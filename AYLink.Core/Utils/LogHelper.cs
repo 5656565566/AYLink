@@ -1,9 +1,7 @@
 using NLog;
 using NLog.Config;
 using NLog.Targets;
-using System;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Text;
 
 namespace AYLink.Core.Utils;

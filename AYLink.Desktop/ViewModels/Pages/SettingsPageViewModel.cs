@@ -243,7 +243,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
     {
         _appConfig.FFmpegBin = value;
         SaveConfig();
-        FFmpeg.AutoGen.ffmpeg.RootPath = value; // TODO 要分离到 Core 库
+        Core.Utils.FFmpegConfig.SetRootPath(value);
     }
 
     #endregion

@@ -473,5 +473,8 @@ $RECYCLE.BIN/
 
 *.user
 
+AYLink.Agent/www/
+
 AYLink.Mobile/
 AYLink.Agent/
+AYLink.Web/

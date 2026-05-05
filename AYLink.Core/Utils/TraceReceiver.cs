@@ -1,8 +1,5 @@
 using AdvancedSharpAdbClient.Receivers;
-using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace AYLink.Core.Utils;
 
@@ -23,11 +20,7 @@ public class TraceReceiver : IShellOutputReceiver
     public Task<bool> AddOutputAsync(string line, CancellationToken cancellationToken)
     {
         Debug.WriteLine(line);
-
-        if (_outputAction != null)
-        {
-            _outputAction(line);
-        }
+        _outputAction?.Invoke(line);
 
         return Task.FromResult(true);
     }
@@ -40,11 +33,7 @@ public class TraceReceiver : IShellOutputReceiver
     public bool AddOutput(string line)
     {
         Debug.WriteLine(line);
-
-        if (_outputAction != null)
-        {
-            _outputAction(line);
-        }
+        _outputAction?.Invoke(line);
 
         return true;
     }

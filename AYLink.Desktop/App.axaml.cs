@@ -23,7 +23,7 @@ public partial class App : Application
 
         if (!string.IsNullOrWhiteSpace(appConfig.FFmpegBin))
         {
-            FFmpeg.AutoGen.ffmpeg.RootPath = appConfig.FFmpegBin;  // TODO 要分离到 Core 库
+            Core.Utils.FFmpegConfig.SetRootPath(appConfig.FFmpegBin);
         }
 
         // 根据配置切换语言
@@ -44,7 +44,7 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
 #if DEBUG
-        AYLink.Desktop.Services.Design.DebugMockDataInitializer.InitializeAll();
+        Services.Design.DebugMockDataInitializer.InitializeAll();
 #endif
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
