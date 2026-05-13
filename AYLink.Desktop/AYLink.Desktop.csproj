@@ -49,7 +49,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="ppy.SDL3-CS" Version="2026.320.0" />
+    <PackageReference Include="ppy.SDL3-CS" Version="2026.512.0" />
   </ItemGroup>
 
   <ItemGroup>

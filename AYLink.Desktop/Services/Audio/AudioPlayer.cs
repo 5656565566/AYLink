@@ -201,7 +201,7 @@ public sealed unsafe class AudioPlayer : IDisposable
                     {
                         short sample = (short)(sourceBuffer[i * 2] | (sourceBuffer[i * 2 + 1] << 8));
                         // 应用音源音量和全局音量
-                        mixBufferFloat[i] += (sample / 32768.0f) * source.Volume * _globalVolume;
+                        mixBufferFloat[i] += sample / 32768.0f * 0.1f * source.Volume * _globalVolume;
                     }
                 }
             }

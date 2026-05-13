@@ -1,4 +1,4 @@
-using AYLink.Core.Models;
+﻿using AYLink.Core.Models;
 using AYLink.Core.Scrcpy;
 using AYLink.Core.Scrcpy.Control;
 using AYLink.Core.Utils;
@@ -31,7 +31,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     public partial bool IsConnected { get; set; }
 
     [ObservableProperty]
-    public partial bool IsSidebarVisible { get; set; } = true;
+    public partial bool IsToolbarVisible { get; set; } = true;
 
     [ObservableProperty]
     public partial Avalonia.Media.Imaging.WriteableBitmap? VideoSource { get; set; }
@@ -270,7 +270,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             _scrcpyClient = null;
 
             var localizer = Services.Localization.LocalizationManager.Instance;
-            Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("ScreenTab.ConnectFailed", "连接失败"), ex.Message);
+            Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("ScreenTab.ConnectFailed", "杩炴帴澶辫触"), ex.Message);
         }
     }
 
@@ -278,9 +278,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     /// 切换侧边栏可见性
     /// </summary>
     [RelayCommand]
-    private void ToggleSidebar()
+    private void ToggleToolbar()
     {
-        IsSidebarVisible = !IsSidebarVisible;
+        IsToolbarVisible = !IsToolbarVisible;
     }
 
     #region 控制按钮命令

@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:behaviors="using:AYLink.Desktop.Behaviors"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             x:Class="AYLink.Desktop.Views.Pages.ScreenTabContentView"
+             x:DataType="vm:ScreenTabViewModel">
+    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <!-- 视频内容 -->
+        <Viewbox Stretch="Uniform">
+            <Grid>
+                <!-- 视频流 -->
+                <Viewbox Stretch="Uniform">
+                    <Grid>
+                        <Image x:Name="VideoImage"
+                               Source="{Binding VideoSource}"
+                               behaviors:VideoImageBehavior.IsAutoAttach="True"/>
+                    </Grid>
+                </Viewbox>
+            </Grid>
+        </Viewbox>
+
+        <!-- 可拖动的悬浮容器 -->
+        <Grid behaviors:FloatingDockBehavior.IsEnabled="True"
+              behaviors:FloatingDockBehavior.IsExpanded="{Binding IsToolbarVisible}"
+              HorizontalAlignment="Right"
+              VerticalAlignment="Center"
+              Margin="16"
+              Background="Transparent">
+
+            <!-- 展开悬浮窗按钮 (收起状态) -->
+            <Button Width="40" Height="40"
+                    ToolTip.Tip="{i18n:Tr ScreenPage.ExpandToolbar, DefaultText='展开工具栏'}"
+                    CornerRadius="20"
+                    BorderThickness="1.5"
+                    Opacity="0.8"
+                    IsVisible="{Binding !IsToolbarVisible}"
+                    Command="{Binding ToggleToolbarCommand}">
+                <Button.BorderBrush>
+                    <SolidColorBrush Color="{DynamicResource SystemAccentColor}" Opacity="0.5" />
+                </Button.BorderBrush>
+                <ui:SymbolIcon Symbol="{x:Static ui:Symbol.ChevronLeft}"/>
+            </Button>
+
+            <!-- 悬浮窗 (展开状态) -->
+            <Border IsVisible="{Binding IsToolbarVisible}"
+                    Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="24"
+                    BoxShadow="0 4 12 0 #40000000"
+                    Opacity="0.9"
+                    Padding="4">
+                <StackPanel Spacing="4">
+                    <!-- 收起按钮 -->
+                    <Button Width="40" Height="40" CornerRadius="20"
+                            ToolTip.Tip="{i18n:Tr ScreenPage.CollapseToolbar, DefaultText='收起工具栏'}"
+                            Command="{Binding ToggleToolbarCommand}">
+                        <ui:SymbolIcon Symbol="{x:Static ui:Symbol.ChevronRight}"/>
+                    </Button>
+
+                    <!-- 控制按钮 -->
+                    <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.Power, DefaultText='电源'}" Command="{Binding SendKeyActionCommand}" CommandParameter="Power"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.Play}"/></Button>
+                    <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.VolumeUp, DefaultText='音量+'}" Command="{Binding SendKeyActionCommand}" CommandParameter="VolumeUp"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.Add}"/></Button>
+                    <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.VolumeDown, DefaultText='音量-'}" Command="{Binding SendKeyActionCommand}" CommandParameter="VolumeDown"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.Remove}"/></Button>
+                    <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.Mute, DefaultText='静音'}" Command="{Binding SendKeyActionCommand}" CommandParameter="Mute"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.Mute}"/></Button>
+                    <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.ScreenOn, DefaultText='亮屏'}" Command="{Binding SendKeyActionCommand}" CommandParameter="ScreenOn"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.Star}"/></Button>
+                    <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.ScreenOff, DefaultText='熄屏'}" Command="{Binding SendKeyActionCommand}" CommandParameter="ScreenOff"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.StarOff}"/></Button>
+                    <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.Back, DefaultText='返回'}" Command="{Binding SendKeyActionCommand}" CommandParameter="Back"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.Back}"/></Button>
+                    <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.Home, DefaultText='主页'}" Command="{Binding SendKeyActionCommand}" CommandParameter="Home"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.Home}"/></Button>
+                    <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.Menu, DefaultText='菜单'}" Command="{Binding SendKeyActionCommand}" CommandParameter="Menu"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.List}"/></Button>
+                    
+                    <!-- 全屏按钮 -->
+                    <Button Width="40" Height="40" CornerRadius="20"
+                            ToolTip.Tip="{i18n:Tr ScreenPage.FullScreen, DefaultText='全屏'}"
+                            Click="OnFullScreenClicked">
+                        <ui:SymbolIcon Symbol="{x:Static ui:Symbol.FullScreen}"/>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
