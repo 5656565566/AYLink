@@ -18,6 +18,8 @@ public enum AudioCodec
 
 public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposable
 {
+    private const int DeviceMetaLengthWithDummyByte = 65;
+    private const ulong PacketFlagConfig = 1UL << 62;
     private readonly Socket _socket = audioSocket ?? throw new ArgumentNullException(nameof(audioSocket));
     private AVCodecContext* _codecContext;
     private SwrContext* _resamplerCtx;
@@ -38,8 +40,9 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
     {
         try
         {
-            byte[] deviceHeader = ReceiveExact(65); // 长度为 64 的 String 但是尾部有 \0
-            string deviceName = System.Text.Encoding.UTF8.GetString(deviceHeader).TrimStart((char)0).Split('\0')[0];
+            // For the first stream socket, scrcpy sends one dummy byte, then a fixed 64-byte device-name field.
+            byte[] deviceHeader = ReceiveExact(DeviceMetaLengthWithDummyByte);
+            string deviceName = System.Text.Encoding.UTF8.GetString(deviceHeader[1..]).TrimStart((char)0).Split('\0')[0];
             Debug.WriteLine($"Device Name: {deviceName}");
         }
         catch (Exception ex)
@@ -96,28 +99,7 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
 
             if (_currentCodec == AudioCodec.AAC)
             {
-                byte[] configHeader = ReceiveExact(12);
-
-                if ((configHeader[0] & 0x80) == 0)
-                {
-                    throw new Exception("Expected AAC config packet, but got a data packet.");
-                }
-
-                byte[] sizeBytes = new byte[4];
-                Array.Copy(configHeader, 8, sizeBytes, 0, 4);
-                Array.Reverse(sizeBytes);
-                int configDataSize = BitConverter.ToInt32(sizeBytes, 0);
-
-                if (configDataSize <= 0)
-                {
-                    throw new Exception("Invalid AAC config packet size.");
-                }
-
-                byte[] configData = ReceiveExact(configDataSize);
-
-                _codecContext->extradata_size = configDataSize;
-                _codecContext->extradata = (byte*)ffmpeg.av_malloc((ulong)configDataSize + ffmpeg.AV_INPUT_BUFFER_PADDING_SIZE);
-                Marshal.Copy(configData, 0, (nint)_codecContext->extradata, configDataSize);
+                InitializeAacDecoder();
             }
 
             if (ffmpeg.avcodec_open2(_codecContext, codec, null) < 0)
@@ -131,6 +113,29 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
             Trace.WriteLine($"Audio initialization or playback failed: {ex}");
             Dispose();
         }
+    }
+
+    private void InitializeAacDecoder()
+    {
+        byte[] firstHeader = ReceiveExact(12);
+        int firstPacketSize = ReadPacketSize(firstHeader);
+
+        if (firstPacketSize <= 0)
+        {
+            throw new Exception("Invalid AAC packet size.");
+        }
+
+        byte[] firstPacketData = ReceiveExact(firstPacketSize);
+
+        if (!IsConfigPacket(firstHeader))
+        {
+            throw new Exception("Expected AAC config packet, but got a data packet.");
+        }
+
+        _codecContext->extradata_size = firstPacketSize;
+        _codecContext->extradata = (byte*)ffmpeg.av_malloc((ulong)firstPacketSize + ffmpeg.AV_INPUT_BUFFER_PADDING_SIZE);
+        Marshal.Copy(firstPacketData, 0, (nint)_codecContext->extradata, firstPacketSize);
+        Debug.WriteLine($"AAC config packet received, extradata size: {firstPacketSize}");
     }
 
     private void InitializeResamplerFromFrame(AVFrame* frame)
@@ -176,66 +181,67 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
             while (_socket.Connected)
             {
                 byte[] header = ReceiveExact(12);
-                byte[] sizeBytes = new byte[4];
-                Array.Copy(header, 8, sizeBytes, 0, 4);
-                Array.Reverse(sizeBytes);
-                int dataSize = BitConverter.ToInt32(sizeBytes, 0);
+                int dataSize = ReadPacketSize(header);
 
                 if (dataSize <= 0) continue;
 
                 byte[] packetData = ReceiveExact(dataSize);
-
-                fixed (byte* pPacketData = packetData)
-                {
-                    ffmpeg.av_new_packet(pkt, dataSize);
-                    Buffer.MemoryCopy(pPacketData, pkt->data, pkt->size, dataSize);
-
-                    int ret = ffmpeg.avcodec_send_packet(_codecContext, pkt);
-                    ffmpeg.av_packet_unref(pkt);
-                    if (ret < 0)
-                    {
-                        // 可以在这里加一个断点或日志来捕获错误码
-                        Debug.WriteLine($"avcodec_send_packet failed with error code: {ret}");
-                        continue;
-                    }
-                }
-
-                while (ffmpeg.avcodec_receive_frame(_codecContext, frame) == 0)
-                {
-                    if (_resamplerCtx == null)
-                    {
-                        InitializeResamplerFromFrame(frame);
-                    }
-
-                    byte* resampledData;
-                    ffmpeg.av_samples_alloc(&resampledData, null, TARGET_CHANNELS, frame->nb_samples, TARGET_SAMPLE_FORMAT, 0);
-
-                    int outSamples = ffmpeg.swr_convert(
-                        _resamplerCtx,
-                        &resampledData,
-                        frame->nb_samples,
-                        frame->extended_data,
-                        frame->nb_samples
-                    );
-
-                    if (outSamples > 0)
-                    {
-                        int bufferSize = ffmpeg.av_samples_get_buffer_size(null, TARGET_CHANNELS, outSamples, TARGET_SAMPLE_FORMAT, 1);
-                        byte[] managedBuffer = new byte[bufferSize];
-                        Marshal.Copy((nint)resampledData, managedBuffer, 0, bufferSize);
-                        
-                        OnAudioDataDecoded?.Invoke(managedBuffer);
-                    }
-
-                    ffmpeg.av_freep(&resampledData);
-                    ffmpeg.av_frame_unref(frame);
-                }
+                DecodePacket(pkt, frame, packetData);
             }
         }
         finally
         {
             ffmpeg.av_packet_free(&pkt);
             ffmpeg.av_frame_free(&frame);
+        }
+    }
+
+    private void DecodePacket(AVPacket* pkt, AVFrame* frame, byte[] packetData)
+    {
+        int dataSize = packetData.Length;
+        fixed (byte* pPacketData = packetData)
+        {
+            ffmpeg.av_new_packet(pkt, dataSize);
+            Buffer.MemoryCopy(pPacketData, pkt->data, pkt->size, dataSize);
+
+            int ret = ffmpeg.avcodec_send_packet(_codecContext, pkt);
+            ffmpeg.av_packet_unref(pkt);
+            if (ret < 0)
+            {
+                Debug.WriteLine($"avcodec_send_packet failed with error code: {ret}");
+                return;
+            }
+        }
+
+        while (ffmpeg.avcodec_receive_frame(_codecContext, frame) == 0)
+        {
+            if (_resamplerCtx == null)
+            {
+                InitializeResamplerFromFrame(frame);
+            }
+
+            byte* resampledData;
+            ffmpeg.av_samples_alloc(&resampledData, null, TARGET_CHANNELS, frame->nb_samples, TARGET_SAMPLE_FORMAT, 0);
+
+            int outSamples = ffmpeg.swr_convert(
+                _resamplerCtx,
+                &resampledData,
+                frame->nb_samples,
+                frame->extended_data,
+                frame->nb_samples
+            );
+
+            if (outSamples > 0)
+            {
+                int bufferSize = ffmpeg.av_samples_get_buffer_size(null, TARGET_CHANNELS, outSamples, TARGET_SAMPLE_FORMAT, 1);
+                byte[] managedBuffer = new byte[bufferSize];
+                Marshal.Copy((nint)resampledData, managedBuffer, 0, bufferSize);
+                
+                OnAudioDataDecoded?.Invoke(managedBuffer);
+            }
+
+            ffmpeg.av_freep(&resampledData);
+            ffmpeg.av_frame_unref(frame);
         }
     }
 
@@ -264,6 +270,28 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
         {
             PlayDecodable();
         }
+    }
+
+    private static int ReadPacketSize(byte[] header)
+    {
+        byte[] sizeBytes = new byte[4];
+        Array.Copy(header, 8, sizeBytes, 0, 4);
+        Array.Reverse(sizeBytes);
+        return BitConverter.ToInt32(sizeBytes, 0);
+    }
+
+    private static bool IsConfigPacket(byte[] header)
+    {
+        ulong ptsAndFlags = ReadUInt64BigEndian(header);
+        return (ptsAndFlags & PacketFlagConfig) != 0;
+    }
+
+    private static ulong ReadUInt64BigEndian(byte[] buffer)
+    {
+        byte[] bytes = new byte[8];
+        Array.Copy(buffer, 0, bytes, 0, 8);
+        Array.Reverse(bytes);
+        return BitConverter.ToUInt64(bytes, 0);
     }
 
     private byte[] ReceiveExact(int length)

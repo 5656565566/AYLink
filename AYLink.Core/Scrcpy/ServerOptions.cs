@@ -14,7 +14,7 @@ public class ServerOptions
     /// <summary>
     /// 服务端必须知道与之通信的客户端版本 以确保协议兼容
     /// </summary>
-    public string ClientVersion { get; set; } = "3.3.4";
+    public string ClientVersion { get; set; } = "4.0";
 
     /// <summary>
     /// 服务端连接ID (Session ID) 用于区分连接到同一个服务端的多个客户端
@@ -27,12 +27,12 @@ public class ServerOptions
     public string LogLevel { get; set; } = "info";
 
     /// <summary>
-    /// 请求服务端发送视频流设置为false时 服务端不启动视频编码
+    /// 请求服务端发送视频流设置为 false 时 服务端不启动视频编码
     /// </summary>
     public bool Video { get; set; } = true;
 
     /// <summary>
-    /// 请求服务端发送音频流需要Android 11+设置为false时 服务端不捕获音频
+    /// 请求服务端发送音频流需要 Android 11+ 设置为 false 时 服务端不捕获音频
     /// </summary>
     public bool Audio { get; set; } = true;
 
@@ -89,6 +89,11 @@ public class ServerOptions
     /// 创建显示器
     /// </summary>
     public string? NewDisplay { get; set; }
+
+    /// <summary>
+    /// 弹性显示器 (客户端调整窗口大小时 动态调整虚拟显示器的大小)
+    /// </summary>
+    public bool FlexDisplay { get; set; } = false;
 
     /// <summary>
     /// 销毁内容
@@ -326,6 +331,7 @@ public class ServerOptions
         if (MaxSize.HasValue) args.Add($"max_size={MaxSize.Value}");
 
         if (!string.IsNullOrEmpty(NewDisplay)) args.Add($"new_display={NewDisplay}");
+        if (FlexDisplay) args.Add("flex_display=true");
         if (!VdDestroyContent) args.Add("vd_destroy_content=false");
         if (!VdSystemDecorations) args.Add("vd_system_decorations=false");
 

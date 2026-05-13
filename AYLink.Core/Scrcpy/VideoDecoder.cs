@@ -15,12 +15,19 @@ public enum VideoCodec
 
 public unsafe class VideoDecoder : IDisposable
 {
+    private const int DeviceMetaLengthWithDummyByte = 65;
+    private const int PacketHeaderSize = 12;
+    private const ulong PacketFlagConfig = 1UL << 62;
+    private const ulong PacketFlagKeyFrame = 1UL << 61;
+    private const ulong PacketPtsMask = PacketFlagKeyFrame - 1;
+
     private AVCodecContext* _codecContext;
     private AVCodecParserContext* _parserCtx;
     private SwsContext* _swsCtx;
     private AVFrame* _frame;
     private Socket _socket;
     private VideoCodec _selectedCodec;
+    private byte[]? _pendingConfigPacket;
 
     private int _lastWidth = 0;
     private int _lastHeight = 0;
@@ -47,8 +54,9 @@ public unsafe class VideoDecoder : IDisposable
     {
         try
         {
-            byte[] deviceHeader = ReceiveExact(65); // 长度为 64 的 String 但是尾部有 \0
-            string deviceName = System.Text.Encoding.UTF8.GetString(deviceHeader).TrimStart((char)0).Split('\0')[0];
+            // For the first stream socket, scrcpy sends one dummy byte, then a fixed 64-byte device-name field.
+            byte[] deviceHeader = ReceiveExact(DeviceMetaLengthWithDummyByte);
+            string deviceName = System.Text.Encoding.UTF8.GetString(deviceHeader[1..]).TrimStart((char)0).Split('\0')[0];
             Debug.WriteLine($"Device Name: {deviceName}");
         }
         catch (Exception ex)
@@ -65,8 +73,8 @@ public unsafe class VideoDecoder : IDisposable
             {
                 [0x68, 0x32, 0x36, 0x34] => VideoCodec.H264,   // "h264"
                 [0x68, 0x32, 0x36, 0x35] => VideoCodec.H265,   // "h265" 
-                [0x00, 0x61, 0x76, 0x31] => VideoCodec.AV1,    // "av1\0"
-                _ => throw new NotSupportedException($"Unsupported audio codec ID: {BitConverter.ToString(codecBytes)}")
+                [0x00, 0x61, 0x76, 0x31] => VideoCodec.AV1,    // "\0av1"
+                _ => throw new NotSupportedException($"Unsupported video codec ID: {BitConverter.ToString(codecBytes)}")
             };
             Debug.WriteLine($"Codec: {BitConverter.ToString(codecBytes)}");
         }
@@ -78,10 +86,11 @@ public unsafe class VideoDecoder : IDisposable
 
         try
         {
-            byte[] widthBytes = ReceiveExact(4);
-            byte[] heightBytes = ReceiveExact(4);
-            int width = BitConverter.ToInt32([.. widthBytes.Reverse()], 0);
-            int height = BitConverter.ToInt32([.. heightBytes.Reverse()], 0);
+            // The video session header is 12 bytes:
+            // 4-byte flags/padding + 4-byte width + 4-byte height.
+            byte[] sessionHeader = ReceiveExact(PacketHeaderSize);
+            int width = ReadInt32BigEndian(sessionHeader, 4);
+            int height = ReadInt32BigEndian(sessionHeader, 8);
 
             if (width <= 0 || width > 8000 || height <= 0 || height > 8000)
             {
@@ -112,15 +121,15 @@ public unsafe class VideoDecoder : IDisposable
             throw new OutOfMemoryException("Failed to allocate codec context");
 
         _codecContext->flags |= ffmpeg.AV_CODEC_FLAG_LOW_DELAY;
-        
-        _codecContext->thread_count = 0; // 低延迟可以用 1
-        _codecContext->thread_type = ffmpeg.FF_THREAD_FRAME; // 帧级并行
+
+        _codecContext->thread_count = 0;
+        _codecContext->thread_type = ffmpeg.FF_THREAD_FRAME;
 
         if (ffmpeg.avcodec_open2(_codecContext, codec, null) < 0)
             throw new InvalidOperationException("Failed to open codec");
 
         _parserCtx = ffmpeg.av_parser_init((int)codecId);
-        if (_parserCtx == null)
+        if (_parserCtx == null && _selectedCodec != VideoCodec.AV1)
             throw new InvalidOperationException("Failed to init parser");
     }
 
@@ -142,7 +151,6 @@ public unsafe class VideoDecoder : IDisposable
 
     public void PlayH264orHEVC()
     {
-        // 增加缓冲区大小以减少 socket receive 调用次数
         byte[] buffer = new byte[1024 * 64];
         AVPacket* packet = ffmpeg.av_packet_alloc();
         if (packet == null) throw new OutOfMemoryException("Failed to allocate AVPacket");
@@ -198,7 +206,6 @@ public unsafe class VideoDecoder : IDisposable
                 }
             }
 
-            // 刷新解码器
             DecodePacket(null);
         }
         finally
@@ -240,10 +247,14 @@ public unsafe class VideoDecoder : IDisposable
         {
             while (_socket.Connected)
             {
-                byte[] ptsBytes = ReceiveExact(8);
-                byte[] sizeBytes = ReceiveExact(4);
-                int packetSize = BitConverter.ToInt32([.. sizeBytes.Reverse()], 0);
-                long pts = BitConverter.ToInt64([.. ptsBytes.Reverse()], 0);
+                byte[] header = ReceiveExact(PacketHeaderSize);
+                if (IsSessionPacket(header))
+                {
+                    HandleSessionPacket(header);
+                    continue;
+                }
+
+                int packetSize = ReadInt32BigEndian(header, 8);
 
                 if (packetSize <= 0 || packetSize > 2 * 1024 * 1024)
                 {
@@ -251,32 +262,27 @@ public unsafe class VideoDecoder : IDisposable
                     continue;
                 }
 
-                if (packetSize == 4)
-                {
-                    ReceiveExact(packetSize);
-                }
-
                 byte[] frameBuffer = ReceiveExact(packetSize);
 
-                if (ffmpeg.av_new_packet(packet, packetSize) < 0)
+                if (IsConfigPacket(header))
                 {
-                    Debug.WriteLine("Failed to allocate new packet buffer.");
+                    _pendingConfigPacket = frameBuffer;
                     continue;
                 }
 
-                System.Runtime.InteropServices.Marshal.Copy(frameBuffer, 0, (nint)packet->data, packetSize);
-                packet->pts = pts;
+                if (_pendingConfigPacket != null)
+                {
+                    frameBuffer = [.. _pendingConfigPacket, .. frameBuffer];
+                    _pendingConfigPacket = null;
+                }
 
+                PreparePacket(packet, frameBuffer, header);
                 DecodePacket(packet);
                 ffmpeg.av_packet_unref(packet);
             }
         }
         finally
         {
-            if (_codecContext != null && _codecContext->extradata != null)
-            {
-                ffmpeg.av_freep(&_codecContext->extradata);
-            }
             ffmpeg.av_packet_free(&packet);
         }
     }
@@ -335,6 +341,33 @@ public unsafe class VideoDecoder : IDisposable
                 ffmpeg.av_frame_unref(_frame);
             }
         }
+    }
+
+    private void PreparePacket(AVPacket* packet, byte[] packetData, byte[] header)
+    {
+        if (ffmpeg.av_new_packet(packet, packetData.Length) < 0)
+        {
+            throw new OutOfMemoryException("Failed to allocate packet buffer.");
+        }
+
+        Marshal.Copy(packetData, 0, (nint)packet->data, packetData.Length);
+
+        ulong ptsFlags = ReadUInt64BigEndian(header, 0);
+        bool isConfigPacket = (ptsFlags & PacketFlagConfig) != 0;
+        packet->pts = isConfigPacket ? ffmpeg.AV_NOPTS_VALUE : (long)(ptsFlags & PacketPtsMask);
+        packet->dts = packet->pts;
+
+        if ((ptsFlags & PacketFlagKeyFrame) != 0)
+        {
+            packet->flags |= ffmpeg.AV_PKT_FLAG_KEY;
+        }
+    }
+
+    private void HandleSessionPacket(byte[] header)
+    {
+        int width = ReadInt32BigEndian(header, 4);
+        int height = ReadInt32BigEndian(header, 8);
+        Debug.WriteLine($"Video session changed: {width} x {height}");
     }
 
     /// <summary>
@@ -397,6 +430,33 @@ public unsafe class VideoDecoder : IDisposable
 
         // 触发事件，将数据传递给订阅者（如UI层）
         OnFrameDecoded?.Invoke(width, height, _bgraBuffer, _bgraRowBytes);
+    }
+
+    private static bool IsSessionPacket(byte[] header)
+    {
+        return (header[0] & 0x80) != 0;
+    }
+
+    private static bool IsConfigPacket(byte[] header)
+    {
+        ulong ptsFlags = ReadUInt64BigEndian(header, 0);
+        return (ptsFlags & PacketFlagConfig) != 0;
+    }
+
+    private static int ReadInt32BigEndian(byte[] buffer, int offset)
+    {
+        byte[] bytes = new byte[4];
+        Array.Copy(buffer, offset, bytes, 0, 4);
+        Array.Reverse(bytes);
+        return BitConverter.ToInt32(bytes, 0);
+    }
+
+    private static ulong ReadUInt64BigEndian(byte[] buffer, int offset)
+    {
+        byte[] bytes = new byte[8];
+        Array.Copy(buffer, offset, bytes, 0, 8);
+        Array.Reverse(bytes);
+        return BitConverter.ToUInt64(bytes, 0);
     }
 
     public void Dispose()

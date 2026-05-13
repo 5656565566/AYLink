@@ -163,6 +163,22 @@ public class ControlMsgModel
         /// 重置视频编码器 (scrcpy v2.4+)
         /// </summary>
         ResetVideo = 17,
+        /// <summary>
+        /// 设置相机闪光灯（手电筒）开关状态 (scrcpy v2.4+)
+        /// </summary>
+        CameraSetTorch = 18,
+        /// <summary>
+        /// 相机变焦放大 (scrcpy v2.4+)
+        /// </summary>
+        CameraZoomIn = 19,
+        /// <summary>
+        /// 相机变焦缩小 (scrcpy v2.4+)
+        /// </summary>
+        CameraZoomOut = 20,
+        /// <summary>
+        /// 重置显示器大小 (scrcpy v4.0+)
+        /// </summary>
+        ResizeDisplay = 21,
     }
 
     /// <summary>
@@ -174,7 +190,6 @@ public class ControlMsgModel
         Copy = 1,
         Cut = 2,
     }
-
     #endregion
 
     #region 数据结构
@@ -200,6 +215,21 @@ public class ControlMsgModel
         /// 屏幕高度 用于服务端进行坐标归一化或验证
         /// </summary>
         public ushort ScreenHeight = height;
+    }
+
+    /// <summary>
+    /// 重设显示器大小
+    /// </summary>
+    public struct ResizeDisplayData
+    {
+        /// <summary>
+        /// 宽度
+        /// </summary>
+        public ushort Width;
+        /// <summary>
+        /// 高度
+        /// </summary>
+        public ushort Height;
     }
 
     /// <summary>
@@ -284,6 +314,9 @@ public class ControlMsgModel
                 case ControlMsgType.StartApp:
                     SerializeStartApp(writer);
                     break;
+                case ControlMsgType.ResizeDisplay:
+                    SerializeResizeDisplay(writer);
+                    break;
                 default:
                     if (!IsSimpleType())
                         throw new NotSupportedException($"不支持序列化此消息类型: {Type}");
@@ -343,8 +376,8 @@ public class ControlMsgModel
         {
             var data = (InjectScrollData)Data!;
             WritePosition(writer, data.Position); // 位置 (12 bytes)
-            WriteBigEndian(writer, FloatToI32(data.HScroll)); // 水平滚动 (4 bytes)
-            WriteBigEndian(writer, FloatToI32(data.VScroll)); // 垂直滚动 (4 bytes)
+            WriteBigEndian(writer, FloatToI16Scroll(data.HScroll)); // 水平滚动 (2 bytes)
+            WriteBigEndian(writer, FloatToI16Scroll(data.VScroll)); // 垂直滚动 (2 bytes)
             WriteBigEndian(writer, (uint)data.Buttons); // 当前按下的所有按钮 (4 bytes)
         }
 
@@ -412,6 +445,13 @@ public class ControlMsgModel
             writer.Write(bytes, 0, length); // 包名
         }
 
+        private void SerializeResizeDisplay(BinaryWriter writer)
+        {
+            var data = (ResizeDisplayData)Data!;
+            WriteBigEndian(writer, data.Width);
+            WriteBigEndian(writer, data.Height);
+        }
+
         #endregion
 
         #region 辅助方法
@@ -419,7 +459,7 @@ public class ControlMsgModel
         /// <summary>
         /// 将一个位置结构体写入二进制流
         /// </summary>
-        private void WritePosition(BinaryWriter writer, ScPosition pos)
+        private static void WritePosition(BinaryWriter writer, ScPosition pos)
         {
             WriteBigEndian(writer, (uint)pos.X);
             WriteBigEndian(writer, (uint)pos.Y);
@@ -430,28 +470,28 @@ public class ControlMsgModel
         /// <summary>
         /// 将一个值以大端字节序（网络字节序）写入二进制流
         /// </summary>
-        private void WriteBigEndian(BinaryWriter writer, uint value)
+        private static void WriteBigEndian(BinaryWriter writer, uint value)
         {
             var bytes = BitConverter.GetBytes(value);
             if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
             writer.Write(bytes);
         }
 
-        private void WriteBigEndian(BinaryWriter writer, int value)
+        private static void WriteBigEndian(BinaryWriter writer, int value)
         {
             var bytes = BitConverter.GetBytes(value);
             if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
             writer.Write(bytes);
         }
 
-        private void WriteBigEndian(BinaryWriter writer, ushort value)
+        private static void WriteBigEndian(BinaryWriter writer, ushort value)
         {
             var bytes = BitConverter.GetBytes(value);
             if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
             writer.Write(bytes);
         }
 
-        private void WriteBigEndian(BinaryWriter writer, ulong value)
+        private static void WriteBigEndian(BinaryWriter writer, ulong value)
         {
             var bytes = BitConverter.GetBytes(value);
             if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
@@ -473,6 +513,19 @@ public class ControlMsgModel
         private static int FloatToI32(float value)
         {
             return (int)(value * (1 << 16));
+        }
+
+        private static short FloatToI16Scroll(float value)
+        {
+            float normalized = Math.Max(-1f, Math.Min(value / 16f, 1f));
+            return (short)(normalized * short.MaxValue);
+        }
+
+        private static void WriteBigEndian(BinaryWriter writer, short value)
+        {
+            var bytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian) Array.Reverse(bytes);
+            writer.Write(bytes);
         }
 
         public class InjectTouchData

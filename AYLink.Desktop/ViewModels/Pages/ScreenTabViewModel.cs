@@ -45,6 +45,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     private int _audioStreamId = -1;
     private readonly AudioPlayer _audioPlayer = AudioPlayer.Instance;
     private bool _isFlexDisplayEnabled;
+    private bool _canResizeDisplay;
     private Size _containerSize;
 
     /// <summary>
@@ -197,6 +198,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
                 deviceConfig.ApplyConfig(Device.ServerOptions);
                 _isFlexDisplayEnabled = Device.ServerOptions.FlexDisplay;
+                _canResizeDisplay = Device.ServerOptions.DisplayId == -1
+                    || !string.IsNullOrWhiteSpace(Device.ServerOptions.NewDisplay);
 
                 if (displays.Count == 0 || _appPackageName != null || Device.ServerOptions.DisplayId == -1)
                 {
@@ -204,6 +207,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                     {
                         Device.ServerOptions.NewDisplay = " ";
                     }
+
+                    _canResizeDisplay = true;
                 }
                 else
                 {
@@ -467,7 +472,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void SendResizeDisplayIfNeeded(Size newSize)
     {
-        if (!_isFlexDisplayEnabled || _scrcpyClient == null || newSize.Width <= 0 || newSize.Height <= 0)
+        if (!_isFlexDisplayEnabled || !_canResizeDisplay || _scrcpyClient == null || newSize.Width <= 0 || newSize.Height <= 0)
         {
             return;
         }

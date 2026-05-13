@@ -16,7 +16,7 @@ public class ScrcpyService
     private ScrcpyTool? _tool;
 
     // 初始化全局配置
-    public void Initialize(string? serverPath = "Scrcpy/scrcpy-server", string? version = "3.3.4")
+    public void Initialize(string? serverPath = "Scrcpy/scrcpy-server", string? version = "4.0")
     {
         _tool = new ScrcpyTool(serverPath!, version!);
     }
