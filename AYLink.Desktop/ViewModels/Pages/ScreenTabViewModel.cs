@@ -12,7 +12,6 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FluentAvalonia.UI.Controls;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -45,6 +44,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     private bool _disposed;
     private int _audioStreamId = -1;
     private readonly AudioPlayer _audioPlayer = AudioPlayer.Instance;
+    private bool _isFlexDisplayEnabled;
+    private Size _containerSize;
 
     /// <summary>
     /// 视频 Image 控件引用
@@ -195,6 +196,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 Device.ServerOptions ??= new ServerOptions();
 
                 deviceConfig.ApplyConfig(Device.ServerOptions);
+                _isFlexDisplayEnabled = Device.ServerOptions.FlexDisplay;
 
                 if (displays.Count == 0 || _appPackageName != null || Device.ServerOptions.DisplayId == -1)
                 {
@@ -253,6 +255,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             IsConnected = true;
 
             SetupEventHandlers();
+            SendResizeDisplayIfNeeded(_containerSize);
         }
         catch (Exception ex)
         {
@@ -432,18 +435,18 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void VideoImage_KeyDown(object? sender, KeyEventArgs e)
     {
-        InputProcessor.ProcessKey(new Services.Input.KeyInput
+        InputProcessor.ProcessKey(new KeyInput
         {
-            EventType = Services.Input.KeyEventType.Down,
+            EventType = KeyEventType.Down,
             KeyName = e.Key.ToString()
         });
     }
 
     private void VideoImage_KeyUp(object? sender, KeyEventArgs e)
     {
-        InputProcessor.ProcessKey(new Services.Input.KeyInput
+        InputProcessor.ProcessKey(new KeyInput
         {
-            EventType = Services.Input.KeyEventType.Up,
+            EventType = KeyEventType.Up,
             KeyName = e.Key.ToString()
         });
     }
@@ -456,6 +459,31 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         InputProcessor.UpdateScreenSize(_screenSize);
     }
 
+    public void UpdateContainerSize(Size newSize)
+    {
+        _containerSize = newSize;
+        SendResizeDisplayIfNeeded(newSize);
+    }
+
+    private void SendResizeDisplayIfNeeded(Size newSize)
+    {
+        if (!_isFlexDisplayEnabled || _scrcpyClient == null || newSize.Width <= 0 || newSize.Height <= 0)
+        {
+            return;
+        }
+
+        var msg = new ControlMsg
+        {
+            Type = ControlMsgType.ResizeDisplay,
+            Data = new ResizeDisplayData
+            {
+                Width = (ushort)Math.Max(1, newSize.Width),
+                Height = (ushort)Math.Max(1, newSize.Height)
+            }
+        };
+        _scrcpyClient.SendControlCommand(msg.Serialize());
+    }
+
     private void VideoImage_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (Device?.DeviceData == null || _videoImage == null) return;
@@ -463,9 +491,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
 
-        InputProcessor.ProcessPointer(new Services.Input.PointerInput
+        InputProcessor.ProcessPointer(new PointerInput
         {
-            EventType = Services.Input.PointerEventType.Pressed,
+            EventType = PointerEventType.Pressed,
             Position = point,
             PointerHash = e.Pointer.GetHashCode()
         });
@@ -481,9 +509,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
 
-        InputProcessor.ProcessPointer(new Services.Input.PointerInput
+        InputProcessor.ProcessPointer(new PointerInput
         {
-            EventType = Services.Input.PointerEventType.WheelChanged,
+            EventType = PointerEventType.WheelChanged,
             Position = point,
             WheelDelta = e.Delta
         });
@@ -497,9 +525,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
 
-        InputProcessor.ProcessPointer(new Services.Input.PointerInput
+        InputProcessor.ProcessPointer(new PointerInput
         {
-            EventType = Services.Input.PointerEventType.Moved,
+            EventType = PointerEventType.Moved,
             Position = point,
             PointerHash = e.Pointer.GetHashCode()
         });
@@ -512,9 +540,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
 
-        InputProcessor.ProcessPointer(new Services.Input.PointerInput
+        InputProcessor.ProcessPointer(new PointerInput
         {
-            EventType = Services.Input.PointerEventType.Released,
+            EventType = PointerEventType.Released,
             Position = point,
             PointerHash = e.Pointer.GetHashCode()
         });
@@ -525,9 +553,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void VideoImage_PointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
     {
-        InputProcessor.ProcessPointer(new Services.Input.PointerInput
+        InputProcessor.ProcessPointer(new PointerInput
         {
-            EventType = Services.Input.PointerEventType.CaptureLost,
+            EventType = PointerEventType.CaptureLost,
             PointerHash = e.Pointer.GetHashCode()
         });
         e.Pointer.Capture(null);
@@ -553,14 +581,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     /// ScrcpyClient 到 IControlCommandSender 的适配器
     /// 这样避免在 Core 层依赖 Desktop 层的接口
     /// </summary>
-    private class ScrcpyClientCommandSender : Services.Input.IControlCommandSender
+    private class ScrcpyClientCommandSender(ScrcpyClient client) : IControlCommandSender
     {
-        private readonly ScrcpyClient _client;
-        
-        public ScrcpyClientCommandSender(ScrcpyClient client)
-        {
-            _client = client;
-        }
+        private readonly ScrcpyClient _client = client;
 
         public void SendCommand(byte[] controlMessage)
         {

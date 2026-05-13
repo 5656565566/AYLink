@@ -142,6 +142,11 @@ public class DeviceConfig
     public string? NewDisplay { get; set; }
 
     /// <summary>
+    /// 弹性显示器 (客户端调整窗口大小时，动态调整虚拟显示器的大小)
+    /// </summary>
+    public bool FlexDisplay { get; set; } = false;
+
+    /// <summary>
     /// 销毁内容
     /// </summary>
     public bool VdDestroyContent { get; set; } = true;

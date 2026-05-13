@@ -115,6 +115,8 @@
     "EnableControl_Description": "Request the server to listen and process control events (e.g., clicks, keystrokes). View-only mode when off",
     "EnableVideo": "Enable Video",
     "EnableVideo_Description": "Request the server to send a video stream. No picture is displayed when off",
+    "FlexDisplay": "Adaptive Display Size",
+    "FlexDisplay_Description": "Automatically sync the virtual display size when the window is resized",
     "InputSource": "Input Source",
     "InvalidBitRate": "Please enter a valid bitrate, e.g., 8000000",
     "InvalidFps": "Please enter a valid framerate, e.g., 60 or 59.94",
@@ -261,10 +263,11 @@
   },
   "ScreenPage": {
     "Back": "Back",
-    "CollapseSidebar": "Collapse Sidebar",
+    "CollapseToolbar": "收起工具栏",
     "EmptyStateDescription": "Please select a device on the home page to start screen mirroring",
     "EmptyStateTitle": "No Device Selected",
-    "ExpandSidebar": "Expand Sidebar",
+    "ExpandToolbar": "展开工具栏",
+    "FullScreen": "全屏",
     "Home": "Home",
     "Menu": "Menu",
     "Mute": "Mute",
@@ -273,7 +276,9 @@
     "ScreenOn": "Screen On",
     "Title": "Screen Mirroring",
     "VolumeDown": "Volume Down",
-    "VolumeUp": "Volume Up"
+    "VolumeUp": "Volume Up",
+    "CollapseSidebar": "Collapse Sidebar",
+    "ExpandSidebar": "Expand Sidebar"
   },
   "ScreenTab": {
     "ConnectFailed": "Connection Failed"

@@ -1,4 +1,12 @@
-﻿using System.Runtime.CompilerServices;
+﻿using Avalonia;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using System;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace AYLink.Desktop.Behaviors;
 
@@ -38,10 +46,7 @@ public class FloatingDockBehavior : AvaloniaObject
 
     private static void EnsureTransitions(Control control)
     {
-        if (control.Transitions == null)
-        {
-            control.Transitions = [];
-        }
+        control.Transitions ??= [];
         
         bool hasMarginTransition = false;
         foreach (var t in control.Transitions)

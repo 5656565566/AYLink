@@ -1,3 +1,8 @@
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using AYLink.Desktop.ViewModels.Pages;
+
 namespace AYLink.Desktop.Views.Pages;
 
 public partial class ScreenTabContentView : UserControl
@@ -7,6 +12,15 @@ public partial class ScreenTabContentView : UserControl
     public ScreenTabContentView()
     {
         InitializeComponent();
+    }
+
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+        if (DataContext is ScreenTabViewModel viewModel)
+        {
+            viewModel.UpdateContainerSize(e.NewSize);
+        }
     }
 
     private void OnFullScreenClicked(object? sender, RoutedEventArgs e)
@@ -57,7 +71,7 @@ public partial class ScreenTabContentView : UserControl
         _fullScreenWindow.Show();
     }
 
-    private bool WindowIsFullScreenWindow(Window win)
+    private static bool WindowIsFullScreenWindow(Window win)
     {
         return win.SystemDecorations == SystemDecorations.None && win.WindowState == WindowState.FullScreen;
     }

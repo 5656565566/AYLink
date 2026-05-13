@@ -111,6 +111,8 @@
     "EnableControl_Description": "请求服务端监听并处理控制事件（如点击、按键）关闭则为纯观看模式",
     "EnableVideo": "启用视频",
     "EnableVideo_Description": "请求服务端发送视频流 关闭时不显示画面",
+    "FlexDisplay": "自适应显示器大小",
+    "FlexDisplay_Description": "调整窗口大小时，自动同步虚拟显示器尺寸",
     "InputSource": "输入源",
     "InvalidBitRate": "请输入合适的码率 例如 8000000",
     "InvalidFps": "请输入合适的帧数 例如 60 或 59.94",
@@ -257,10 +259,11 @@
   },
   "ScreenPage": {
     "Back": "返回",
-    "CollapseSidebar": "收起侧边栏",
+    "CollapseToolbar": "收起工具栏",
     "EmptyStateDescription": "请在首页选择一个设备来启动投屏",
     "EmptyStateTitle": "未选中设备",
-    "ExpandSidebar": "展开侧边栏",
+    "ExpandToolbar": "展开工具栏",
+    "FullScreen": "全屏",
     "Home": "主页",
     "Menu": "菜单",
     "Mute": "静音",
@@ -272,7 +275,7 @@
     "VolumeUp": "音量+"
   },
   "ScreenTab": {
-    "ConnectFailed": "连接失败"
+    "ConnectFailed": "杩炴帴澶辫触"
   },
   "SettingsPage": {
     "About": "关于",

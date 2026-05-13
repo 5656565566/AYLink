@@ -236,6 +236,12 @@
 				</ui:SettingsExpander.Footer>
 			</ui:SettingsExpander>
 
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.FlexDisplay, DefaultText='自适应显示器大小'}" Description="{i18n:Tr DeviceSettings.FlexDisplay_Description, DefaultText='调整窗口大小时，自动同步虚拟显示器尺寸'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.FlexDisplay}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+
 			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.VideoEncoderName, DefaultText='指定视频编码器'}" Description="{i18n:Tr DeviceSettings.VideoEncoderName_Description, DefaultText='请求服务端使用的特定视频编码器名称，如果设置，将忽略VideoCodec'}">
 				<ui:SettingsExpander.Footer>
 					<TextBox MinWidth="150" Text="{Binding DeviceConfig.VideoEncoder}" />
