@@ -42,10 +42,11 @@ def extract_from_xaml(content: str) -> dict[str, str]:
     keys = {}
     # 匹配 {i18n:Tr AppPage.CtxLaunch, DefaultText='启动应用'}
     # 也匹配 {i18n:Tr AppPage.CtxLaunch} (无默认文本)
-    pattern = r"\{i18n:Tr\s+([A-Za-z0-9_.]+)(?:\s*,\s*DefaultText\s*=\s*'([^']*)')?\s*\}"
+    pattern = r"""\{i18n:Tr\s+([A-Za-z0-9_.]+)(?:\s*,\s*DefaultText\s*=\s*(['"])((?:\\.|(?!\2).)*)\2)?\s*\}"""
     for match in re.finditer(pattern, content):
         key = match.group(1)
-        default_text = match.group(2) or ""
+        default_text = match.group(3) or ""
+        default_text = default_text.replace("\\'", "'").replace('\\"', '"')
         if key not in keys or (keys[key] == "" and default_text != ""):
             keys[key] = default_text
     return keys

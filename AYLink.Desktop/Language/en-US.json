@@ -95,6 +95,7 @@
     "AudioEncoderName": "Specify Audio Encoder",
     "AudioEncoderName_Description": "Specific audio encoder name requested from the server; if set, ignores AudioCodec",
     "AudioSource": "Audio Source",
+    "AudioSource_Description": "Request the audio source. “output” means device playback audio, and “mic” means microphone",
     "BackToHome": "Back",
     "CameraFacing": "Camera Facing",
     "CameraFacing_Description": "Select camera facing",
@@ -109,6 +110,7 @@
     "CameraSize": "Camera Resolution",
     "CameraSize_Description": "Desired camera resolution",
     "CodecOptions": "Encoder Advanced Options",
+    "CodecOptions_Description": "Set advanced key-value options for audio/video encoders in the format: “key:type=value,key2:type=value...”",
     "EnableAudio": "Enable Audio",
     "EnableAudio_Description": "Request the server to send an audio stream. Requires Android 11+. Audio is not captured when off",
     "EnableControl": "Enable Device Control",
@@ -151,7 +153,8 @@
     "VideoCodec_Description": "Video codec requested from the server",
     "VideoEncoderName": "Specify Video Encoder",
     "VideoEncoderName_Description": "Specific video encoder name requested from the server; if set, ignores VideoCodec",
-    "VideoSource": "Video Source"
+    "VideoSource": "Video Source",
+    "VideoSource_Description": "Request the video source. “display” means screen content, and “camera” means camera"
   },
   "Dialog": {
     "Cancel": "Cancel",

@@ -91,6 +91,7 @@
     "AudioEncoderName": "指定音频编码器",
     "AudioEncoderName_Description": "请求服务端使用的特定音频编码器名称，如果设置，将忽略AudioCodec",
     "AudioSource": "音频源",
+    "AudioSource_Description": "请求音频源，“output”表示设备内部播放的声音，“mic”表示麦克风",
     "BackToHome": "返回",
     "CameraFacing": "摄像头朝向",
     "CameraFacing_Description": "选择摄像头朝向",
@@ -105,6 +106,7 @@
     "CameraSize": "摄像头分辨率",
     "CameraSize_Description": "期望的摄像头分辨率",
     "CodecOptions": "编码器高级选项",
+    "CodecOptions_Description": "为音视频编码器设置高级键值对选项，格式：“key:type=value,key2:type=value...”",
     "EnableAudio": "启用音频",
     "EnableAudio_Description": "请求服务端发送音频流 需要Android 11+ 关闭时不捕获音频",
     "EnableControl": "启用设备控制",
@@ -147,7 +149,8 @@
     "VideoCodec_Description": "请求服务端使用的视频编解码器",
     "VideoEncoderName": "指定视频编码器",
     "VideoEncoderName_Description": "请求服务端使用的特定视频编码器名称，如果设置，将忽略VideoCodec",
-    "VideoSource": "视频源"
+    "VideoSource": "视频源",
+    "VideoSource_Description": "请求视频源，“display”表示屏幕内容，“camera”表示摄像头"
   },
   "Dialog": {
     "Cancel": "取消",
