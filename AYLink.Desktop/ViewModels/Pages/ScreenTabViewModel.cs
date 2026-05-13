@@ -47,6 +47,11 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     private bool _isFlexDisplayEnabled;
     private bool _canResizeDisplay;
     private Size _containerSize;
+    private bool _hasReceivedFirstVideoFrame;
+    private Size? _pendingResizeSize;
+    private Size? _lastResizeRequestSize;
+    private readonly DispatcherTimer _resizeThrottleTimer;
+    private static readonly TimeSpan ResizeThrottleInterval = TimeSpan.FromMilliseconds(120);
 
     /// <summary>
     /// 视频 Image 控件引用
@@ -58,6 +63,11 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         Device = device;
         _appPackageName = appPackageName;
         _appDisplayName = appDisplayName;
+        _resizeThrottleTimer = new DispatcherTimer
+        {
+            Interval = ResizeThrottleInterval
+        };
+        _resizeThrottleTimer.Tick += OnResizeThrottleTimerTick;
 
         var titleAppName = string.IsNullOrWhiteSpace(appDisplayName) ? appPackageName : appDisplayName;
         Title = titleAppName != null ? $"{device.Name} - {titleAppName}" : device.Name;
@@ -143,6 +153,12 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
                     try
                     {
+                        if (!_hasReceivedFirstVideoFrame)
+                        {
+                            _hasReceivedFirstVideoFrame = true;
+                            FlushPendingResize();
+                        }
+
                         if (VideoSource == null || VideoSource.PixelSize.Width != width || VideoSource.PixelSize.Height != height)
                         {
                             var oldBitmap = VideoSource;
@@ -260,7 +276,6 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             IsConnected = true;
 
             SetupEventHandlers();
-            SendResizeDisplayIfNeeded(_containerSize);
         }
         catch (Exception ex)
         {
@@ -467,12 +482,42 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     public void UpdateContainerSize(Size newSize)
     {
         _containerSize = newSize;
-        SendResizeDisplayIfNeeded(newSize);
+        _pendingResizeSize = newSize;
+        _resizeThrottleTimer.Stop();
+        _resizeThrottleTimer.Start();
+    }
+
+    private void OnResizeThrottleTimerTick(object? sender, EventArgs e)
+    {
+        _resizeThrottleTimer.Stop();
+        FlushPendingResize();
+    }
+
+    private void FlushPendingResize()
+    {
+        if (_pendingResizeSize is not Size pendingSize)
+        {
+            return;
+        }
+
+        SendResizeDisplayIfNeeded(pendingSize);
     }
 
     private void SendResizeDisplayIfNeeded(Size newSize)
     {
         if (!_isFlexDisplayEnabled || !_canResizeDisplay || _scrcpyClient == null || newSize.Width <= 0 || newSize.Height <= 0)
+        {
+            return;
+        }
+
+        if (!_hasReceivedFirstVideoFrame)
+        {
+            return;
+        }
+
+        if (_lastResizeRequestSize is Size lastSize &&
+            Math.Abs(lastSize.Width - newSize.Width) < 0.5 &&
+            Math.Abs(lastSize.Height - newSize.Height) < 0.5)
         {
             return;
         }
@@ -487,6 +532,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             }
         };
         _scrcpyClient.SendControlCommand(msg.Serialize());
+        _lastResizeRequestSize = newSize;
     }
 
     private void VideoImage_PointerPressed(object? sender, PointerPressedEventArgs e)
@@ -623,6 +669,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
                 _scrcpyClient?.DisConnect();
                 _scrcpyClient?.Dispose();
+                _resizeThrottleTimer.Stop();
 
                 VideoSource?.Dispose();
                 VideoSource = null;

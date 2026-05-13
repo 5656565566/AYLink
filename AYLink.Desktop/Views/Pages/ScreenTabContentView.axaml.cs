@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Threading;
 using AYLink.Desktop.ViewModels.Pages;
 
 namespace AYLink.Desktop.Views.Pages;
@@ -47,6 +49,19 @@ public partial class ScreenTabContentView : UserControl
             Content = new ScreenTabContentView() // 复用当前的 UserControl
         };
 
+        if (_fullScreenWindow.Content is ScreenTabContentView fullScreenContent)
+        {
+            fullScreenContent.SetVideoStretch(Stretch.Fill);
+        }
+
+        _fullScreenWindow.Opened += (s, ev) =>
+        {
+            if (_fullScreenWindow != null)
+            {
+                viewModel.UpdateContainerSize(_fullScreenWindow.Bounds.Size);
+            }
+        };
+
         // 按 Esc 退出全屏
         _fullScreenWindow.KeyDown += (s, ev) =>
         {
@@ -61,11 +76,17 @@ public partial class ScreenTabContentView : UserControl
         {
             _fullScreenWindow = null;
             // 全屏窗口关闭后 重新唤醒原界面的 Image 绑定
+            SetVideoStretch(Stretch.Uniform);
             var videoImage = this.FindControl<Image>("VideoImage");
             if (videoImage != null)
             {
                 viewModel.AttachVideoImage(videoImage);
             }
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                viewModel.UpdateContainerSize(Bounds.Size);
+            }, DispatcherPriority.Background);
         };
 
         _fullScreenWindow.Show();
@@ -74,5 +95,14 @@ public partial class ScreenTabContentView : UserControl
     private static bool WindowIsFullScreenWindow(Window win)
     {
         return win.SystemDecorations == SystemDecorations.None && win.WindowState == WindowState.FullScreen;
+    }
+
+    private void SetVideoStretch(Stretch stretch)
+    {
+        var videoImage = this.FindControl<Image>("VideoImage");
+        if (videoImage != null)
+        {
+            videoImage.Stretch = stretch;
+        }
     }
 }

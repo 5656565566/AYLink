@@ -8,18 +8,14 @@
              x:DataType="vm:ScreenTabViewModel">
     <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
         <!-- 视频内容 -->
-        <Viewbox Stretch="Uniform">
-            <Grid>
-                <!-- 视频流 -->
-                <Viewbox Stretch="Uniform">
-                    <Grid>
-                        <Image x:Name="VideoImage"
-                               Source="{Binding VideoSource}"
-                               behaviors:VideoImageBehavior.IsAutoAttach="True"/>
-                    </Grid>
-                </Viewbox>
-            </Grid>
-        </Viewbox>
+        <Grid>
+            <Image x:Name="VideoImage"
+                   Source="{Binding VideoSource}"
+                   Stretch="Uniform"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch"
+                   behaviors:VideoImageBehavior.IsAutoAttach="True"/>
+        </Grid>
 
         <!-- 可拖动的悬浮容器 -->
         <Grid behaviors:FloatingDockBehavior.IsEnabled="True"
