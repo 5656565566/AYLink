@@ -3,14 +3,10 @@
              xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:behaviors="using:AYLink.Desktop.Behaviors"
-             xmlns:input="using:AYLink.Desktop.Services.Input"
              xmlns:i18n="using:AYLink.Desktop.Services.Localization"
              x:Class="AYLink.Desktop.Views.Pages.ScreenTabContentView"
              x:DataType="vm:ScreenTabViewModel">
     <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-        <!-- SDL 鼠标锁定支持控件，绑定到 ViewModel 里的锁定状态 -->
-        <input:SdlMouseLocker IsMouseLocked="{Binding IsMouseLocked}" />
-
         <!-- 视频内容 -->
         <Grid>
             <Image x:Name="VideoImage"
@@ -70,12 +66,6 @@
                     <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.Back, DefaultText='返回'}" Command="{Binding SendKeyActionCommand}" CommandParameter="Back"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.Back}"/></Button>
                     <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.Home, DefaultText='主页'}" Command="{Binding SendKeyActionCommand}" CommandParameter="Home"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.Home}"/></Button>
                     <Button Width="40" Height="40" CornerRadius="20" ToolTip.Tip="{i18n:Tr ScreenPage.Menu, DefaultText='菜单'}" Command="{Binding SendKeyActionCommand}" CommandParameter="Menu"><ui:SymbolIcon Symbol="{x:Static ui:Symbol.List}"/></Button>
-                    <Button Width="40" Height="40" CornerRadius="20"
-                            ToolTip.Tip="锁定/解锁鼠标"
-                            Command="{Binding ToggleMouseLockCommand}">
-                        <ui:SymbolIcon Symbol="{x:Static ui:Symbol.Code}"/>
-                    </Button>
-                    
                     <!-- 全屏按钮 -->
                     <Button Width="40" Height="40" CornerRadius="20"
                             ToolTip.Tip="{i18n:Tr ScreenPage.FullScreen, DefaultText='全屏'}"

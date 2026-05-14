@@ -1,6 +1,6 @@
 ﻿using AYLink.Core.Models;
-using AYLink.Core.Scrcpy;
 using AYLink.Core.Scrcpy.Control;
+using AYLink.Core.Scrcpy;
 using AYLink.Core.Utils;
 using AYLink.Desktop.Models;
 using AYLink.Desktop.Services;
@@ -8,7 +8,6 @@ using AYLink.Desktop.Services.Audio;
 using AYLink.Desktop.Services.Input;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -16,7 +15,6 @@ using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using static AYLink.Core.Scrcpy.Control.ControlMsgModel;
 
@@ -42,32 +40,26 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     
     public IInputProcessor InputProcessor { get; private set; } = new DefaultInputProcessor();
 
-    private ScrcpyClient? _scrcpyClient;
     private Size _screenSize;
     private readonly string? _appPackageName;
     private readonly string? _appDisplayName;
-    private bool _isPointerCaptured;
     private bool _disposed;
-    private int _audioStreamId = -1;
     private readonly AudioPlayer _audioPlayer = AudioPlayer.Instance;
-    public bool IsFlexDisplayEnabled { get; private set; }
-    private bool _canResizeDisplay;
     private Size _containerSize;
     private bool _hasReceivedFirstVideoFrame;
     private Size? _pendingResizeSize;
     private Size? _lastResizeRequestSize;
     private readonly DispatcherTimer _resizeThrottleTimer;
+    private readonly IMouseLockService _mouseLockService = new SdlMouseLockService();
+    private readonly ScreenInputCoordinator _inputCoordinator;
+    private readonly ScreenSessionController _sessionController;
     private static readonly TimeSpan ResizeThrottleInterval = TimeSpan.FromMilliseconds(120);
 
     /// <summary>
     /// 视频 Image 控件引用
     /// </summary>
     private Image? _videoImage;
-    private InputElement? _keyboardEventHost;
-    private IPointer? _activePointer;
-    private Point? _lastPointerViewPoint;
-    private int? _lastPointerHash;
-    private bool _ignoreNextLockedPointerMove;
+    private Func<bool> _keyboardInputGate = static () => true;
 
     public ScreenTabViewModel(DeviceModel device, string? appPackageName = null, string? appDisplayName = null)
     {
@@ -79,9 +71,24 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             Interval = ResizeThrottleInterval
         };
         _resizeThrottleTimer.Tick += OnResizeThrottleTimerTick;
+        _sessionController = new ScreenSessionController(device, appPackageName, _audioPlayer);
+        _inputCoordinator = new ScreenInputCoordinator(
+            () => InputProcessor,
+            _mouseLockService,
+            () => IsMouseLocked,
+            CanHandleKeyboardInput,
+            () => Device?.DeviceData != null,
+            NormalizeCoordinates,
+            ApplyMouseLockState);
+        _sessionController.VideoFrameDecoded += OnVideoFrameDecoded;
 
         var titleAppName = string.IsNullOrWhiteSpace(appDisplayName) ? appPackageName : appDisplayName;
         Title = titleAppName != null ? $"{device.Name} - {titleAppName}" : device.Name;
+    }
+
+    public void SetKeyboardInputGate(Func<bool> keyboardInputGate)
+    {
+        _keyboardInputGate = keyboardInputGate ?? throw new ArgumentNullException(nameof(keyboardInputGate));
     }
 
     /// <summary>
@@ -97,6 +104,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         DetachEventHandlers();
 
         _videoImage = videoImage;
+        _mouseLockService.Attach(videoImage);
 
         if (Device != null && !IsConnected)
         {
@@ -125,6 +133,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     public void DetachVideoImage()
     {
         DetachEventHandlers();
+        _mouseLockService.Detach();
         _videoImage = null;
     }
 
@@ -146,11 +155,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
         try
         {
-            // 加载设备配置并应用到 ServerOptions
             var deviceConfig = ConfigManager.Instance.LoadConfig<DeviceConfig>(
                 HashHelper.ToMd5Hash(Device.Serial));
-
-            // 提供默认实例并应用全局配置
             Device.ServerOptions ??= new ServerOptions();
             deviceConfig.ApplyConfig(Device.ServerOptions);
 
@@ -172,155 +178,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
             InputProcessor.CursorLockRequested += OnCursorLockRequested;
             InputProcessor.SetCursorLocked(IsMouseLocked);
-
-            _scrcpyClient = new ScrcpyClient(Device);
-            
-            // 使用适配器将 ScrcpyClient 转换为 IControlCommandSender
-            // 注意：此时控制 Socket 尚未连接
-            InputProcessor.SetSender(new ScrcpyClientCommandSender(_scrcpyClient));
-
-            // 订阅视频帧解码事件
-            _scrcpyClient.OnVideoFrameDecoded += (width, height, bgraDataPtr, rowBytes) =>
-            {
-                // 在回调中检查 _disposed 防止访问已释放的内存导致 AccessViolationException
-                if (_disposed) return;
-
-                Dispatcher.UIThread.Post(() =>
-                {
-                    // 再次检查 - Post 到 UI 线程执行时可能已经被 Dispose
-                    if (_disposed) return;
-
-                    try
-                    {
-                        if (!_hasReceivedFirstVideoFrame)
-                        {
-                            _hasReceivedFirstVideoFrame = true;
-                            FlushPendingResize();
-                        }
-
-                        if (VideoSource == null || VideoSource.PixelSize.Width != width || VideoSource.PixelSize.Height != height)
-                        {
-                            var oldBitmap = VideoSource;
-                            VideoSource = new Avalonia.Media.Imaging.WriteableBitmap(
-                                new PixelSize(width, height),
-                                new Vector(96, 96),
-                                Avalonia.Platform.PixelFormat.Bgra8888,
-                                Avalonia.Platform.AlphaFormat.Premul);
-                            oldBitmap?.Dispose();
-
-                            // 动态更新屏幕大小和事件坐标系基准
-                            _screenSize = new Size(width, height);
-                            InputProcessor.UpdateScreenSize(_screenSize);
-                        }
-
-                        using (var buf = VideoSource.Lock())
-                        {
-                            unsafe
-                            {
-                                Buffer.MemoryCopy(
-                                    bgraDataPtr.ToPointer(),
-                                    buf.Address.ToPointer(),
-                                    buf.RowBytes * height,
-                                    rowBytes * height);
-                            }
-                        }
-                        
-                        // 触发 UI 更新
-                        _videoImage?.InvalidateVisual();
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"[ScreenTab] Render frame error: {ex.Message}");
-                    }
-                }, DispatcherPriority.Render);
-            };
-
-            // 订阅音频解码事件 - 将解码后的 PCM 数据推送到音频播放器
-            _scrcpyClient.OnAudioDataDecoded += (pcmData) =>
-            {
-                if (_audioStreamId >= 0)
-                {
-                    _audioPlayer.StreamPush(_audioStreamId, pcmData);
-                }
-            };
-
-            await Task.Run(async () =>
-            {
-                ScrcpyTool tool = ScrcpyService.Instance.Tool;
-                var displays = tool.GetResolutions(Device);
-
-                // 根据投屏模式修正参数
-                if (displays.Count == 0 || _appPackageName != null || Device.ServerOptions.DisplayId == -1)
-                {
-                    // 虚拟屏幕模式 (如应用投屏或无物理屏幕)
-                    if (string.IsNullOrEmpty(Device.ServerOptions.NewDisplay))
-                    {
-                        Device.ServerOptions.NewDisplay = " ";
-                    }
-                    _canResizeDisplay = true;
-                }
-                else
-                {
-                    // 物理屏幕镜像模式 (常规投屏)
-                    Device.ServerOptions.NewDisplay = null;
-                    Device.ServerOptions.FlexDisplay = false; // 强制不支持 FlexDisplay
-                    
-                    var displayId = displays.Keys.ToArray()[0];
-                    Device.ServerOptions.DisplayId = displayId;
-                    _screenSize = new Size(displays[displayId].height, displays[displayId].width);
-                    InputProcessor.UpdateScreenSize(_screenSize);
-                    
-                    _canResizeDisplay = false;
-                }
-
-                // 在修正完参数后，提取当前连接真正生效的 FlexDisplay 状态以供全屏时判断
-                IsFlexDisplayEnabled = Device.ServerOptions.FlexDisplay;
-
-                // 检查音频设备是否可用
-                bool isAudioAvailable = _audioPlayer.IsAudioDeviceAvailable;
-
-                // 初始化音频流
-                if (isAudioAvailable && Device.ServerOptions.Audio)
-                {
-                    if (!_audioPlayer.IsActivate())
-                    {
-                        _audioPlayer.ConfigureAudioDevice();
-                    }
-                    _audioStreamId = _audioPlayer.StreamPlayStart(
-                        AudioDecoder.TARGET_SAMPLE_RATE,
-                        AudioDecoder.TARGET_CHANNELS);
-                }
-
-                var ports = await tool.DeployServerAsync(Device, isAudioAvailable);
-                await Task.Delay(2000);
-                
-                // 建立 Socket 连接
-                bool connected = _scrcpyClient.Connect(ports);
-
-                if (!connected)
-                {
-                    Device.ServerOptions = null;
-                    throw new Exception("Failed to connect to scrcpy server.");
-                }
-
-                // 连接建立后，向设备发送 UHID 创建命令（如果是 HID 处理器）
-                if (InputProcessor is HidInputProcessor hidProcessor)
-                {
-                    hidProcessor.CreateDevices();
-                }
-
-                Device.ServerOptions = null;
-
-                if (!string.IsNullOrWhiteSpace(_appPackageName))
-                {
-                    var keyMsg = new ControlMsg
-                    {
-                        Type = ControlMsgType.StartApp,
-                        Data = _appPackageName
-                    };
-                    _scrcpyClient.SendControlCommand(keyMsg.Serialize());
-                }
-            });
+            await _sessionController.ConnectAsync(InputProcessor);
 
             IsConnected = true;
 
@@ -330,20 +188,60 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         {
             Debug.WriteLine($"[ScreenTab] ConnectDevice failed: {ex}");
 
-            // 连接失败时清理已分配的资源
-            if (_audioStreamId >= 0)
-            {
-                _audioPlayer.StopStream(_audioStreamId);
-                _audioStreamId = -1;
-            }
-
-            _scrcpyClient?.DisConnect();
-            _scrcpyClient?.Dispose();
-            _scrcpyClient = null;
-
             var localizer = Services.Localization.LocalizationManager.Instance;
-            Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("ScreenTab.ConnectFailed", "杩炴帴澶辫触"), ex.Message);
+            Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("ScreenTab.ConnectFailed", "连接失败"), ex.Message);
         }
+    }
+
+    public bool IsFlexDisplayEnabled => _sessionController.IsFlexDisplayEnabled;
+
+    private void OnVideoFrameDecoded(int width, int height, IntPtr bgraDataPtr, int rowBytes)
+    {
+        if (_disposed) return;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_disposed) return;
+
+            try
+            {
+                if (!_hasReceivedFirstVideoFrame)
+                {
+                    _hasReceivedFirstVideoFrame = true;
+                    FlushPendingResize();
+                }
+
+                if (VideoSource == null || VideoSource.PixelSize.Width != width || VideoSource.PixelSize.Height != height)
+                {
+                    var oldBitmap = VideoSource;
+                    VideoSource = new Avalonia.Media.Imaging.WriteableBitmap(
+                        new PixelSize(width, height),
+                        new Vector(96, 96),
+                        Avalonia.Platform.PixelFormat.Bgra8888,
+                        Avalonia.Platform.AlphaFormat.Premul);
+                    oldBitmap?.Dispose();
+
+                    _screenSize = new Size(width, height);
+                    InputProcessor.UpdateScreenSize(_screenSize);
+                }
+
+                using var buf = VideoSource.Lock();
+                unsafe
+                {
+                    Buffer.MemoryCopy(
+                        bgraDataPtr.ToPointer(),
+                        buf.Address.ToPointer(),
+                        buf.RowBytes * height,
+                        rowBytes * height);
+                }
+
+                _videoImage?.InvalidateVisual();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ScreenTab] Render frame error: {ex.Message}");
+            }
+        }, DispatcherPriority.Render);
     }
 
     private void OnCursorLockRequested(bool locked)
@@ -361,22 +259,19 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     }
 
     private void ApplyMouseLockState(bool locked)
+        => ApplyMouseLockState(locked, false);
+
+    private void ApplyMouseLockState(bool locked, bool showToast)
     {
         InputProcessor.SetCursorLocked(locked);
+        _mouseLockService.SetLocked(locked);
+        _inputCoordinator.SetMouseLocked(locked);
         IsMouseLocked = locked;
-        ResetPointerMotionTracking();
-        _ignoreNextLockedPointerMove = false;
 
-        if (!locked)
+        if (showToast)
         {
-            _activePointer?.Capture(null);
-            _isPointerCaptured = false;
+            ShowMouseLockToast(locked);
         }
-        else
-        {
-            CenterCursorInVideoImage();
-        }
-
     }
 
     private static void ShowMouseLockToast(bool locked)
@@ -429,14 +324,14 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         switch (buttonName)
         {
             case "ScreenOn":
-                _scrcpyClient?.SendControlCommand(new ControlMsg
+                _sessionController.Client?.SendControlCommand(new ControlMsg
                 {
                     Type = ControlMsgType.SetScreenPowerMode,
                     Data = true
                 }.Serialize());
                 break;
             case "ScreenOff":
-                _scrcpyClient?.SendControlCommand(new ControlMsg
+                _sessionController.Client?.SendControlCommand(new ControlMsg
                 {
                     Type = ControlMsgType.SetScreenPowerMode,
                     Data = false
@@ -458,7 +353,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 MetaState = 0
             }
         };
-        _scrcpyClient?.SendControlCommand(keyMsg.Serialize());
+        _sessionController.Client?.SendControlCommand(keyMsg.Serialize());
     }
 
     private void SendKeyUp(int keycode)
@@ -474,7 +369,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 MetaState = 0
             }
         };
-        _scrcpyClient?.SendControlCommand(keyMsg.Serialize());
+        _sessionController.Client?.SendControlCommand(keyMsg.Serialize());
     }
 
     private static int GetButtonKeycode(string buttonName)
@@ -498,121 +393,15 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void SetupEventHandlers()
     {
-        if (_videoImage == null) return;
-
-        // 先移除已有的事件绑定 防止重复注册
-        DetachEventHandlers();
-
-        _videoImage.PointerMoved += VideoImage_PointerMoved;
-        _videoImage.PointerCaptureLost += VideoImage_PointerCaptureLost;
-
-        _videoImage.AddHandler(
-            InputElement.PointerPressedEvent,
-            VideoImage_PointerPressed,
-            Avalonia.Interactivity.RoutingStrategies.Bubble,
-            handledEventsToo: true);
-
-        _videoImage.AddHandler(
-            InputElement.PointerReleasedEvent,
-            VideoImage_PointerReleased,
-            Avalonia.Interactivity.RoutingStrategies.Bubble,
-            handledEventsToo: true);
-
-        _videoImage.SizeChanged += VideoImage_SizeChanged;
-        _videoImage.PointerWheelChanged += VideoImage_PointerWheelChanged;
-
-        _keyboardEventHost = TopLevel.GetTopLevel(_videoImage) as InputElement;
-        _keyboardEventHost?.AddHandler(
-            InputElement.KeyDownEvent,
-            VideoImage_KeyDown,
-            Avalonia.Interactivity.RoutingStrategies.Tunnel,
-            handledEventsToo: true);
-
-        _keyboardEventHost?.AddHandler(
-            InputElement.KeyUpEvent,
-            VideoImage_KeyUp,
-            Avalonia.Interactivity.RoutingStrategies.Tunnel,
-            handledEventsToo: true);
-
-        _videoImage.Focusable = true;
+        if (_videoImage != null)
+        {
+            _inputCoordinator.Attach(_videoImage);
+        }
     }
 
     private void DetachEventHandlers()
     {
-        if (_videoImage == null) return;
-
-        _videoImage.PointerMoved -= VideoImage_PointerMoved;
-        _videoImage.PointerCaptureLost -= VideoImage_PointerCaptureLost;
-        _videoImage.SizeChanged -= VideoImage_SizeChanged;
-        _videoImage.PointerWheelChanged -= VideoImage_PointerWheelChanged;
-
-        _videoImage.RemoveHandler(InputElement.PointerPressedEvent, VideoImage_PointerPressed);
-        _videoImage.RemoveHandler(InputElement.PointerReleasedEvent, VideoImage_PointerReleased);
-        _keyboardEventHost?.RemoveHandler(InputElement.KeyDownEvent, VideoImage_KeyDown);
-        _keyboardEventHost?.RemoveHandler(InputElement.KeyUpEvent, VideoImage_KeyUp);
-        _keyboardEventHost = null;
-
-        InputProcessor.ClearAll();
-        _isPointerCaptured = false;
-        ResetPointerMotionTracking();
-    }
-
-    private void VideoImage_KeyDown(object? sender, KeyEventArgs e)
-    {
-        if (IsMouseLocked && e.Key == Key.Escape)
-        {
-            ApplyMouseLockState(false);
-            ShowMouseLockToast(false);
-            e.Handled = true;
-            return;
-        }
-
-        if (InputProcessor is HidInputProcessor && IsAltToggleKey(e))
-        {
-            var locked = !IsMouseLocked;
-            ApplyMouseLockState(locked);
-            ShowMouseLockToast(locked);
-            e.Handled = true;
-            return;
-        }
-
-        InputProcessor.ProcessKey(new KeyInput
-        {
-            EventType = KeyEventType.Down,
-            KeyName = e.Key.ToString()
-        });
-        
-        if (IsMouseLocked)
-        {
-            e.Handled = true; // 拦截按键以免触发系统焦点移动
-        }
-    }
-
-    private void VideoImage_KeyUp(object? sender, KeyEventArgs e)
-    {
-        if (InputProcessor is HidInputProcessor && IsAltToggleKey(e))
-        {
-            e.Handled = true;
-            return;
-        }
-
-        InputProcessor.ProcessKey(new KeyInput
-        {
-            EventType = KeyEventType.Up,
-            KeyName = e.Key.ToString()
-        });
-        
-        if (IsMouseLocked)
-        {
-            e.Handled = true;
-        }
-    }
-
-    private void VideoImage_SizeChanged(object? sender, SizeChangedEventArgs e)
-    {
-        InputProcessor.ClearAll();
-        _isPointerCaptured = false;
-        ResetPointerMotionTracking();
+        _inputCoordinator.Detach();
     }
 
     public void UpdateContainerSize(Size newSize)
@@ -641,252 +430,14 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void SendResizeDisplayIfNeeded(Size newSize)
     {
-        if (!IsFlexDisplayEnabled || !_canResizeDisplay || _scrcpyClient == null || newSize.Width <= 0 || newSize.Height <= 0)
+        if (_sessionController.SendResizeDisplayIfNeeded(newSize, _hasReceivedFirstVideoFrame, _lastResizeRequestSize))
         {
-            return;
-        }
-
-        if (!_hasReceivedFirstVideoFrame)
-        {
-            return;
-        }
-
-        if (_lastResizeRequestSize is Size lastSize &&
-            Math.Abs(lastSize.Width - newSize.Width) < 0.5 &&
-            Math.Abs(lastSize.Height - newSize.Height) < 0.5)
-        {
-            return;
-        }
-
-        var msg = new ControlMsg
-        {
-            Type = ControlMsgType.ResizeDisplay,
-            Data = new ResizeDisplayData
-            {
-                Width = (ushort)Math.Max(1, newSize.Width),
-                Height = (ushort)Math.Max(1, newSize.Height)
-            }
-        };
-        _scrcpyClient.SendControlCommand(msg.Serialize());
-        _lastResizeRequestSize = newSize;
-    }
-
-    private void VideoImage_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (Device?.DeviceData == null || _videoImage == null) return;
-
-        _activePointer = e.Pointer;
-
-        if (!_videoImage.IsFocused)
-        {
-            _videoImage.Focus();
-        }
-
-        var viewPoint = e.GetPosition(_videoImage);
-        var point = NormalizeCoordinates(viewPoint);
-        TrackPointerMotion(e.Pointer.GetHashCode(), viewPoint);
-
-        InputProcessor.ProcessPointer(new PointerInput
-        {
-            EventType = PointerEventType.Pressed,
-            Position = point,
-            PointerHash = e.Pointer.GetHashCode()
-        });
-
-        var shouldCapturePointer = IsMouseLocked || e.GetCurrentPoint(_videoImage).Properties.IsLeftButtonPressed;
-        if (shouldCapturePointer)
-        {
-            e.Pointer.Capture(_videoImage);
-            _isPointerCaptured = true;
+            _lastResizeRequestSize = newSize;
         }
     }
 
-    private void VideoImage_PointerWheelChanged(object? sender, PointerWheelEventArgs e)
-    {
-        // HID 模式下或者触摸模式下，都可以发送滚轮事件，不需要判断是否已捕获
-        if (Device?.DeviceData == null || _videoImage == null) return;
-
-        _activePointer = e.Pointer;
-
-        var viewPoint = e.GetPosition(_videoImage);
-        var point = NormalizeCoordinates(viewPoint);
-
-        InputProcessor.ProcessPointer(new PointerInput
-        {
-            EventType = PointerEventType.WheelChanged,
-            Position = point,
-            WheelDelta = e.Delta
-        });
-        e.Handled = true;
-    }
-
-    private void VideoImage_PointerMoved(object? sender, PointerEventArgs e)
-    {
-        // 允许悬停事件传递下去，对于 HID 鼠标这是移动光标，对于 Default 则内部会判断并忽略
-        if (Device?.DeviceData == null || _videoImage == null) return;
-
-        _activePointer = e.Pointer;
-
-        if (IsMouseLocked && !_isPointerCaptured)
-        {
-            e.Pointer.Capture(_videoImage);
-            _isPointerCaptured = true;
-        }
-
-        var viewPoint = e.GetPosition(_videoImage);
-        var point = NormalizeCoordinates(viewPoint);
-        var pointerHash = e.Pointer.GetHashCode();
-        Vector? relativeDelta;
-
-        if (InputProcessor is HidInputProcessor && !_isPointerCaptured)
-        {
-            ResetPointerMotionTracking();
-            return;
-        }
-
-        if (IsMouseLocked && InputProcessor is HidInputProcessor)
-        {
-            var centerPoint = new Point(_videoImage.Bounds.Width / 2, _videoImage.Bounds.Height / 2);
-            if (_ignoreNextLockedPointerMove)
-            {
-                _ignoreNextLockedPointerMove = false;
-                var warpDelta = viewPoint - centerPoint;
-                if (Math.Abs(warpDelta.X) <= 1.5 && Math.Abs(warpDelta.Y) <= 1.5)
-                {
-                    TrackPointerMotion(pointerHash, centerPoint);
-                    return;
-                }
-            }
-
-            var deltaFromCenter = viewPoint - centerPoint;
-            relativeDelta = (Math.Abs(deltaFromCenter.X) > 0.1 || Math.Abs(deltaFromCenter.Y) > 0.1)
-                ? deltaFromCenter
-                : null;
-
-            TrackPointerMotion(pointerHash, centerPoint);
-
-            if (relativeDelta.HasValue)
-            {
-                CenterCursorInVideoImage();
-            }
-        }
-        else
-        {
-            relativeDelta = GetRelativePointerDelta(pointerHash, viewPoint);
-        }
-
-        InputProcessor.ProcessPointer(new PointerInput
-        {
-            EventType = PointerEventType.Moved,
-            Position = point,
-            PointerHash = pointerHash,
-            RelativeDelta = relativeDelta ?? default,
-            HasRelativeDelta = relativeDelta.HasValue
-        });
-    }
-
-    private void VideoImage_PointerReleased(object? sender, PointerReleasedEventArgs e)
-    {
-        if (!_isPointerCaptured || Device?.DeviceData == null || _videoImage == null) return;
-
-        _activePointer = e.Pointer;
-
-        var viewPoint = e.GetPosition(_videoImage);
-        var point = NormalizeCoordinates(viewPoint);
-        TrackPointerMotion(e.Pointer.GetHashCode(), viewPoint);
-
-        InputProcessor.ProcessPointer(new PointerInput
-        {
-            EventType = PointerEventType.Released,
-            Position = point,
-            PointerHash = e.Pointer.GetHashCode()
-        });
-        
-        if (!IsMouseLocked)
-        {
-            e.Pointer.Capture(null);
-            _isPointerCaptured = false;
-        }
-    }
-
-    private void VideoImage_PointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
-    {
-        _activePointer = e.Pointer;
-
-        InputProcessor.ProcessPointer(new PointerInput
-        {
-            EventType = PointerEventType.CaptureLost,
-            PointerHash = e.Pointer.GetHashCode()
-        });
-        e.Pointer.Capture(null);
-        _isPointerCaptured = false;
-        ResetPointerMotionTracking();
-    }
-
-    private static bool IsAltToggleKey(KeyEventArgs e)
-    {
-        return e.Key is Key.LeftAlt or Key.RightAlt
-               || e.Key == Key.System
-               || e.KeyModifiers.HasFlag(KeyModifiers.Alt)
-               || e.PhysicalKey.ToString().Contains("Alt", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private Vector? GetRelativePointerDelta(int pointerHash, Point currentViewPoint)
-    {
-        Vector? delta = null;
-
-        if (_lastPointerHash == pointerHash && _lastPointerViewPoint is Point lastPoint)
-        {
-            delta = currentViewPoint - lastPoint;
-        }
-
-        TrackPointerMotion(pointerHash, currentViewPoint);
-        return delta;
-    }
-
-    private void TrackPointerMotion(int pointerHash, Point currentViewPoint)
-    {
-        _lastPointerHash = pointerHash;
-        _lastPointerViewPoint = currentViewPoint;
-    }
-
-    private void ResetPointerMotionTracking()
-    {
-        _lastPointerHash = null;
-        _lastPointerViewPoint = null;
-    }
-
-    private void CenterCursorInVideoImage()
-    {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || _videoImage == null)
-        {
-            return;
-        }
-
-        var topLevel = TopLevel.GetTopLevel(_videoImage);
-        if (topLevel is not Window window)
-        {
-            return;
-        }
-
-        var centerInControl = new Point(_videoImage.Bounds.Width / 2, _videoImage.Bounds.Height / 2);
-        var centerInWindow = _videoImage.TranslatePoint(centerInControl, topLevel);
-        if (!centerInWindow.HasValue)
-        {
-            return;
-        }
-
-        var scale = topLevel.RenderScaling;
-        var screenX = window.Position.X + (int)Math.Round(centerInWindow.Value.X * scale);
-        var screenY = window.Position.Y + (int)Math.Round(centerInWindow.Value.Y * scale);
-
-        _ignoreNextLockedPointerMove = true;
-        SetCursorPos(screenX, screenY);
-    }
-
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool SetCursorPos(int x, int y);
+    private bool CanHandleKeyboardInput()
+        => _keyboardInputGate();
 
     private Point NormalizeCoordinates(Point viewPoint)
     {
@@ -930,20 +481,6 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     #endregion
 
-    /// <summary>
-    /// ScrcpyClient 到 IControlCommandSender 的适配器
-    /// 这样避免在 Core 层依赖 Desktop 层的接口
-    /// </summary>
-    private class ScrcpyClientCommandSender(ScrcpyClient client) : IControlCommandSender
-    {
-        private readonly ScrcpyClient _client = client;
-
-        public void SendCommand(byte[] controlMessage)
-        {
-            _client.SendControlCommand(controlMessage);
-        }
-    }
-
     public void Dispose()
     {
         Dispose(true);
@@ -965,16 +502,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                     InputProcessor.CursorLockRequested -= OnCursorLockRequested;
                     InputProcessor.Dispose();
                 }
-
-                // 停止音频流
-                if (_audioStreamId >= 0)
-                {
-                    _audioPlayer.StopStream(_audioStreamId);
-                    _audioStreamId = -1;
-                }
-
-                _scrcpyClient?.DisConnect();
-                _scrcpyClient?.Dispose();
+                _inputCoordinator.Dispose();
+                _mouseLockService.Dispose();
+                _sessionController.Dispose();
                 _resizeThrottleTimer.Stop();
 
                 VideoSource?.Dispose();

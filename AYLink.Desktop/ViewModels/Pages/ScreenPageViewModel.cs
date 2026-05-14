@@ -21,7 +21,12 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
     /// </summary>
     protected override bool AllowDuplicateDeviceTabs => true;
 
-    protected override ScreenTabViewModel CreateTab(DeviceModel device) => new(device);
+    protected override ScreenTabViewModel CreateTab(DeviceModel device)
+    {
+        var tab = new ScreenTabViewModel(device);
+        ConfigureTab(tab);
+        return tab;
+    }
 
     protected override void OnTabClosed(ScreenTabViewModel tab) => tab.Dispose();
 
@@ -43,7 +48,13 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
     public void AddNewTabWithApp(DeviceModel device, string? appPackageName, string? appDisplayName)
     {
         var newTab = new ScreenTabViewModel(device, appPackageName, appDisplayName);
+        ConfigureTab(newTab);
         RegisterTab(newTab);
+    }
+
+    private void ConfigureTab(ScreenTabViewModel tab)
+    {
+        tab.SetKeyboardInputGate(() => IsActive && SelectedTab == tab);
     }
 
     /// <summary>

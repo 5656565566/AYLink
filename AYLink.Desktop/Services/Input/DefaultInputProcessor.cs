@@ -7,7 +7,7 @@ namespace AYLink.Desktop.Services.Input;
 
 /// <summary>
 /// 默认的注入模式输入处理器
-/// 负责将抽象输入事件转换为Android的触摸和按键事件并发送
+/// 负责将抽象输入事件转换为 Android 的触摸和按键事件并发送
 /// </summary>
 public class DefaultInputProcessor : IInputProcessor
 {
@@ -16,7 +16,11 @@ public class DefaultInputProcessor : IInputProcessor
     private ulong _nextPointerId;
     private IControlCommandSender? _sender;
 
-    public event Action<bool>? CursorLockRequested;
+    event Action<bool>? IInputProcessor.CursorLockRequested
+    {
+        add { }
+        remove { }
+    }
 
     public void SetCursorLocked(bool locked)
     {
