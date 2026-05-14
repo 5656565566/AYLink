@@ -35,7 +35,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     [ObservableProperty]
     public partial Avalonia.Media.Imaging.WriteableBitmap? VideoSource { get; set; }
-    public IInputProcessor InputProcessor { get; } = new DefaultInputProcessor();
+    
+    public IInputProcessor InputProcessor { get; private set; } = new DefaultInputProcessor();
 
     private ScrcpyClient? _scrcpyClient;
     private Size _screenSize;
@@ -136,6 +137,25 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
         try
         {
+            // 加载设备配置并应用到 ServerOptions
+            var deviceConfig = ConfigManager.Instance.LoadConfig<DeviceConfig>(
+                HashHelper.ToMd5Hash(Device.Serial));
+
+            // 提供默认实例并应用全局配置
+            Device.ServerOptions ??= new ServerOptions();
+            deviceConfig.ApplyConfig(Device.ServerOptions);
+
+            // 根据配置选择输入处理器
+            InputProcessor?.Dispose();
+            if (Device.ServerOptions.HidKeyboard || Device.ServerOptions.HidMouse)
+            {
+                InputProcessor = new HidInputProcessor(Device.ServerOptions.HidKeyboard, Device.ServerOptions.HidMouse);
+            }
+            else
+            {
+                InputProcessor = new DefaultInputProcessor();
+            }
+
             _scrcpyClient = new ScrcpyClient(Device);
             
             // 使用适配器将 ScrcpyClient 转换为 IControlCommandSender
@@ -211,14 +231,6 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 ScrcpyTool tool = ScrcpyService.Instance.Tool;
                 var displays = tool.GetResolutions(Device);
 
-                // 加载设备配置并应用到 ServerOptions
-                var deviceConfig = ConfigManager.Instance.LoadConfig<DeviceConfig>(
-                    HashHelper.ToMd5Hash(Device.Serial));
-
-                // 提供默认实例并应用全局配置
-                Device.ServerOptions ??= new ServerOptions();
-                deviceConfig.ApplyConfig(Device.ServerOptions);
-
                 // 根据投屏模式修正参数
                 if (displays.Count == 0 || _appPackageName != null || Device.ServerOptions.DisplayId == -1)
                 {
@@ -263,12 +275,20 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
                 var ports = await tool.DeployServerAsync(Device, isAudioAvailable);
                 await Task.Delay(2000);
+                
+                // 建立 Socket 连接
                 bool connected = _scrcpyClient.Connect(ports);
 
                 if (!connected)
                 {
                     Device.ServerOptions = null;
                     throw new Exception("Failed to connect to scrcpy server.");
+                }
+
+                // 连接建立后，向设备发送 UHID 创建命令（如果需要 HID 处理器）
+                if (InputProcessor is HidInputProcessor hidProcessor)
+                {
+                    hidProcessor.CreateDevices();
                 }
 
                 Device.ServerOptions = null;
@@ -564,7 +584,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void VideoImage_PointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        if (!_isPointerCaptured || Device?.DeviceData == null || _videoImage == null) return;
+        // HID 模式下或者触摸模式下 都可以发送滚轮事件 不需要判断是否已捕获
+        if (Device?.DeviceData == null || _videoImage == null) return;
 
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
@@ -580,7 +601,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void VideoImage_PointerMoved(object? sender, PointerEventArgs e)
     {
-        if (!_isPointerCaptured || Device?.DeviceData == null || _videoImage == null) return;
+        // 允许悬停事件传递下去 对于 HID 鼠标这是移动光标 对于 Default 则内部会判断并忽略
+        if (Device?.DeviceData == null || _videoImage == null) return;
 
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);

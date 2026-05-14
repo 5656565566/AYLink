@@ -106,6 +106,17 @@ public class DeviceConfig
     /// 设置一个延迟（毫秒） 如果客户端在这段时间内没有交互 则关闭设备屏幕-1表示禁用
     /// </summary>
     public int? ScreenOffTimeout { get; set; }
+
+    /// <summary>
+    /// 请求服务端使用 HID 键盘进行输入需要 Android 12+
+    /// </summary>
+    public bool HidKeyboard { get; set; } = false;
+
+    /// <summary>
+    /// 请求服务端使用 HID 鼠标进行输入需要 Android 12+
+    /// </summary>
+    public bool HidMouse { get; set; } = false;
+
     /// <summary>
     /// 要使用的摄像头ID
     /// </summary>

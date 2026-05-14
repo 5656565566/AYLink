@@ -170,6 +170,18 @@
 					<TextBox MinWidth="150" Text="{Binding DeviceConfig.ScreenOffTimeout}" />
 				</ui:SettingsExpander.Footer>
 			</ui:SettingsExpander>
+			
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.HidKeyboard, DefaultText='键盘 HID 输入'}" Description="{i18n:Tr DeviceSettings.HidKeyboard_Description, DefaultText='使用虚拟 HID 键盘设备进行输入（需要 Android 12+）'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.HidKeyboard}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
+			
+			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.HidMouse, DefaultText='鼠标 HID 输入'}" Description="{i18n:Tr DeviceSettings.HidMouse_Description, DefaultText='使用虚拟 HID 鼠标设备进行输入（需要 Android 12+）'}">
+				<ui:SettingsExpander.Footer>
+					<ToggleSwitch IsChecked="{Binding DeviceConfig.HidMouse}" />
+				</ui:SettingsExpander.Footer>
+			</ui:SettingsExpander>
 
 			<!-- 摄像头专属设置 -->
 			<TextBlock Text="{i18n:Tr DeviceSettings.CameraSettings, DefaultText='摄像头专属设置'}" Classes="h2"/>

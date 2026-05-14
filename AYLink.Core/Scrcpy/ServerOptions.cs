@@ -371,9 +371,6 @@ public class ServerOptions
         args.Add($"cleanup={Cleanup.ToString().ToLower()}");
         args.Add($"power_on={PowerOn.ToString().ToLower()}");
 
-        if (HidKeyboard) args.Add("hid_keyboard=true");
-        if (HidMouse) args.Add("hid_mouse=true");
-        if (Otg) args.Add("otg=true");
         if (SendDummyByte) args.Add("send_dummy_byte=true");
 
         return args;

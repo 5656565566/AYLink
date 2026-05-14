@@ -1,4 +1,6 @@
 using System.Text;
+using System;
+using System.IO;
 
 namespace AYLink.Core.Scrcpy.Control;
 
@@ -415,9 +417,22 @@ public class ControlMsgModel
         private void SerializeUhidCreate(BinaryWriter writer)
         {
             var data = (UhidCreateData)Data!;
-            WriteBigEndian(writer, data.Id);
+            
+            WriteBigEndian(writer, data.Id);         // id (2 byte)
+            WriteBigEndian(writer, (ushort)0);       // vendor_id (2 byte)
+            WriteBigEndian(writer, (ushort)0);       // product_id (2 byte)
+            
+            string name = data.Name ?? "scrcpy";
+            byte[] nameBytes = Encoding.UTF8.GetBytes(name);
+            int nameLen = Math.Min(nameBytes.Length, 127);
+            writer.Write((byte)nameLen);             // 名称长度 (1字节)
+            writer.Write(nameBytes, 0, nameLen);     // 名称字节
+            
+            // 报告描述符大小 (2 byte)
             var reportDescSize = (ushort)data.ReportDesc.Length;
             WriteBigEndian(writer, reportDescSize);
+            
+            // 报告描述符数据
             writer.Write(data.ReportDesc, 0, reportDescSize);
         }
 
@@ -581,6 +596,7 @@ public class ControlMsgModel
     public struct UhidCreateData
     {
         public ushort Id; // 设备ID
+        public string Name; // 名称
         public byte[] ReportDesc; // HID报告描述符
     }
 
