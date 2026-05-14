@@ -9,6 +9,7 @@ using AYLink.Desktop.Services.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -44,7 +45,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     private bool _disposed;
     private int _audioStreamId = -1;
     private readonly AudioPlayer _audioPlayer = AudioPlayer.Instance;
-    private bool _isFlexDisplayEnabled;
+    public bool IsFlexDisplayEnabled { get; private set; }
     private bool _canResizeDisplay;
     private Size _containerSize;
     private bool _hasReceivedFirstVideoFrame;
@@ -168,6 +169,10 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                                 Avalonia.Platform.PixelFormat.Bgra8888,
                                 Avalonia.Platform.AlphaFormat.Premul);
                             oldBitmap?.Dispose();
+
+                            // 动态更新屏幕大小和事件坐标系基准
+                            _screenSize = new Size(width, height);
+                            InputProcessor.UpdateScreenSize(_screenSize);
                         }
 
                         using (var buf = VideoSource.Lock())
@@ -210,30 +215,36 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 var deviceConfig = ConfigManager.Instance.LoadConfig<DeviceConfig>(
                     HashHelper.ToMd5Hash(Device.Serial));
 
+                // 提供默认实例并应用全局配置
                 Device.ServerOptions ??= new ServerOptions();
-
                 deviceConfig.ApplyConfig(Device.ServerOptions);
-                _isFlexDisplayEnabled = Device.ServerOptions.FlexDisplay;
-                _canResizeDisplay = Device.ServerOptions.DisplayId == -1
-                    || !string.IsNullOrWhiteSpace(Device.ServerOptions.NewDisplay);
 
+                // 根据投屏模式修正参数
                 if (displays.Count == 0 || _appPackageName != null || Device.ServerOptions.DisplayId == -1)
                 {
+                    // 虚拟屏幕模式 (如应用投屏或无物理屏幕)
                     if (string.IsNullOrEmpty(Device.ServerOptions.NewDisplay))
                     {
                         Device.ServerOptions.NewDisplay = " ";
                     }
-
                     _canResizeDisplay = true;
                 }
                 else
                 {
+                    // 物理屏幕镜像模式 (常规投屏)
                     Device.ServerOptions.NewDisplay = null;
+                    Device.ServerOptions.FlexDisplay = false; // 强制不支持 FlexDisplay
+                    
                     var displayId = displays.Keys.ToArray()[0];
                     Device.ServerOptions.DisplayId = displayId;
                     _screenSize = new Size(displays[displayId].height, displays[displayId].width);
                     InputProcessor.UpdateScreenSize(_screenSize);
+                    
+                    _canResizeDisplay = false;
                 }
+
+                // 在修正完参数后，提取当前连接真正生效的 FlexDisplay 状态以供全屏时判断
+                IsFlexDisplayEnabled = Device.ServerOptions.FlexDisplay;
 
                 // 检查音频设备是否可用
                 bool isAudioAvailable = _audioPlayer.IsAudioDeviceAvailable;
@@ -475,8 +486,6 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     {
         InputProcessor.ClearAll();
         _isPointerCaptured = false;
-        _screenSize = new Size(e.NewSize.Width, e.NewSize.Height);
-        InputProcessor.UpdateScreenSize(_screenSize);
     }
 
     public void UpdateContainerSize(Size newSize)
@@ -505,7 +514,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void SendResizeDisplayIfNeeded(Size newSize)
     {
-        if (!_isFlexDisplayEnabled || !_canResizeDisplay || _scrcpyClient == null || newSize.Width <= 0 || newSize.Height <= 0)
+        if (!IsFlexDisplayEnabled || !_canResizeDisplay || _scrcpyClient == null || newSize.Width <= 0 || newSize.Height <= 0)
         {
             return;
         }
@@ -615,15 +624,42 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private Point NormalizeCoordinates(Point viewPoint)
     {
-        if (_videoImage == null || _videoImage.Bounds.Width <= 0 || _videoImage.Bounds.Height <= 0)
+        if (_videoImage == null || _videoImage.Bounds.Width <= 0 || _videoImage.Bounds.Height <= 0 || _screenSize.Width <= 0 || _screenSize.Height <= 0)
             return new Point(0, 0);
 
-        double scaleX = _screenSize.Width / _videoImage.Bounds.Width;
-        double scaleY = _screenSize.Height / _videoImage.Bounds.Height;
+        double controlWidth = _videoImage.Bounds.Width;
+        double controlHeight = _videoImage.Bounds.Height;
 
+        // 根据实际使用的 Stretch 模式计算实际渲染图片的缩放比例
+        double scaleX = controlWidth / _screenSize.Width;
+        double scaleY = controlHeight / _screenSize.Height;
+        
+        double scale = _videoImage.Stretch == Stretch.Fill ? 1.0 : Math.Min(scaleX, scaleY);
+        
+        if (_videoImage.Stretch == Stretch.Fill)
+        {
+            return new Point(
+                Math.Clamp(viewPoint.X / scaleX, 0, _screenSize.Width),
+                Math.Clamp(viewPoint.Y / scaleY, 0, _screenSize.Height)
+            );
+        }
+
+        // 计算渲染出来的实际图片大小
+        double drawnWidth = _screenSize.Width * scale;
+        double drawnHeight = _screenSize.Height * scale;
+
+        // 图片默认在中心，计算相对控件边缘的留白偏移量
+        double offsetX = (controlWidth - drawnWidth) / 2;
+        double offsetY = (controlHeight - drawnHeight) / 2;
+
+        // 将鼠标相对控件坐标 转换成 相对图片坐标
+        double imageX = viewPoint.X - offsetX;
+        double imageY = viewPoint.Y - offsetY;
+
+        // 还原回原始视频的坐标系 (去除缩放比例)
         return new Point(
-            Math.Clamp(viewPoint.X * scaleX, 0, _screenSize.Width),
-            Math.Clamp(viewPoint.Y * scaleY, 0, _screenSize.Height));
+            Math.Clamp(imageX / scale, 0, _screenSize.Width),
+            Math.Clamp(imageY / scale, 0, _screenSize.Height));
     }
 
     #endregion

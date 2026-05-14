@@ -44,14 +44,22 @@ public partial class ScreenTabContentView : UserControl
             WindowState = WindowState.FullScreen,
             SystemDecorations = SystemDecorations.None,
             Topmost = true,
-            Background = Avalonia.Media.Brushes.Black,
+            Background = Brushes.Black,
             DataContext = viewModel,
             Content = new ScreenTabContentView() // 复用当前的 UserControl
         };
 
         if (_fullScreenWindow.Content is ScreenTabContentView fullScreenContent)
         {
-            fullScreenContent.SetVideoStretch(Stretch.Fill);
+            // 防止错误拉伸
+            if (viewModel.IsFlexDisplayEnabled)
+            {
+                fullScreenContent.SetVideoStretch(Stretch.Fill);
+            }
+            else
+            {
+                fullScreenContent.SetVideoStretch(Stretch.Uniform);
+            }
         }
 
         _fullScreenWindow.Opened += (s, ev) =>
@@ -76,10 +84,10 @@ public partial class ScreenTabContentView : UserControl
         {
             _fullScreenWindow = null;
             // 全屏窗口关闭后 重新唤醒原界面的 Image 绑定
-            SetVideoStretch(Stretch.Uniform);
             var videoImage = this.FindControl<Image>("VideoImage");
             if (videoImage != null)
             {
+                videoImage.Stretch = Stretch.Uniform;
                 viewModel.AttachVideoImage(videoImage);
             }
 
@@ -97,7 +105,7 @@ public partial class ScreenTabContentView : UserControl
         return win.SystemDecorations == SystemDecorations.None && win.WindowState == WindowState.FullScreen;
     }
 
-    private void SetVideoStretch(Stretch stretch)
+    public void SetVideoStretch(Stretch stretch)
     {
         var videoImage = this.FindControl<Image>("VideoImage");
         if (videoImage != null)

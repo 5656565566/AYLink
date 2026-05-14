@@ -98,7 +98,6 @@ public class ServerOptions
     /// <summary>
     /// 销毁内容
     /// </summary>
-    /// 
     public bool VdDestroyContent { get; set; } = true;
     /// <summary>
     /// 系统主题

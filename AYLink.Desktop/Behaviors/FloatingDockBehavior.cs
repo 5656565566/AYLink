@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -24,7 +25,17 @@ public class FloatingDockBehavior : AvaloniaObject
         public int DragToken;
     }
 
+    private static class GlobalDockState
+    {
+        public static bool IsInitialized = false;
+        public static bool IsSnappedToEdge = true;
+        public static bool IsDockedLeft = false;
+        public static double TargetY = 16;
+        public static double TargetX = 0;
+    }
+
     private static readonly ConditionalWeakTable<Control, DragState> _states = [];
+    private static readonly HashSet<Control> _activeControls = [];
 
     public static readonly AttachedProperty<bool> IsEnabledProperty =
         AvaloniaProperty.RegisterAttached<FloatingDockBehavior, Control, bool>("IsEnabled", false);
@@ -42,6 +53,7 @@ public class FloatingDockBehavior : AvaloniaObject
     {
         IsEnabledProperty.Changed.AddClassHandler<Control>(HandleIsEnabledChanged);
         IsExpandedProperty.Changed.AddClassHandler<Control>(HandleIsExpandedChanged);
+        InputElement.IsPointerOverProperty.Changed.AddClassHandler<Control>(HandleIsPointerOverChanged);
     }
 
     private static void EnsureTransitions(Control control)
@@ -85,12 +97,27 @@ public class FloatingDockBehavior : AvaloniaObject
     {
         if (e.NewValue is true)
         {
+            _activeControls.Add(control);
             var state = _states.GetOrCreateValue(control);
-            // 初始状态假定为靠右贴边
-            state.IsSnappedToEdge = true;
-            state.IsDockedLeft = false;
+            
+            if (GlobalDockState.IsInitialized)
+            {
+                state.IsSnappedToEdge = GlobalDockState.IsSnappedToEdge;
+                state.IsDockedLeft = GlobalDockState.IsDockedLeft;
+            }
+            else
+            {
+                // 初始状态假定为靠右贴边
+                state.IsSnappedToEdge = true;
+                state.IsDockedLeft = false;
+            }
 
             EnsureTransitions(control);
+
+            if (GlobalDockState.IsInitialized)
+            {
+                ApplySolidState(control, state);
+            }
 
             control.AddHandler(InputElement.PointerPressedEvent, Control_PointerPressed, RoutingStrategies.Tunnel);
             control.AddHandler(InputElement.PointerMovedEvent, Control_PointerMoved, RoutingStrategies.Tunnel);
@@ -99,6 +126,7 @@ public class FloatingDockBehavior : AvaloniaObject
         }
         else
         {
+            _activeControls.Remove(control);
             control.RemoveHandler(InputElement.PointerPressedEvent, Control_PointerPressed);
             control.RemoveHandler(InputElement.PointerMovedEvent, Control_PointerMoved);
             control.RemoveHandler(InputElement.PointerReleasedEvent, Control_PointerReleased);
@@ -107,29 +135,92 @@ public class FloatingDockBehavior : AvaloniaObject
         }
     }
 
+    private static void ApplySolidState(Control control, DragState state)
+    {
+        if (!GlobalDockState.IsInitialized) return;
+
+        bool isExpanded = GetIsExpanded(control);
+        double marginX = isExpanded ? 16 : (control.IsPointerOver ? 0 : -24);
+
+        EnableTransitions(control, false);
+
+        if (GlobalDockState.IsSnappedToEdge)
+        {
+            if (GlobalDockState.IsDockedLeft)
+            {
+                control.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+                control.Margin = new Thickness(marginX, GlobalDockState.TargetY, 0, 0);
+            }
+            else
+            {
+                control.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right;
+                control.Margin = new Thickness(0, GlobalDockState.TargetY, marginX, 0);
+            }
+        }
+        else
+        {
+            control.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+            control.Margin = new Thickness(GlobalDockState.TargetX, GlobalDockState.TargetY, 0, 0);
+        }
+
+        _ = ReenableTransitionsAsync(control);
+    }
+
+    private static async Task ReenableTransitionsAsync(Control control)
+    {
+        await Task.Delay(16);
+        EnableTransitions(control, true);
+    }
+
+    private static void ApplyDockMargin(Control control, DragState state)
+    {
+        if (!state.IsSnappedToEdge) return;
+        
+        bool isExpanded = GetIsExpanded(control);
+        double marginX = isExpanded ? 16 : (control.IsPointerOver ? 0 : -24);
+        
+        double targetY = GlobalDockState.IsInitialized ? GlobalDockState.TargetY : control.Margin.Top;
+
+        EnableTransitions(control, true);
+
+        if (state.IsDockedLeft)
+        {
+            if (control.HorizontalAlignment == Avalonia.Layout.HorizontalAlignment.Right)
+            {
+                control.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+            }
+            control.Margin = new Thickness(marginX, targetY, 0, 0);
+        }
+        else
+        {
+            if (control.HorizontalAlignment == Avalonia.Layout.HorizontalAlignment.Right)
+            {
+                control.Margin = new Thickness(0, targetY, marginX, 0);
+            }
+            else if (control.Parent is Control parent)
+            {
+                double targetX = parent.Bounds.Width - marginX - control.Bounds.Width;
+                control.Margin = new Thickness(targetX, targetY, 0, 0);
+            }
+        }
+    }
+
     private static void HandleIsExpandedChanged(Control control, AvaloniaPropertyChangedEventArgs e)
     {
         if (!GetIsEnabled(control)) return;
         if (!_states.TryGetValue(control, out var state)) return;
 
-        bool isExpanded = e.NewValue is true;
-        
-        if (state.IsSnappedToEdge)
+        ApplyDockMargin(control, state);
+    }
+
+    private static void HandleIsPointerOverChanged(Control control, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (!GetIsEnabled(control)) return;
+        if (!_states.TryGetValue(control, out var state)) return;
+
+        if (state.IsSnappedToEdge && !state.IsDragging)
         {
-            // 收起时隐藏一半（球的宽度为40）展开时距边缘16
-            double marginX = isExpanded ? 16 : -24;
-            var currentMargin = control.Margin;
-
-            EnableTransitions(control, true);
-
-            if (state.IsDockedLeft)
-            {
-                control.Margin = new Thickness(marginX, currentMargin.Top, 0, 0);
-            }
-            else
-            {
-                control.Margin = new Thickness(0, currentMargin.Top, marginX, 0);
-            }
+            ApplyDockMargin(control, state);
         }
     }
 
@@ -138,7 +229,10 @@ public class FloatingDockBehavior : AvaloniaObject
         if (sender is not Control control) return;
         if (control.Parent is not Control parent) return;
 
-        if (!e.GetCurrentPoint(parent).Properties.IsLeftButtonPressed) return;
+        // 修改：不要用 e.GetCurrentPoint(parent) 判断，直接判断 e.GetCurrentPoint(control) 
+        // 或使用事件参数原始信息判断是不是左键
+        var pointProperties = e.GetCurrentPoint(control).Properties;
+        if (!pointProperties.IsLeftButtonPressed) return;
 
         var state = _states.GetOrCreateValue(control);
         state.DragToken++; // 中止之前的延迟操作
@@ -243,21 +337,22 @@ public class FloatingDockBehavior : AvaloniaObject
         double snapThreshold = 60;
         bool isExpanded = GetIsExpanded(control);
         
-        state.IsSnappedToEdge = false;
+        bool isSnapped = false;
+        bool isDockedLeft = false;
 
         double targetX = absLeft;
-        double marginX = isExpanded ? 16 : -24; 
+        double marginX = isExpanded ? 16 : (control.IsPointerOver ? 0 : -24); 
 
         if (absLeft < snapThreshold)
         {
-            state.IsSnappedToEdge = true;
-            state.IsDockedLeft = true;
+            isSnapped = true;
+            isDockedLeft = true;
             targetX = marginX;
         }
         else if (absLeft + width > parent.Bounds.Width - snapThreshold)
         {
-            state.IsSnappedToEdge = true;
-            state.IsDockedLeft = false;
+            isSnapped = true;
+            isDockedLeft = false;
             targetX = parent.Bounds.Width - marginX - width;
         }
         else
@@ -266,6 +361,28 @@ public class FloatingDockBehavior : AvaloniaObject
             if (targetX < 16) targetX = 16;
             if (targetX + width > parent.Bounds.Width - 16) targetX = parent.Bounds.Width - 16 - width;
         }
+
+        // 更新全局状态
+        GlobalDockState.IsInitialized = true;
+        GlobalDockState.IsSnappedToEdge = isSnapped;
+        GlobalDockState.IsDockedLeft = isDockedLeft;
+        GlobalDockState.TargetY = targetY;
+        GlobalDockState.TargetX = targetX;
+
+        // 立即同步到其他激活的控件
+        foreach (var c in _activeControls)
+        {
+            if (c != control && _states.TryGetValue(c, out var s))
+            {
+                s.IsSnappedToEdge = GlobalDockState.IsSnappedToEdge;
+                s.IsDockedLeft = GlobalDockState.IsDockedLeft;
+                ApplySolidState(c, s);
+            }
+        }
+
+        // 更新当前拖拽控件状态
+        state.IsSnappedToEdge = isSnapped;
+        state.IsDockedLeft = isDockedLeft;
 
         // 启用过渡动画并执行移动
         EnableTransitions(control, true);
@@ -279,20 +396,7 @@ public class FloatingDockBehavior : AvaloniaObject
         // 动画完成后固化状态（解决窗口 Resize 时的锚点对齐问题）
         if (state.IsSnappedToEdge)
         {
-            EnableTransitions(control, false);
-            if (state.IsDockedLeft)
-            {
-                control.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
-                control.Margin = new Thickness(marginX, targetY, 0, 0);
-            }
-            else
-            {
-                control.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right;
-                control.Margin = new Thickness(0, targetY, marginX, 0);
-            }
-            // 确保渲染管线在无动画状态下应用了新属性
-            await Task.Delay(16);
-            EnableTransitions(control, true);
+            ApplySolidState(control, state);
         }
     }
 }
