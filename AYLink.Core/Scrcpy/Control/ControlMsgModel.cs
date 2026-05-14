@@ -422,7 +422,7 @@ public class ControlMsgModel
             WriteBigEndian(writer, (ushort)0);       // vendor_id (2 byte)
             WriteBigEndian(writer, (ushort)0);       // product_id (2 byte)
             
-            string name = data.Name ?? "scrcpy";
+            string name = data.Name ?? "AYLink";
             byte[] nameBytes = Encoding.UTF8.GetBytes(name);
             int nameLen = Math.Min(nameBytes.Length, 127);
             writer.Write((byte)nameLen);             // 名称长度 (1字节)

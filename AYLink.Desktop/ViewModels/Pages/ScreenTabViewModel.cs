@@ -16,6 +16,7 @@ using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using static AYLink.Core.Scrcpy.Control.ControlMsgModel;
 
@@ -35,6 +36,9 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     [ObservableProperty]
     public partial Avalonia.Media.Imaging.WriteableBitmap? VideoSource { get; set; }
+    
+    [ObservableProperty]
+    private bool _isMouseLocked;
     
     public IInputProcessor InputProcessor { get; private set; } = new DefaultInputProcessor();
 
@@ -59,6 +63,11 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     /// 视频 Image 控件引用
     /// </summary>
     private Image? _videoImage;
+    private InputElement? _keyboardEventHost;
+    private IPointer? _activePointer;
+    private Point? _lastPointerViewPoint;
+    private int? _lastPointerHash;
+    private bool _ignoreNextLockedPointerMove;
 
     public ScreenTabViewModel(DeviceModel device, string? appPackageName = null, string? appDisplayName = null)
     {
@@ -146,7 +155,12 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             deviceConfig.ApplyConfig(Device.ServerOptions);
 
             // 根据配置选择输入处理器
-            InputProcessor?.Dispose();
+            if (InputProcessor != null)
+            {
+                InputProcessor.CursorLockRequested -= OnCursorLockRequested;
+                InputProcessor.Dispose();
+            }
+
             if (Device.ServerOptions.HidKeyboard || Device.ServerOptions.HidMouse)
             {
                 InputProcessor = new HidInputProcessor(Device.ServerOptions.HidKeyboard, Device.ServerOptions.HidMouse);
@@ -156,9 +170,13 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 InputProcessor = new DefaultInputProcessor();
             }
 
+            InputProcessor.CursorLockRequested += OnCursorLockRequested;
+            InputProcessor.SetCursorLocked(IsMouseLocked);
+
             _scrcpyClient = new ScrcpyClient(Device);
             
             // 使用适配器将 ScrcpyClient 转换为 IControlCommandSender
+            // 注意：此时控制 Socket 尚未连接
             InputProcessor.SetSender(new ScrcpyClientCommandSender(_scrcpyClient));
 
             // 订阅视频帧解码事件
@@ -285,7 +303,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                     throw new Exception("Failed to connect to scrcpy server.");
                 }
 
-                // 连接建立后，向设备发送 UHID 创建命令（如果需要 HID 处理器）
+                // 连接建立后，向设备发送 UHID 创建命令（如果是 HID 处理器）
                 if (InputProcessor is HidInputProcessor hidProcessor)
                 {
                     hidProcessor.CreateDevices();
@@ -325,6 +343,58 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
             var localizer = Services.Localization.LocalizationManager.Instance;
             Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("ScreenTab.ConnectFailed", "杩炴帴澶辫触"), ex.Message);
+        }
+    }
+
+    private void OnCursorLockRequested(bool locked)
+    {
+        ApplyMouseLockState(locked);
+        ShowMouseLockToast(locked);
+    }
+
+    [RelayCommand]
+    private void ToggleMouseLock()
+    {
+        var locked = !IsMouseLocked;
+        ApplyMouseLockState(locked);
+        ShowMouseLockToast(locked);
+    }
+
+    private void ApplyMouseLockState(bool locked)
+    {
+        InputProcessor.SetCursorLocked(locked);
+        IsMouseLocked = locked;
+        ResetPointerMotionTracking();
+        _ignoreNextLockedPointerMove = false;
+
+        if (!locked)
+        {
+            _activePointer?.Capture(null);
+            _isPointerCaptured = false;
+        }
+        else
+        {
+            CenterCursorInVideoImage();
+        }
+
+    }
+
+    private static void ShowMouseLockToast(bool locked)
+    {
+        var localizer = Services.Localization.LocalizationManager.Instance;
+        if (locked)
+        {
+            Services.Notifications.ToastManager.Instance.Show(
+                localizer.GetString("ScreenTab.CursorLockedTitle", "光标已锁定"),
+                localizer.GetString("ScreenTab.CursorLockedMessage", "按 Alt 键解锁光标")
+            );
+        }
+        else
+        {
+            Services.Notifications.ToastManager.Instance.Show(
+                localizer.GetString("ScreenTab.CursorUnlockedTitle", "光标已解锁"),
+                localizer.GetString("ScreenTab.CursorUnlockedMessage", "光标已恢复自由移动")
+            );
         }
     }
 
@@ -451,16 +521,17 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         _videoImage.SizeChanged += VideoImage_SizeChanged;
         _videoImage.PointerWheelChanged += VideoImage_PointerWheelChanged;
 
-        _videoImage.AddHandler(
+        _keyboardEventHost = TopLevel.GetTopLevel(_videoImage) as InputElement;
+        _keyboardEventHost?.AddHandler(
             InputElement.KeyDownEvent,
             VideoImage_KeyDown,
-            Avalonia.Interactivity.RoutingStrategies.Bubble,
+            Avalonia.Interactivity.RoutingStrategies.Tunnel,
             handledEventsToo: true);
 
-        _videoImage.AddHandler(
+        _keyboardEventHost?.AddHandler(
             InputElement.KeyUpEvent,
             VideoImage_KeyUp,
-            Avalonia.Interactivity.RoutingStrategies.Bubble,
+            Avalonia.Interactivity.RoutingStrategies.Tunnel,
             handledEventsToo: true);
 
         _videoImage.Focusable = true;
@@ -477,35 +548,71 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
         _videoImage.RemoveHandler(InputElement.PointerPressedEvent, VideoImage_PointerPressed);
         _videoImage.RemoveHandler(InputElement.PointerReleasedEvent, VideoImage_PointerReleased);
-        _videoImage.RemoveHandler(InputElement.KeyDownEvent, VideoImage_KeyDown);
-        _videoImage.RemoveHandler(InputElement.KeyUpEvent, VideoImage_KeyUp);
+        _keyboardEventHost?.RemoveHandler(InputElement.KeyDownEvent, VideoImage_KeyDown);
+        _keyboardEventHost?.RemoveHandler(InputElement.KeyUpEvent, VideoImage_KeyUp);
+        _keyboardEventHost = null;
 
         InputProcessor.ClearAll();
         _isPointerCaptured = false;
+        ResetPointerMotionTracking();
     }
 
     private void VideoImage_KeyDown(object? sender, KeyEventArgs e)
     {
+        if (IsMouseLocked && e.Key == Key.Escape)
+        {
+            ApplyMouseLockState(false);
+            ShowMouseLockToast(false);
+            e.Handled = true;
+            return;
+        }
+
+        if (InputProcessor is HidInputProcessor && IsAltToggleKey(e))
+        {
+            var locked = !IsMouseLocked;
+            ApplyMouseLockState(locked);
+            ShowMouseLockToast(locked);
+            e.Handled = true;
+            return;
+        }
+
         InputProcessor.ProcessKey(new KeyInput
         {
             EventType = KeyEventType.Down,
             KeyName = e.Key.ToString()
         });
+        
+        if (IsMouseLocked)
+        {
+            e.Handled = true; // 拦截按键以免触发系统焦点移动
+        }
     }
 
     private void VideoImage_KeyUp(object? sender, KeyEventArgs e)
     {
+        if (InputProcessor is HidInputProcessor && IsAltToggleKey(e))
+        {
+            e.Handled = true;
+            return;
+        }
+
         InputProcessor.ProcessKey(new KeyInput
         {
             EventType = KeyEventType.Up,
             KeyName = e.Key.ToString()
         });
+        
+        if (IsMouseLocked)
+        {
+            e.Handled = true;
+        }
     }
 
     private void VideoImage_SizeChanged(object? sender, SizeChangedEventArgs e)
     {
         InputProcessor.ClearAll();
         _isPointerCaptured = false;
+        ResetPointerMotionTracking();
     }
 
     public void UpdateContainerSize(Size newSize)
@@ -568,8 +675,16 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     {
         if (Device?.DeviceData == null || _videoImage == null) return;
 
+        _activePointer = e.Pointer;
+
+        if (!_videoImage.IsFocused)
+        {
+            _videoImage.Focus();
+        }
+
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
+        TrackPointerMotion(e.Pointer.GetHashCode(), viewPoint);
 
         InputProcessor.ProcessPointer(new PointerInput
         {
@@ -578,14 +693,20 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             PointerHash = e.Pointer.GetHashCode()
         });
 
-        e.Pointer.Capture(_videoImage);
-        _isPointerCaptured = true;
+        var shouldCapturePointer = IsMouseLocked || e.GetCurrentPoint(_videoImage).Properties.IsLeftButtonPressed;
+        if (shouldCapturePointer)
+        {
+            e.Pointer.Capture(_videoImage);
+            _isPointerCaptured = true;
+        }
     }
 
     private void VideoImage_PointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        // HID 模式下或者触摸模式下 都可以发送滚轮事件 不需要判断是否已捕获
+        // HID 模式下或者触摸模式下，都可以发送滚轮事件，不需要判断是否已捕获
         if (Device?.DeviceData == null || _videoImage == null) return;
+
+        _activePointer = e.Pointer;
 
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
@@ -601,17 +722,66 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void VideoImage_PointerMoved(object? sender, PointerEventArgs e)
     {
-        // 允许悬停事件传递下去 对于 HID 鼠标这是移动光标 对于 Default 则内部会判断并忽略
+        // 允许悬停事件传递下去，对于 HID 鼠标这是移动光标，对于 Default 则内部会判断并忽略
         if (Device?.DeviceData == null || _videoImage == null) return;
+
+        _activePointer = e.Pointer;
+
+        if (IsMouseLocked && !_isPointerCaptured)
+        {
+            e.Pointer.Capture(_videoImage);
+            _isPointerCaptured = true;
+        }
 
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
+        var pointerHash = e.Pointer.GetHashCode();
+        Vector? relativeDelta;
+
+        if (InputProcessor is HidInputProcessor && !_isPointerCaptured)
+        {
+            ResetPointerMotionTracking();
+            return;
+        }
+
+        if (IsMouseLocked && InputProcessor is HidInputProcessor)
+        {
+            var centerPoint = new Point(_videoImage.Bounds.Width / 2, _videoImage.Bounds.Height / 2);
+            if (_ignoreNextLockedPointerMove)
+            {
+                _ignoreNextLockedPointerMove = false;
+                var warpDelta = viewPoint - centerPoint;
+                if (Math.Abs(warpDelta.X) <= 1.5 && Math.Abs(warpDelta.Y) <= 1.5)
+                {
+                    TrackPointerMotion(pointerHash, centerPoint);
+                    return;
+                }
+            }
+
+            var deltaFromCenter = viewPoint - centerPoint;
+            relativeDelta = (Math.Abs(deltaFromCenter.X) > 0.1 || Math.Abs(deltaFromCenter.Y) > 0.1)
+                ? deltaFromCenter
+                : null;
+
+            TrackPointerMotion(pointerHash, centerPoint);
+
+            if (relativeDelta.HasValue)
+            {
+                CenterCursorInVideoImage();
+            }
+        }
+        else
+        {
+            relativeDelta = GetRelativePointerDelta(pointerHash, viewPoint);
+        }
 
         InputProcessor.ProcessPointer(new PointerInput
         {
             EventType = PointerEventType.Moved,
             Position = point,
-            PointerHash = e.Pointer.GetHashCode()
+            PointerHash = pointerHash,
+            RelativeDelta = relativeDelta ?? default,
+            HasRelativeDelta = relativeDelta.HasValue
         });
     }
 
@@ -619,8 +789,11 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     {
         if (!_isPointerCaptured || Device?.DeviceData == null || _videoImage == null) return;
 
+        _activePointer = e.Pointer;
+
         var viewPoint = e.GetPosition(_videoImage);
         var point = NormalizeCoordinates(viewPoint);
+        TrackPointerMotion(e.Pointer.GetHashCode(), viewPoint);
 
         InputProcessor.ProcessPointer(new PointerInput
         {
@@ -629,12 +802,17 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             PointerHash = e.Pointer.GetHashCode()
         });
         
-        e.Pointer.Capture(null);
-        _isPointerCaptured = false;
+        if (!IsMouseLocked)
+        {
+            e.Pointer.Capture(null);
+            _isPointerCaptured = false;
+        }
     }
 
     private void VideoImage_PointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
     {
+        _activePointer = e.Pointer;
+
         InputProcessor.ProcessPointer(new PointerInput
         {
             EventType = PointerEventType.CaptureLost,
@@ -642,7 +820,73 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         });
         e.Pointer.Capture(null);
         _isPointerCaptured = false;
+        ResetPointerMotionTracking();
     }
+
+    private static bool IsAltToggleKey(KeyEventArgs e)
+    {
+        return e.Key is Key.LeftAlt or Key.RightAlt
+               || e.Key == Key.System
+               || e.KeyModifiers.HasFlag(KeyModifiers.Alt)
+               || e.PhysicalKey.ToString().Contains("Alt", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private Vector? GetRelativePointerDelta(int pointerHash, Point currentViewPoint)
+    {
+        Vector? delta = null;
+
+        if (_lastPointerHash == pointerHash && _lastPointerViewPoint is Point lastPoint)
+        {
+            delta = currentViewPoint - lastPoint;
+        }
+
+        TrackPointerMotion(pointerHash, currentViewPoint);
+        return delta;
+    }
+
+    private void TrackPointerMotion(int pointerHash, Point currentViewPoint)
+    {
+        _lastPointerHash = pointerHash;
+        _lastPointerViewPoint = currentViewPoint;
+    }
+
+    private void ResetPointerMotionTracking()
+    {
+        _lastPointerHash = null;
+        _lastPointerViewPoint = null;
+    }
+
+    private void CenterCursorInVideoImage()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || _videoImage == null)
+        {
+            return;
+        }
+
+        var topLevel = TopLevel.GetTopLevel(_videoImage);
+        if (topLevel is not Window window)
+        {
+            return;
+        }
+
+        var centerInControl = new Point(_videoImage.Bounds.Width / 2, _videoImage.Bounds.Height / 2);
+        var centerInWindow = _videoImage.TranslatePoint(centerInControl, topLevel);
+        if (!centerInWindow.HasValue)
+        {
+            return;
+        }
+
+        var scale = topLevel.RenderScaling;
+        var screenX = window.Position.X + (int)Math.Round(centerInWindow.Value.X * scale);
+        var screenY = window.Position.Y + (int)Math.Round(centerInWindow.Value.Y * scale);
+
+        _ignoreNextLockedPointerMove = true;
+        SetCursorPos(screenX, screenY);
+    }
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool SetCursorPos(int x, int y);
 
     private Point NormalizeCoordinates(Point viewPoint)
     {
@@ -716,7 +960,11 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 _disposed = true;
                 DetachEventHandlers();
                 DetachVideoImage();
-                InputProcessor?.Dispose();
+                if (InputProcessor != null)
+                {
+                    InputProcessor.CursorLockRequested -= OnCursorLockRequested;
+                    InputProcessor.Dispose();
+                }
 
                 // 停止音频流
                 if (_audioStreamId >= 0)

@@ -16,10 +16,11 @@ public class DefaultInputProcessor : IInputProcessor
     private ulong _nextPointerId;
     private IControlCommandSender? _sender;
 
-    event Action<bool>? IInputProcessor.CursorLockRequested
+    public event Action<bool>? CursorLockRequested;
+
+    public void SetCursorLocked(bool locked)
     {
-        add { }
-        remove { }
+        // 默认注入模式不需要处理光标锁定状态
     }
 
     public void SetSender(IControlCommandSender? sender)

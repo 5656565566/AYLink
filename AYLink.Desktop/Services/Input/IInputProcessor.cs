@@ -15,6 +15,11 @@ public interface IInputProcessor : IDisposable
     event Action<bool>? CursorLockRequested;
 
     /// <summary>
+    /// 设置光标锁定状态
+    /// </summary>
+    void SetCursorLocked(bool locked);
+
+    /// <summary>
     /// 设置指令发送器，处理器通过此接口发送生成的控制指令
     /// </summary>
     /// <param name="sender">指令发送器，可能是一个具体的Client，或者多控分配器</param>

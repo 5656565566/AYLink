@@ -30,6 +30,16 @@ public class PointerInput
     /// 滚轮事件的 X、Y 偏移
     /// </summary>
     public Vector WheelDelta { get; set; }
+
+    /// <summary>
+    /// 指针相对上一帧的位移（用于 HID 相对鼠标）
+    /// </summary>
+    public Vector RelativeDelta { get; set; }
+
+    /// <summary>
+    /// 当前事件是否携带有效的相对位移
+    /// </summary>
+    public bool HasRelativeDelta { get; set; }
 }
 
 public enum KeyEventType

@@ -8,6 +8,7 @@ namespace AYLink.Desktop.Services.Input;
 /// <summary>
 /// HID 输入处理器
 /// 将输入事件转换为底层的 USB HID 报文并通过 UhidInput 消息发送给设备
+/// 需要 Android 12+ 并开启相应的选项
 /// </summary>
 public class HidInputProcessor : IInputProcessor
 {
@@ -28,16 +29,16 @@ public class HidInputProcessor : IInputProcessor
     // 当前鼠标按键状态 (位掩码)
     private byte _currentMouseButtons = 0;
 
-    // 用于计算相对位移的上一帧坐标
-    private Point? _lastMousePosition;
-
     // 记录按下的按键以便在 ClearAll 中释放
     private readonly HashSet<byte> _pressedKeys = [];
 
-    event Action<bool>? IInputProcessor.CursorLockRequested
+    private bool _isCursorLocked;
+    public event Action<bool>? CursorLockRequested;
+
+    public void SetCursorLocked(bool locked)
     {
-        add { }
-        remove { }
+        _isCursorLocked = locked;
+        _fallbackProcessor.SetCursorLocked(locked);
     }
 
     public HidInputProcessor(bool hidKeyboardEnabled, bool hidMouseEnabled)
@@ -102,6 +103,15 @@ public class HidInputProcessor : IInputProcessor
             return;
         }
 
+        // 未锁定鼠标时，投屏区域按普通触摸模式处理。
+        // 这样点击/拖动都会直接映射到屏幕坐标，避免 HID 相对鼠标在未锁定时只发送按键、
+        // 却没有稳定位置更新，导致点击落到设备当前鼠标光标位置。
+        if (!_isCursorLocked)
+        {
+            _fallbackProcessor.ProcessPointer(input);
+            return;
+        }
+
         int dx = 0;
         int dy = 0;
         int vWheel = 0;
@@ -111,13 +121,11 @@ public class HidInputProcessor : IInputProcessor
         {
             case PointerEventType.Pressed:
                 _currentMouseButtons |= 0x01; // 左键
-                _lastMousePosition = input.Position;
                 break;
 
             case PointerEventType.Released:
             case PointerEventType.CaptureLost:
                 _currentMouseButtons &= 0xFE; // 取消左键
-                _lastMousePosition = null;
                 break;
 
             case PointerEventType.WheelChanged:
@@ -127,21 +135,14 @@ public class HidInputProcessor : IInputProcessor
                 break;
 
             case PointerEventType.Moved:
-                if (_lastMousePosition != null)
+                if (input.HasRelativeDelta)
                 {
-                    // 计算相对增量
-                    double diffX = input.Position.X - _lastMousePosition.Value.X;
-                    double diffy = input.Position.Y - _lastMousePosition.Value.Y;
-                    
-                    // 放大倍数可以自行调节以改善手感
-                    dx = (int)(diffX * 1.5);
-                    dy = (int)(diffy * 1.5);
-
-                    _lastMousePosition = input.Position;
+                    double sensitivity = _isCursorLocked ? 1.0 : 1.5;
+                    dx = (int)Math.Round(input.RelativeDelta.X * sensitivity);
+                    dy = (int)Math.Round(input.RelativeDelta.Y * sensitivity);
                 }
                 else
                 {
-                    _lastMousePosition = input.Position;
                     return; // 第一次无增量
                 }
                 break;
@@ -179,6 +180,19 @@ public class HidInputProcessor : IInputProcessor
 
     public void ProcessKey(KeyInput input)
     {
+        // 捕获 ALT 键用于切换鼠标锁定
+        if (input.KeyName.ToUpper() == "LEFTALT" || input.KeyName.ToUpper() == "RIGHTALT" || input.KeyName.ToUpper() == "ALT")
+        {
+            if (input.EventType == KeyEventType.Down)
+            {
+                // 触发光标锁定状态切换
+                _isCursorLocked = !_isCursorLocked;
+                CursorLockRequested?.Invoke(_isCursorLocked);
+            }
+            // 不要把 Alt 键发送给设备，以免引起设备端焦点丢失或菜单弹出
+            return;
+        }
+
         // 如果未开启 HID 键盘，回退到默认的按键模拟注入
         if (!_hidKeyboardEnabled || _sender == null || !_isKeyboardCreated)
         {
