@@ -56,11 +56,7 @@
     "UninstallFailedMessage": "Error occurred while uninstalling app: {0}",
     "UninstallSuccessMessage": "{0} uninstalled",
     "Uninstalling": "Uninstalling {0}...",
-    "Uploading": "Uploading: {0}",
-    "InstallFailedTitle": "Installation Failed",
-    "InstallSuccessTitle": "Installation Successful",
-    "UninstallFailedTitle": "Uninstall Failed",
-    "UninstallSuccessTitle": "Uninstall Successful"
+    "Uploading": "Uploading: {0}"
   },
   "DeviceItem": {
     "ConfirmDisconnectMessage": "Are you sure you want to disconnect device {0} ({1})?",
@@ -119,6 +115,10 @@
     "EnableVideo_Description": "Request the server to send a video stream. No picture is displayed when off",
     "FlexDisplay": "Adaptive Display Size",
     "FlexDisplay_Description": "Automatically sync the virtual display size when the window is resized",
+    "HidKeyboard": "键盘 HID 输入",
+    "HidKeyboard_Description": "使用虚拟 HID 键盘设备进行输入（需要 Android 12+）",
+    "HidMouse": "鼠标 HID 输入",
+    "HidMouse_Description": "使用虚拟 HID 鼠标设备进行输入（需要 Android 12+）",
     "InputSource": "Input Source",
     "InvalidBitRate": "Please enter a valid bitrate, e.g., 8000000",
     "InvalidFps": "Please enter a valid framerate, e.g., 60 or 59.94",
@@ -279,12 +279,14 @@
     "ScreenOn": "Screen On",
     "Title": "Screen Mirroring",
     "VolumeDown": "Volume Down",
-    "VolumeUp": "Volume Up",
-    "CollapseSidebar": "Collapse Sidebar",
-    "ExpandSidebar": "Expand Sidebar"
+    "VolumeUp": "Volume Up"
   },
   "ScreenTab": {
-    "ConnectFailed": "Connection Failed"
+    "ConnectFailed": "Connection Failed",
+    "CursorLockedMessage": "按 Alt 键解锁光标",
+    "CursorLockedTitle": "光标已锁定",
+    "CursorUnlockedMessage": "光标已恢复自由移动",
+    "CursorUnlockedTitle": "光标已解锁"
   },
   "SettingsPage": {
     "About": "About",

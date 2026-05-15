@@ -56,11 +56,7 @@
     "UninstallFailedMessage": "卸载应用时发生错误: {0}",
     "UninstallSuccessMessage": "{0} 已卸载",
     "Uninstalling": "正在卸载 {0}...",
-    "Uploading": "正在上传: {0}",
-    "InstallFailedTitle": "安装失败",
-    "InstallSuccessTitle": "安装成功",
-    "UninstallFailedTitle": "卸载失败",
-    "UninstallSuccessTitle": "卸载成功"
+    "Uploading": "正在上传: {0}"
   },
   "DeviceItem": {
     "ConfirmDisconnectMessage": "确定要断开设备 {0} ({1}) 吗？",
@@ -119,6 +115,10 @@
     "EnableVideo_Description": "请求服务端发送视频流 关闭时不显示画面",
     "FlexDisplay": "自适应显示器大小",
     "FlexDisplay_Description": "调整窗口大小时，自动同步虚拟显示器尺寸",
+    "HidKeyboard": "键盘 HID 输入",
+    "HidKeyboard_Description": "使用虚拟 HID 键盘设备进行输入（需要 Android 12+）",
+    "HidMouse": "鼠标 HID 输入",
+    "HidMouse_Description": "使用虚拟 HID 鼠标设备进行输入（需要 Android 12+）",
     "InputSource": "输入源",
     "InvalidBitRate": "请输入合适的码率 例如 8000000",
     "InvalidFps": "请输入合适的帧数 例如 60 或 59.94",
@@ -279,12 +279,14 @@
     "ScreenOn": "亮屏",
     "Title": "投屏",
     "VolumeDown": "音量-",
-    "VolumeUp": "音量+",
-    "CollapseSidebar": "收起侧边栏",
-    "ExpandSidebar": "展开侧边栏"
+    "VolumeUp": "音量+"
   },
   "ScreenTab": {
-    "ConnectFailed": "连接失败"
+    "ConnectFailed": "连接失败",
+    "CursorLockedMessage": "按 Alt 键解锁光标",
+    "CursorLockedTitle": "光标已锁定",
+    "CursorUnlockedMessage": "光标已恢复自由移动",
+    "CursorUnlockedTitle": "光标已解锁"
   },
   "SettingsPage": {
     "About": "关于",
