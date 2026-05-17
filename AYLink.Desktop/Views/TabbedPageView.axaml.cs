@@ -21,17 +21,6 @@ namespace AYLink.Desktop.Views;
 /// 通用标签页视图控件
 /// 提供 TabView + 空状态 + 状态栏 的统一布局
 /// 通过 StyledProperty 注入具体的内容模板和状态栏模板
-///
-/// 支持浏览器风格的标签页脱离功能：
-/// - 向左右拖拽一小段距离即可分离
-/// - 向上下分离的距离是左右的 2 倍
-/// - 脱出标签页松手前鼠标有动画提示
-///
-/// 空标签页机制：
-/// - 当没有功能标签页时，自动显示一个不可关闭的空标签页
-/// - 空标签页显示提示信息（图标、标题、描述）
-/// - 当添加功能标签页时，空标签页自动消失
-/// - 当所有功能标签页关闭后，空标签页重新出现
 /// </summary>
 public partial class TabbedPageView : UserControl
 {
@@ -89,7 +78,9 @@ public partial class TabbedPageView : UserControl
     /// 空标签页的标题文本
     /// </summary>
     public static readonly StyledProperty<string> EmptyTabTitleProperty =
-        AvaloniaProperty.Register<TabbedPageView, string>(nameof(EmptyTabTitle), "新标签页");
+        AvaloniaProperty.Register<TabbedPageView, string>(nameof(EmptyTabTitle), 
+            Services.Localization.LocalizationManager.Instance.GetString("TabbedPageView.EmptyTabTitle", "空标签页")
+        );
 
     public string EmptyTabTitle
     {
@@ -333,12 +324,6 @@ public partial class TabbedPageView : UserControl
 
     /// <summary>
     /// 执行标签页脱离 - 创建独立窗口
-    ///
-    /// 关键：必须使用 Dispatcher.UIThread.Post 延迟执行 DetachTab，
-    /// 因为 FluentAvalonia 的 TabViewListView 在 PointerReleased 事件链中
-    /// 还会调用 EndReorder() 访问集合索引。如果在事件链中同步移除集合项，
-    /// 会导致 EndReorder() 中 Index was out of range 的
-    /// ArgumentOutOfRangeException 崩溃。
     /// </summary>
     private void PerformTearOff(PointerReleasedEventArgs e)
     {
@@ -364,7 +349,7 @@ public partial class TabbedPageView : UserControl
             windowPos = new PixelPoint(100, 100);
         }
 
-        // 延迟执行：让 FluentAvalonia TabViewListView.EndReorder() 先完成，
+        // 延迟执行 让 FluentAvalonia TabViewListView.EndReorder() 先完成
         // 然后再从集合中移除标签页并创建分离窗口
         Dispatcher.UIThread.Post(() =>
         {

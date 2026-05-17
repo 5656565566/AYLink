@@ -34,9 +34,9 @@
     "CopySuccessMessage": "Package name {0} copied to clipboard",
     "CopySuccessTitle": "Copied",
     "InstallAppTitle": "Install App",
-    "InstallCancelledMessage": "安装已取消",
+    "InstallCancelledMessage": "Installation cancelled",
     "InstallFailedMessage": "Error occurred while installing app: {0}",
-    "InstallInProgressMessage": "当前设备正在安装应用，请等待当前任务完成",
+    "InstallInProgressMessage": "The device is currently installing an app, please wait for the current task to finish",
     "InstallSuccessMessage": "APK installation complete",
     "Installing": "Installing: {0}",
     "LaunchFailedMessage": "Failed to launch app: {0}",
@@ -115,10 +115,10 @@
     "EnableVideo_Description": "Request the server to send a video stream. No picture is displayed when off",
     "FlexDisplay": "Adaptive Display Size",
     "FlexDisplay_Description": "Automatically sync the virtual display size when the window is resized",
-    "HidKeyboard": "键盘 HID 输入",
-    "HidKeyboard_Description": "使用虚拟 HID 键盘设备进行输入（需要 Android 12+）",
-    "HidMouse": "鼠标 HID 输入",
-    "HidMouse_Description": "使用虚拟 HID 鼠标设备进行输入（需要 Android 12+）",
+    "HidKeyboard": "Keyboard HID Input",
+    "HidKeyboard_Description": "Use virtual HID keyboard device for input (Requires Android 12+)",
+    "HidMouse": "Mouse HID Input",
+    "HidMouse_Description": "Use virtual HID mouse device for input (Requires Android 12+)",
     "InputSource": "Input Source",
     "InvalidBitRate": "Please enter a valid bitrate, e.g., 8000000",
     "InvalidFps": "Please enter a valid framerate, e.g., 60 or 59.94",
@@ -266,11 +266,11 @@
   },
   "ScreenPage": {
     "Back": "Back",
-    "CollapseToolbar": "收起工具栏",
+    "CollapseToolbar": "Collapse Toolbar",
     "EmptyStateDescription": "Please select a device on the home page to start screen mirroring",
     "EmptyStateTitle": "No Device Selected",
-    "ExpandToolbar": "展开工具栏",
-    "FullScreen": "全屏",
+    "ExpandToolbar": "Expand Toolbar",
+    "FullScreen": "Full Screen",
     "Home": "Home",
     "Menu": "Menu",
     "Mute": "Mute",
@@ -283,10 +283,10 @@
   },
   "ScreenTab": {
     "ConnectFailed": "Connection Failed",
-    "CursorLockedMessage": "按 Alt 键解锁光标",
-    "CursorLockedTitle": "光标已锁定",
-    "CursorUnlockedMessage": "光标已恢复自由移动",
-    "CursorUnlockedTitle": "光标已解锁"
+    "CursorLockedMessage": "Press Alt key to unlock cursor",
+    "CursorLockedTitle": "Cursor Locked",
+    "CursorUnlockedMessage": "Cursor unlocked and can move freely",
+    "CursorUnlockedTitle": "Cursor Unlocked"
   },
   "SettingsPage": {
     "About": "About",
@@ -364,6 +364,9 @@
     "NotConnected": "Not Connected",
     "SessionDisconnected": "Session disconnected",
     "SessionStartFailed": "Failed to start session: {0}"
+  },
+  "TabbedPageView": {
+    "EmptyTabTitle": "Empty Tab"
   },
   "TaskPage": {
     "CancelTask": "Cancel Task",

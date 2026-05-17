@@ -365,6 +365,9 @@
     "SessionDisconnected": "会话已断开",
     "SessionStartFailed": "会话启动失败: {0}"
   },
+  "TabbedPageView": {
+    "EmptyTabTitle": "空标签页"
+  },
   "TaskPage": {
     "CancelTask": "取消任务",
     "ClearFilter": "清空条件",
