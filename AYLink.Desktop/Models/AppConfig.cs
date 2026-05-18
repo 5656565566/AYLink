@@ -7,6 +7,7 @@ public class AppConfig
     public string Language { get; set; } = CultureInfo.CurrentUICulture.Name;
     public string? AudioOutputDevice { get; set; } = null;
     public int GlobalVolume { get; set; } = 100;
+    public bool MuteInBackground { get; set; } = false;
     public string ScrcpyServer { get; set; } = string.Empty;
     public string ScrcpyVersion { get; set; } = string.Empty;
     public string Adb { get; set; } = string.Empty;

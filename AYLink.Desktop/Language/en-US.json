@@ -320,6 +320,8 @@
     "JavaArchive": "Java Archive",
     "Language": "Language",
     "LanguageDescription": "Select the application's display language",
+    "MuteInBackground": "Mute in Background",
+    "MuteInBackgroundDescription": "Automatically mute when the app is in the background and resume when it returns to the foreground",
     "NotSelected": "Not Selected",
     "OnSelectedLanguageChanged": "Some texts require a restart to update",
     "OpenGithubUrl": "Open GitHub Repository",

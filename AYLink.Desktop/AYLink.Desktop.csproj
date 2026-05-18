@@ -69,15 +69,6 @@
       <Compile Remove="Services\Design\**\*.cs" />
   </ItemGroup>
 
-  <!-- 拦截发布过程 将指定的 DLL 从单文件打包中排除 使其保留在外部 -->
-  <Target Name="ExcludeAssembliesFromSingleFile" AfterTargets="ComputeResolvedFilesToPublishList">
-    <ItemGroup>
-      <ResolvedFileToPublish Update="@(ResolvedFileToPublish)" Condition="'%(FileName)' == 'FFmpeg.AutoGen'">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      </ResolvedFileToPublish>
-    </ItemGroup>
-  </Target>
-
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <SelfContained>true</SelfContained>
     <PublishReadyToRun>false</PublishReadyToRun>

@@ -76,6 +76,8 @@ public partial class DetachedTabWindow : Window
     {
         InitializeComponent();
 
+        Services.AppWindowActivationService.Instance.Register(this);
+
         // 同步主窗口的亚克力/背景图设置
         SyncWithMainWindowAppearance();
 
@@ -219,6 +221,8 @@ public partial class DetachedTabWindow : Window
 
     private void OnWindowClosed(object? sender, EventArgs e)
     {
+        Services.AppWindowActivationService.Instance.Unregister(this);
+
         // 先从管理器注销 防止其他窗口在关闭过程中尝试与此窗口交互
         DetachedTabWindowManager.Instance.Unregister(this);
 

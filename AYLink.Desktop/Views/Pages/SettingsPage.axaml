@@ -82,6 +82,13 @@
                 </ui:SettingsExpander.Footer>
             </ui:SettingsExpander>
 
+            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.MuteInBackground, DefaultText='后台静音'}"
+                                Description="{i18n:Tr SettingsPage.MuteInBackgroundDescription, DefaultText='当应用退到后台时自动静音，回到前台后恢复播放'}">
+                <ui:SettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding MuteInBackground}" />
+                </ui:SettingsExpander.Footer>
+            </ui:SettingsExpander>
+
             <!-- 外观设置 -->
             <TextBlock Text="{i18n:Tr SettingsPage.Appearance, DefaultText='外观'}" Classes="h2"/>
 

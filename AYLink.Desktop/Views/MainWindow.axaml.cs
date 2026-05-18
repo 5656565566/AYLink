@@ -31,6 +31,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        AppWindowActivationService.Instance.Register(this);
+
         // 注册全局背景图
         BackgroundImageManager.Instance.RegisterImageComponent(GlobalBackgroundImage);
         
@@ -106,6 +108,7 @@ public partial class MainWindow : Window
 
     private void MainWindow_Closed(object? sender, EventArgs e)
     {
+        AppWindowActivationService.Instance.Unregister(this);
         _navigationService.Navigated -= OnNavigationServiceNavigated;
 
         // 关闭所有脱离的标签页窗口

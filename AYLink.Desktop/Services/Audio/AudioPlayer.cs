@@ -33,7 +33,9 @@ public sealed unsafe class AudioPlayer : IDisposable
     private int _nextSourceId = 1;
     private Thread? _mixerThread;
     private volatile bool _shutdownRequested = false; // volatile 确保多线程可见性
-    private float _globalVolume = 1.0f;
+    private volatile float _globalVolume = 1.0f;
+    private volatile bool _muteInBackground = false;
+    private volatile bool _isAppActive = true;
 
     private bool _disposed = false;
     public bool IsAudioDeviceAvailable => _audioDevice != 0;
@@ -201,7 +203,7 @@ public sealed unsafe class AudioPlayer : IDisposable
                     {
                         short sample = (short)(sourceBuffer[i * 2] | (sourceBuffer[i * 2 + 1] << 8));
                         // 应用音源音量和全局音量
-                        mixBufferFloat[i] += sample / 32768.0f * 0.1f * source.Volume * _globalVolume;
+                        mixBufferFloat[i] += sample / 32768.0f * 0.1f * source.Volume * GetEffectiveGlobalVolume();
                     }
                 }
             }
@@ -335,6 +337,27 @@ public sealed unsafe class AudioPlayer : IDisposable
     public void SetGlobalVolume(float volume)
     {
         _globalVolume = Math.Max(0.0f, volume);
+    }
+
+    /// <summary>
+    /// 设置应用退到后台时是否静音
+    /// </summary>
+    public void SetMuteInBackground(bool muteInBackground)
+    {
+        _muteInBackground = muteInBackground;
+    }
+
+    /// <summary>
+    /// 设置应用当前是否处于前台
+    /// </summary>
+    public void SetAppActive(bool isActive)
+    {
+        _isAppActive = isActive;
+    }
+
+    private float GetEffectiveGlobalVolume()
+    {
+        return _muteInBackground && !_isAppActive ? 0.0f : _globalVolume;
     }
 
     /// <summary>

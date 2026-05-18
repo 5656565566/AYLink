@@ -47,6 +47,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
         ScrcpyVersion = _appConfig.ScrcpyVersion;
         SelectedAudioOutputDevice = _appConfig.AudioOutputDevice
             ?? LocalizationManager.Instance.GetString("SettingsPage.SystemDefault", "系统默认");
+        MuteInBackground = _appConfig.MuteInBackground;
         EnableAcrylic = _appConfig.EnableAcrylic;
         EnableBackgroundImage = _appConfig.EnableBackgroundImage;
         IsRandomBackground = _appConfig.BackgroundImageMode == "Random";
@@ -95,6 +96,9 @@ public partial class SettingsPageViewModel : PageViewModelBase
 
     [ObservableProperty]
     public partial string? SelectedAudioOutputDevice { get; set; }
+
+    [ObservableProperty]
+    public partial bool MuteInBackground { get; set; }
 
     [ObservableProperty]
     public partial LanguageInfo SelectedLanguage { get; set; }
@@ -157,6 +161,13 @@ public partial class SettingsPageViewModel : PageViewModelBase
         _appConfig.AudioOutputDevice = targetDevice;
         _audioPlayer.ConfigureAudioDevice(_appConfig.AudioOutputDevice);
         SaveConfig();
+    }
+
+    partial void OnMuteInBackgroundChanged(bool value)
+    {
+        _appConfig.MuteInBackground = value;
+        SaveConfig();
+        _audioPlayer.SetMuteInBackground(value);
     }
 
     partial void OnSelectedLanguageChanged(LanguageInfo value)

@@ -104,6 +104,7 @@ public partial class MainWindowViewModel : ViewModelBase
         // 初始化音频播放器
         _audioPlayer.ConfigureAudioDevice(appConfig.AudioOutputDevice);
         _audioPlayer.SetGlobalVolume(appConfig.GlobalVolume);
+        _audioPlayer.SetMuteInBackground(appConfig.MuteInBackground);
     }
 
     /// <summary>

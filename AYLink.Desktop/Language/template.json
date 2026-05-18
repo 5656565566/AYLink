@@ -320,6 +320,8 @@
     "JavaArchive": "Java Archive",
     "Language": "语言",
     "LanguageDescription": "选择应用程序的显示语言",
+    "MuteInBackground": "后台静音",
+    "MuteInBackgroundDescription": "当应用退到后台时自动静音，回到前台后恢复播放",
     "NotSelected": "未选择",
     "OnSelectedLanguageChanged": "部分文本需要重启后更新",
     "OpenGithubUrl": "打开 GitHub 仓库",
