@@ -6,6 +6,8 @@
 [English](README_EN.md) | **简体中文**
 
 **安易连（AYLink）** 是一款基于 [scrcpy](https://github.com/Genymobile/scrcpy) 核心驱动的跨平台安卓设备投屏与控制客户端。本项目使用 [Avalonia UI](https://avaloniaui.net/) 框架采用 C# 编写，致力于提供流畅、美观且支持多平台的桌面级安卓设备管理体验。
+- 如果你在找网页客户端 [AYLink.Extra](https://github.com/5656565566/AYLink.Extra) 该仓库包含了一个网页客户端，可以远程使用
+
 
 > [!TIP]
 > 本项目最初为业余学习 Avalonia 框架的实践之作。无法保证绝对稳定无误。遇到任何问题或有好的建议，欢迎随时通过 Issue 提交反馈！
@@ -18,7 +20,7 @@
 
 ## 📸 界面展示
 
-| 主界面 | 功能设置 |
+| **主界面** | **功能设置** |
 | :---: | :---: |
 | ![主界面](screenshot/1.png) | ![功能设置](screenshot/2.png) |
 | **投屏窗口** | **终端** |
