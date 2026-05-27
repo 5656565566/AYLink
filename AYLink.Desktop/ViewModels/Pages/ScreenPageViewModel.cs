@@ -28,13 +28,23 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
         return tab;
     }
 
-    protected override void OnTabClosed(ScreenTabViewModel tab) => tab.Dispose();
+    protected override void OnTabClosed(ScreenTabViewModel tab) { }
 
     public override void OnNavigatedTo(object? parameter = null)
     {
         if (parameter is ScreenNavigationArgs args)
         {
-            AddNewTabWithApp(args.Device, args.AppPackageName, args.AppDisplayName);
+            if (args.RemoteDevice != null && !string.IsNullOrWhiteSpace(args.ServerId))
+            {
+                AddRemoteTab(args.RemoteDevice, args.ServerId, args.AppPackageName, args.AppDisplayName);
+                IsActive = true;
+                return;
+            }
+
+            if (args.Device != null)
+            {
+                AddNewTabWithApp(args.Device, args.AppPackageName, args.AppDisplayName);
+            }
             IsActive = true;
             return;
         }
@@ -52,6 +62,26 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
         RegisterTab(newTab);
     }
 
+    /// <summary>
+    /// 添加远程 Agent 投屏标签页
+    /// </summary>
+    /// <param name="remoteDevice">远程设备摘要</param>
+    /// <param name="serverId">所属服务器标识</param>
+    /// <param name="appPackageName">可选应用包名</param>
+    /// <param name="appDisplayName">可选应用显示名称</param>
+    public void AddRemoteTab(AYLink.Core.Devices.DeviceDescriptor remoteDevice, string serverId, string? appPackageName, string? appDisplayName)
+    {
+        var server = AgentSessionService.Instance.FindServer(serverId);
+        if (server == null)
+        {
+            throw new InvalidOperationException($"未找到远程服务器 {serverId}");
+        }
+
+        var newTab = new ScreenTabViewModel(remoteDevice, server, appPackageName, appDisplayName);
+        ConfigureTab(newTab);
+        RegisterTab(newTab);
+    }
+
     private void ConfigureTab(ScreenTabViewModel tab)
     {
         tab.SetKeyboardInputGate(() => IsActive && SelectedTab == tab);
@@ -63,11 +93,6 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
     /// </summary>
     public override void Dispose()
     {
-        foreach (var tab in Tabs)
-        {
-            tab.Dispose();
-        }
-
         base.Dispose();
         GC.SuppressFinalize(this);
     }

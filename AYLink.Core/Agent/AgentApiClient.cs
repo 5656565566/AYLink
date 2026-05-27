@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -140,6 +141,80 @@ public sealed class AgentApiClient
     public Task<AgentWebRtcNetworkSettingsDto> SaveWebRtcNetworkSettingsAsync(string accessToken, AgentWebRtcNetworkSettingsDto settings, CancellationToken cancellationToken = default)
         => SendAsync<AgentWebRtcNetworkSettingsDto>(HttpMethod.Put, "/api/settings/webrtc-network", settings, accessToken, cancellationToken);
 
+    /// <summary>
+    /// 创建一个新的 Agent WebRTC 投屏票据
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="request">票据创建参数</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>会话票据响应</returns>
+    public Task<AgentWebRtcTicketResponse> CreateWebRtcTicketAsync(string accessToken, AgentWebRtcTicketRequest request, CancellationToken cancellationToken = default)
+        => SendAsync<AgentWebRtcTicketResponse>(HttpMethod.Post, "/api/webrtc-ticket", request, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 获取设备控制权限可访问的 WebRTC 网络设置
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>WebRTC 网络设置</returns>
+    public Task<AgentWebRtcNetworkSettingsDto> GetControlWebRtcNetworkSettingsAsync(string accessToken, CancellationToken cancellationToken = default)
+        => SendAsync<AgentWebRtcNetworkSettingsDto>(HttpMethod.Get, "/api/control/webrtc-network", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 向 Agent 汇报当前 scrcpy 会话仍然存活
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备标识</param>
+    /// <param name="sessionId">当前会话标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>会话保活结果</returns>
+    public Task<AgentBooleanResponse> TouchScrcpySessionAsync(string accessToken, string deviceId, string sessionId, CancellationToken cancellationToken = default)
+        => SendAsync<AgentBooleanResponse>(
+            HttpMethod.Post,
+            "/api/scrcpy-sessions/heartbeat",
+            new AgentScrcpySessionActionRequest { DeviceId = deviceId, SessionId = sessionId },
+            accessToken,
+            cancellationToken);
+
+    /// <summary>
+    /// 通知 Agent 主动释放当前 scrcpy 会话
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备标识</param>
+    /// <param name="sessionId">当前会话标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>会话释放结果</returns>
+    public Task<AgentBooleanResponse> ReleaseScrcpySessionAsync(string accessToken, string deviceId, string sessionId, CancellationToken cancellationToken = default)
+        => SendAsync<AgentBooleanResponse>(
+            HttpMethod.Post,
+            "/api/scrcpy-sessions/release",
+            new AgentScrcpySessionActionRequest { DeviceId = deviceId, SessionId = sessionId },
+            accessToken,
+            cancellationToken);
+
+    /// <summary>
+    /// 构造当前 Agent 的 WebRTC 信令 WebSocket 地址
+    /// </summary>
+    /// <param name="ticket">已签发的会话票据</param>
+    /// <returns>WebSocket 连接地址</returns>
+    public Uri BuildWebRtcSignalUri(string ticket)
+    {
+        if (string.IsNullOrWhiteSpace(ticket))
+        {
+            throw new ArgumentException("Ticket cannot be empty.", nameof(ticket));
+        }
+
+        var baseUri = _httpClient.BaseAddress ?? throw new InvalidOperationException("BaseAddress is not configured.");
+        var builder = new UriBuilder(baseUri)
+        {
+            Scheme = string.Equals(baseUri.Scheme, "https", StringComparison.OrdinalIgnoreCase) ? "wss" : "ws",
+            Path = "/webrtc",
+            Query = $"ticket={Uri.EscapeDataString(ticket.Trim())}"
+        };
+
+        return builder.Uri;
+    }
+
     private async Task<T> SendAsync<T>(
         HttpMethod method,
         string path,
@@ -168,6 +243,7 @@ public sealed class AgentApiClient
 
         if (!response.IsSuccessStatusCode)
         {
+            Debug.WriteLine($"[AgentApi] {method} {path} failed: {(int)response.StatusCode} {response.ReasonPhrase}; body={content}");
             throw new AgentApiException(response.StatusCode, ParseErrorMessage(content) ?? response.ReasonPhrase ?? "Request failed.");
         }
 
@@ -234,6 +310,18 @@ public sealed class AgentStatusResponse
     /// </summary>
     [JsonProperty("status")]
     public string Status { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Agent 布尔值结果响应模型
+/// </summary>
+public sealed class AgentBooleanResponse
+{
+    /// <summary>
+    /// 当前请求是否成功
+    /// </summary>
+    [JsonProperty("success")]
+    public bool Success { get; set; }
 }
 
 /// <summary>
@@ -393,6 +481,78 @@ public sealed class AgentCreateDeviceRequest
 }
 
 /// <summary>
+/// Agent WebRTC 票据创建请求模型
+/// </summary>
+public sealed class AgentWebRtcTicketRequest
+{
+    /// <summary>
+    /// 服务端设备标识
+    /// </summary>
+    [JsonProperty("deviceId")]
+    public string DeviceId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 目标应用包名
+    /// </summary>
+    [JsonProperty("appPackage")]
+    public string AppPackage { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 目标应用显示名称
+    /// </summary>
+    [JsonProperty("appName")]
+    public string AppName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 是否请求创建新显示
+    /// </summary>
+    [JsonProperty("newDisplay")]
+    public bool NewDisplay { get; set; }
+
+    /// <summary>
+    /// 新显示宽度
+    /// </summary>
+    [JsonProperty("newDisplayWidth")]
+    public int? NewDisplayWidth { get; set; }
+
+    /// <summary>
+    /// 新显示高度
+    /// </summary>
+    [JsonProperty("newDisplayHeight")]
+    public int? NewDisplayHeight { get; set; }
+
+    /// <summary>
+    /// 新显示 DPI
+    /// </summary>
+    [JsonProperty("newDisplayDpi")]
+    public int? NewDisplayDpi { get; set; }
+}
+
+/// <summary>
+/// Agent WebRTC 票据响应模型
+/// </summary>
+public sealed class AgentWebRtcTicketResponse
+{
+    /// <summary>
+    /// 一次性会话票据
+    /// </summary>
+    [JsonProperty("ticket")]
+    public string Ticket { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 当前 WebRTC 会话标识
+    /// </summary>
+    [JsonProperty("sessionId")]
+    public string SessionId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 票据剩余有效期
+    /// </summary>
+    [JsonProperty("expiresInSeconds")]
+    public int ExpiresInSeconds { get; set; }
+}
+
+/// <summary>
 /// Agent 全局 WebRTC 网络设置模型
 /// </summary>
 public sealed class AgentWebRtcNetworkSettingsDto
@@ -486,4 +646,22 @@ internal sealed class AgentErrorResponse
     /// </summary>
     [JsonProperty("message")]
     public string? Message { get; set; }
+}
+
+/// <summary>
+/// Agent scrcpy 会话动作请求模型
+/// </summary>
+internal sealed class AgentScrcpySessionActionRequest
+{
+    /// <summary>
+    /// 服务端设备标识
+    /// </summary>
+    [JsonProperty("deviceId")]
+    public string DeviceId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 当前会话标识
+    /// </summary>
+    [JsonProperty("sessionId")]
+    public string SessionId { get; set; } = string.Empty;
 }

@@ -35,7 +35,7 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     public bool IsConnected => Device.IsConnected;
     public bool IsLocal => Device.SourceKind == DeviceSourceKind.Local;
     public bool IsRemote => Device.SourceKind == DeviceSourceKind.Agent;
-    public bool CanMirror => IsLocal && HasCapability(DeviceCapability.Mirror);
+    public bool CanMirror => HasCapability(DeviceCapability.Mirror);
     public bool CanOpenFileManager => IsLocal && HasCapability(DeviceCapability.FileManager);
     public bool CanOpenAppManager => IsLocal && HasCapability(DeviceCapability.AppManager);
     public bool CanOpenShell => IsLocal && HasCapability(DeviceCapability.Shell);
@@ -167,6 +167,16 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     [RelayCommand]
     private async Task Mirror()
     {
+        if (IsRemote)
+        {
+            Navigation.NavigateTo("Screen", new Services.ScreenNavigationArgs
+            {
+                RemoteDevice = Device,
+                ServerId = Device.ProviderId
+            });
+            return;
+        }
+
         var localDevice = await GetLocalDeviceOrNotifyAsync();
         if (localDevice == null)
         {

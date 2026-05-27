@@ -181,7 +181,7 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
     /// <summary>
     /// 统一的 Tab 关闭处理
     /// </summary>
-    private void OnTabCloseRequested(TabItemViewModelBase tab)
+    private async void OnTabCloseRequested(TabItemViewModelBase tab)
     {
         if (tab is not TTab typedTab) return;
 
@@ -195,10 +195,7 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
         }
         Tabs.Remove(typedTab);
         OnTabClosed(typedTab);
-        if (typedTab is ITabLifecycleAware disposableLifecycleAware)
-        {
-            disposableLifecycleAware.Dispose();
-        }
+        await TabShutdownHelper.StopAndDisposeAsync(typedTab);
 
         if (Tabs.Count == 0)
         {
@@ -240,8 +237,8 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
             if (tab is ITabLifecycleAware lifecycleAware)
             {
                 lifecycleAware.OnDetachedFromHost();
-                lifecycleAware.Dispose();
             }
+            TabShutdownHelper.StopAndDispose(tab);
         }
 
         Tabs.Clear();

@@ -185,7 +185,7 @@ public sealed class AgentDeviceProvider(AgentServerRuntime runtime) : IDevicePro
             ConnectionType = InferConnectionType(dto.Serial, dto.IpAddress),
             Status = dto.Status,
             IsConnected = string.Equals(dto.Status, "online", StringComparison.OrdinalIgnoreCase),
-            Capabilities = DeviceCapability.Connect | DeviceCapability.Rename,
+            Capabilities = DeviceCapability.Connect | DeviceCapability.Rename | DeviceCapability.Mirror,
             RemoteDeviceId = dto.Id
         };
     }

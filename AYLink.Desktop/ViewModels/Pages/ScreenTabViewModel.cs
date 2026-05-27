@@ -1,5 +1,7 @@
 ﻿using AYLink.Core.Models;
 using AYLink.Core.Scrcpy.Control;
+using AYLink.Core.Agent;
+using AYLink.Core.Devices;
 using AYLink.Core.Scrcpy;
 using AYLink.Core.Utils;
 using AYLink.Desktop.Models;
@@ -24,8 +26,11 @@ namespace AYLink.Desktop.ViewModels.Pages;
 /// 投屏标签页 ViewModel - 每个设备对应一个标签页
 /// 管理 ScrcpyClient 连接、视频渲染和控制输入
 /// </summary>
-public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
+public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable, IAsyncTabStopAware
 {
+    private readonly DeviceDescriptor? _remoteDevice;
+    private readonly AgentServerRuntime? _remoteServer;
+
     [ObservableProperty]
     public partial bool IsConnected { get; set; }
 
@@ -47,12 +52,14 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     private readonly AudioPlayer _audioPlayer = AudioPlayer.Instance;
     private Size _containerSize;
     private bool _hasReceivedFirstVideoFrame;
+    private int _renderedFrameCount;
     private Size? _pendingResizeSize;
     private Size? _lastResizeRequestSize;
     private readonly DispatcherTimer _resizeThrottleTimer;
     private readonly IMouseLockService _mouseLockService = new SdlMouseLockService();
     private readonly ScreenInputCoordinator _inputCoordinator;
-    private readonly ScreenSessionController _sessionController;
+    private readonly ScreenSessionController? _sessionController;
+    private readonly AgentScreenSessionController? _agentSessionController;
     private static readonly TimeSpan ResizeThrottleInterval = TimeSpan.FromMilliseconds(120);
 
     /// <summary>
@@ -77,13 +84,45 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             _mouseLockService,
             () => IsMouseLocked,
             CanHandleKeyboardInput,
-            () => Device?.DeviceData != null,
+            () => IsConnected && (_agentSessionController != null || Device?.DeviceData != null),
             NormalizeCoordinates,
             ApplyMouseLockState);
         _sessionController.VideoFrameDecoded += OnVideoFrameDecoded;
 
         var titleAppName = string.IsNullOrWhiteSpace(appDisplayName) ? appPackageName : appDisplayName;
         Title = titleAppName != null ? $"{device.Name} - {titleAppName}" : device.Name;
+    }
+
+    public ScreenTabViewModel(DeviceDescriptor remoteDevice, AgentServerRuntime remoteServer, string? appPackageName = null, string? appDisplayName = null)
+    {
+        _remoteDevice = remoteDevice;
+        _remoteServer = remoteServer;
+        _appPackageName = appPackageName;
+        _appDisplayName = appDisplayName;
+        _resizeThrottleTimer = new DispatcherTimer
+        {
+            Interval = ResizeThrottleInterval
+        };
+        _resizeThrottleTimer.Tick += OnResizeThrottleTimerTick;
+        _agentSessionController = new AgentScreenSessionController(
+            new AgentWebRtcSession(remoteServer.Client, remoteServer.EnsureAccessTokenAsync),
+            _audioPlayer);
+        _agentSessionController.Session.SessionError += ex =>
+            Debug.WriteLine($"[ScreenTab][Remote] session error: {ex}");
+        _agentSessionController.Session.StateChanged += state =>
+            Debug.WriteLine($"[ScreenTab][Remote] session state: {state}");
+        _inputCoordinator = new ScreenInputCoordinator(
+            () => InputProcessor,
+            _mouseLockService,
+            () => IsMouseLocked,
+            CanHandleKeyboardInput,
+            () => IsConnected,
+            NormalizeCoordinates,
+            ApplyMouseLockState);
+        _agentSessionController.VideoFrameDecoded += OnVideoFrameDecoded;
+
+        var titleAppName = string.IsNullOrWhiteSpace(appDisplayName) ? appPackageName : appDisplayName;
+        Title = titleAppName != null ? $"{remoteDevice.Name} - {titleAppName}" : remoteDevice.Name;
     }
 
     public void SetKeyboardInputGate(Func<bool> keyboardInputGate)
@@ -106,7 +145,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         _videoImage = videoImage;
         _mouseLockService.Attach(videoImage);
 
-        if (Device != null && !IsConnected)
+        if ((Device != null || _remoteDevice != null) && !IsConnected)
         {
             // 首次连接
             _ = ConnectDeviceAsync();
@@ -151,10 +190,24 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     /// </summary>
     private async Task ConnectDeviceAsync()
     {
-        if (Device?.AdbClient == null || _videoImage == null) return;
+        if (_videoImage == null)
+        {
+            return;
+        }
 
         try
         {
+            if (_agentSessionController != null)
+            {
+                await ConnectRemoteDeviceAsync();
+                return;
+            }
+
+            if (Device?.AdbClient == null || _sessionController == null)
+            {
+                return;
+            }
+
             var deviceConfig = ConfigManager.Instance.LoadConfig<DeviceConfig>(
                 HashHelper.ToMd5Hash(Device.Serial));
             Device.ServerOptions ??= new ServerOptions();
@@ -193,7 +246,30 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         }
     }
 
-    public bool IsFlexDisplayEnabled => _sessionController.IsFlexDisplayEnabled;
+    public bool IsFlexDisplayEnabled => _sessionController?.IsFlexDisplayEnabled == true;
+
+    private async Task ConnectRemoteDeviceAsync()
+    {
+        if (_agentSessionController == null || _remoteDevice == null || _remoteServer == null)
+        {
+            return;
+        }
+
+        if (InputProcessor != null)
+        {
+            InputProcessor.CursorLockRequested -= OnCursorLockRequested;
+            InputProcessor.Dispose();
+        }
+
+        InputProcessor = new DefaultInputProcessor();
+        InputProcessor.CursorLockRequested += OnCursorLockRequested;
+        InputProcessor.SetCursorLocked(IsMouseLocked);
+        InputProcessor.SetSender(new AgentSessionCommandSender(_agentSessionController.Session));
+
+        await _agentSessionController.ConnectAsync(CreateRemoteSessionOptions());
+        IsConnected = true;
+        SetupEventHandlers();
+    }
 
     private void OnVideoFrameDecoded(int width, int height, IntPtr bgraDataPtr, int rowBytes)
     {
@@ -208,6 +284,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 if (!_hasReceivedFirstVideoFrame)
                 {
                     _hasReceivedFirstVideoFrame = true;
+                    Debug.WriteLine($"[ScreenTab][Remote] first video frame rendered candidate: size={width}x{height}");
                     FlushPendingResize();
                 }
 
@@ -233,6 +310,12 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                         buf.Address.ToPointer(),
                         buf.RowBytes * height,
                         rowBytes * height);
+                }
+
+                _renderedFrameCount++;
+                if (_renderedFrameCount <= 3 || _renderedFrameCount % 120 == 0)
+                {
+                    Debug.WriteLine($"[ScreenTab] frame copied to bitmap: count={_renderedFrameCount}, size={width}x{height}, rowBytes={rowBytes}");
                 }
 
                 _videoImage?.InvalidateVisual();
@@ -324,14 +407,14 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         switch (buttonName)
         {
             case "ScreenOn":
-                _sessionController.Client?.SendControlCommand(new ControlMsg
+                SendControlCommand(new ControlMsg
                 {
                     Type = ControlMsgType.SetScreenPowerMode,
                     Data = true
                 }.Serialize());
                 break;
             case "ScreenOff":
-                _sessionController.Client?.SendControlCommand(new ControlMsg
+                SendControlCommand(new ControlMsg
                 {
                     Type = ControlMsgType.SetScreenPowerMode,
                     Data = false
@@ -353,7 +436,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 MetaState = 0
             }
         };
-        _sessionController.Client?.SendControlCommand(keyMsg.Serialize());
+        SendControlCommand(keyMsg.Serialize());
     }
 
     private void SendKeyUp(int keycode)
@@ -369,7 +452,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 MetaState = 0
             }
         };
-        _sessionController.Client?.SendControlCommand(keyMsg.Serialize());
+        SendControlCommand(keyMsg.Serialize());
     }
 
     private static int GetButtonKeycode(string buttonName)
@@ -430,7 +513,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void SendResizeDisplayIfNeeded(Size newSize)
     {
-        if (_sessionController.SendResizeDisplayIfNeeded(newSize, _hasReceivedFirstVideoFrame, _lastResizeRequestSize))
+        if (_sessionController != null &&
+            _sessionController.SendResizeDisplayIfNeeded(newSize, _hasReceivedFirstVideoFrame, _lastResizeRequestSize))
         {
             _lastResizeRequestSize = newSize;
         }
@@ -438,6 +522,24 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private bool CanHandleKeyboardInput()
         => _keyboardInputGate();
+
+    /// <summary>
+    /// 在标签页销毁前停止当前投屏会话
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task StopAsync(System.Threading.CancellationToken cancellationToken = default)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (_agentSessionController != null)
+        {
+            await _agentSessionController.StopAsync(cancellationToken);
+            IsConnected = false;
+        }
+    }
 
     private Point NormalizeCoordinates(Point viewPoint)
     {
@@ -504,13 +606,80 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 }
                 _inputCoordinator.Dispose();
                 _mouseLockService.Dispose();
-                _sessionController.Dispose();
+                _sessionController?.Dispose();
+                _agentSessionController?.Dispose();
                 _resizeThrottleTimer.Stop();
 
                 VideoSource?.Dispose();
                 VideoSource = null;
             }
             _disposed = true;
+        }
+    }
+
+    private void SendControlCommand(byte[] payload)
+    {
+        if (payload.Length == 0)
+        {
+            return;
+        }
+
+        if (_sessionController?.Client != null)
+        {
+            _sessionController.Client.SendControlCommand(payload);
+            return;
+        }
+
+        _agentSessionController?.Session.SendControl(payload);
+    }
+
+    private AgentWebRtcSessionOptions CreateRemoteSessionOptions()
+    {
+        var options = new AgentWebRtcSessionOptions
+        {
+            DeviceId = _remoteDevice?.RemoteDeviceId?.ToString() ?? string.Empty,
+            AppPackage = _appPackageName ?? string.Empty,
+            AppName = _appDisplayName ?? string.Empty
+        };
+
+        if (_remoteServer?.Config.EnableWebRtcOverride == true)
+        {
+            options.PreferredNetworkSettings = BuildPreferredWebRtcSettings(_remoteServer.Config);
+        }
+
+        return options;
+    }
+
+    private static AgentWebRtcNetworkSettingsDto BuildPreferredWebRtcSettings(AgentServerConfig config)
+    {
+        var settings = new AgentWebRtcNetworkSettingsDto
+        {
+            IceTransportPolicy = string.IsNullOrWhiteSpace(config.LocalIceTransportPolicy) ? "all" : config.LocalIceTransportPolicy.Trim()
+        };
+
+        foreach (var server in config.LocalIceServers)
+        {
+            if (string.IsNullOrWhiteSpace(server.Address))
+            {
+                continue;
+            }
+
+            settings.IceServers.Add(new AgentWebRtcIceServerDto
+            {
+                Urls = [server.Address.Trim()]
+            });
+        }
+
+        return settings;
+    }
+
+    private sealed class AgentSessionCommandSender(AgentWebRtcSession session) : IControlCommandSender
+    {
+        private readonly AgentWebRtcSession _session = session;
+
+        public void SendCommand(byte[] controlMessage)
+        {
+            _session.SendControl(controlMessage);
         }
     }
 }

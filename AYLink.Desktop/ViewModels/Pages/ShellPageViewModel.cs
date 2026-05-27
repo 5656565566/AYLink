@@ -15,5 +15,5 @@ public partial class ShellPageViewModel : TabbedPageViewModelBase<ShellTabViewMo
 
     protected override ShellTabViewModel CreateTab(DeviceModel device) => new(device);
 
-    protected override void OnTabClosed(ShellTabViewModel tab) => tab.Dispose();
+    protected override void OnTabClosed(ShellTabViewModel tab) { }
 }

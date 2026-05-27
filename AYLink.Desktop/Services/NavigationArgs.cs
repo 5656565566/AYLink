@@ -1,4 +1,5 @@
 using System;
+using AYLink.Core.Devices;
 
 namespace AYLink.Desktop.Services;
 
@@ -42,7 +43,11 @@ public abstract class NavigationArgs
 /// </summary>
 public sealed class ScreenNavigationArgs : NavigationArgs
 {
-    public required AYLink.Core.Models.DeviceModel Device { get; init; }
+    public AYLink.Core.Models.DeviceModel? Device { get; init; }
+
+    public DeviceDescriptor? RemoteDevice { get; init; }
+
+    public string? ServerId { get; init; }
 
     public string? AppPackageName { get; init; }
 

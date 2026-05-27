@@ -61,14 +61,14 @@
                 <TextBlock Text="{i18n:Tr ServerSettings.LocalWebRtcPref, DefaultText='本地 WebRTC 网络偏好'}" Classes="h2" Margin="0,0,0,10"/>
 
                 <ui:SettingsExpander Header="{i18n:Tr ServerSettings.EnableWebRtcOverride, DefaultText='使用本地 WebRTC 覆盖'}" 
-                                     Description="{i18n:Tr ServerSettings.EnableWebRtcOverride_Desc, DefaultText='仅对当前浏览器和当前账号生效，投屏时优先于全局默认配置'}">
+                                     Description="{i18n:Tr ServerSettings.EnableWebRtcOverride_Desc, DefaultText='仅对当前服务器和当前账号生效，投屏时优先于全局默认配置'}">
                     <ui:SettingsExpander.Footer>
                         <ToggleSwitch IsChecked="{Binding ServerConfig.EnableWebRtcOverride}" />
                     </ui:SettingsExpander.Footer>
                 </ui:SettingsExpander>
 
                 <ui:SettingsExpander Header="{i18n:Tr ServerSettings.IceTransportPolicy, DefaultText='ICE 传输策略'}" 
-                                     Description="{i18n:Tr ServerSettings.IceTransportPolicy_Desc, DefaultText='当前浏览器投屏时使用的本地优先策略'}">
+                                     Description="{i18n:Tr ServerSettings.IceTransportPolicy_Desc, DefaultText='当前服务器投屏时使用的本地优先策略'}">
                     <ui:SettingsExpander.Footer>
                         <ComboBox MinWidth="150" SelectedItem="{Binding ServerConfig.LocalIceTransportPolicy}">
                             <system:String>all</system:String>
@@ -136,7 +136,7 @@
                 </ui:SettingsExpander>
 
                 <ui:SettingsExpander Header="{i18n:Tr ServerSettings.ResetDefault, DefaultText='恢复默认设置'}" 
-                                     Description="{i18n:Tr ServerSettings.ResetDefault_Desc, DefaultText='将当前浏览器的本地 WebRTC 偏好恢复为默认值'}">
+                                     Description="{i18n:Tr ServerSettings.ResetDefault_Desc, DefaultText='将当前服务器的本地 WebRTC 偏好恢复为默认值'}">
                     <ui:SettingsExpander.Footer>
                         <Button Content="{i18n:Tr ServerSettings.ResetDefaultButton, DefaultText='恢复默认设置'}" Command="{Binding ResetToDefaultsCommand}"/>
                     </ui:SettingsExpander.Footer>
