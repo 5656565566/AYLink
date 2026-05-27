@@ -63,7 +63,7 @@ public partial class TabbedPageView : UserControl
     }
 
     /// <summary>
-    /// 空状态图标内容（可以是 SymbolIcon、PathIcon 等任意 Control）
+    /// 空状态图标内容
     /// </summary>
     public static readonly StyledProperty<object?> EmptyStateIconProperty =
         AvaloniaProperty.Register<TabbedPageView, object?>(nameof(EmptyStateIcon));
@@ -149,11 +149,8 @@ public partial class TabbedPageView : UserControl
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         // 取消旧集合的订阅
-        if (_currentTabsCollection != null)
-        {
-            _currentTabsCollection.CollectionChanged -= OnTabsCollectionChanged;
-            _currentTabsCollection = null;
-        }
+        _currentTabsCollection?.CollectionChanged -= OnTabsCollectionChanged;
+        _currentTabsCollection = null;
 
         // 订阅新集合
         if (DataContext is PageViewModelBase pageVm)
@@ -213,7 +210,7 @@ public partial class TabbedPageView : UserControl
     /// <summary>
     /// 统一的标签页关闭处理 - 调用 TabItemViewModelBase.CloseTabCommand
     /// </summary>
-    private void TabView_TabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
+    private static void TabView_TabDragStarting(TabView _, TabViewTabDragStartingEventArgs args)
     {
         if (args.Item is TabItemViewModelBase tabVm && !tabVm.IsClosable)
         {
@@ -225,7 +222,7 @@ public partial class TabbedPageView : UserControl
         }
     }
 
-    private void TabView_TabCloseRequested(TabView _, TabViewTabCloseRequestedEventArgs args)
+    private static void TabView_TabCloseRequested(TabView _, TabViewTabCloseRequestedEventArgs args)
     {
         // FluentAvalonia TabView 的 args.Item 可能是 ViewModel 或 TabViewItem
         if (args.Item is TabItemViewModelBase tabVm)
@@ -331,8 +328,7 @@ public partial class TabbedPageView : UserControl
 
         var tabVm = _draggingTabVm;
         var contentTemplate = TabContentTemplate;
-        var pageVm = DataContext as PageViewModelBase;
-        if (pageVm == null) return;
+        if (DataContext is not PageViewModelBase pageVm) return;
 
         // 获取屏幕坐标用于定位新窗口（在 detach 前获取，因为 detach 后控件可能变化）
         var topLevel = TopLevel.GetTopLevel(this);
@@ -402,9 +398,7 @@ public partial class TabbedPageView : UserControl
         if (_draggingTabItem == null) return;
 
         // 在 TabView 上创建一个浮动指示器
-        if (_tearOffIndicator == null)
-        {
-            _tearOffIndicator = new Border
+        _tearOffIndicator ??= new Border
             {
                 Background = new SolidColorBrush(Colors.White, 0.1),
                 BorderBrush = new SolidColorBrush(Color.Parse("#60AAAAFF")),
@@ -434,7 +428,6 @@ public partial class TabbedPageView : UserControl
                 Opacity = 0,
                 RenderTransformOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
             };
-        }
 
         // 将指示器添加到最顶层
         var rootGrid = this.FindDescendantOfType<Grid>();
@@ -478,8 +471,7 @@ public partial class TabbedPageView : UserControl
         {
             Dispatcher.UIThread.Post(() =>
             {
-                if (_tearOffIndicator != null)
-                    _tearOffIndicator.RenderTransform = new ScaleTransform(1.0, 1.0);
+                _tearOffIndicator?.RenderTransform = new ScaleTransform(1.0, 1.0);
             });
         });
     }

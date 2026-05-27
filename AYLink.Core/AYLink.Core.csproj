@@ -15,6 +15,7 @@
     <PackageReference Include="FFmpeg.AutoGen" Version="8.1.0" />
     <!-- 日志 -->
     <PackageReference Include="NLog" Version="6.1.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
 </Project>

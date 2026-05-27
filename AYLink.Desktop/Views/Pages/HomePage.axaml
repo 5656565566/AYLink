@@ -16,10 +16,10 @@
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,*">
-
+        
         <!-- 顶部工具栏 -->
         <ui:CommandBar Grid.Row="0" DefaultLabelPosition="Right" Background="Transparent">
-
+            
             <!-- 主要操作 -->
             <ui:CommandBar.PrimaryCommands>
                 <ui:CommandBarButton Label="{i18n:Tr HomePage.AddDevice, DefaultText='添加设备'}" Command="{Binding AddDeviceCommand}">
@@ -27,7 +27,7 @@
                         <ui:SymbolIconSource Symbol="Add"/>
                     </ui:CommandBarButton.IconSource>
                 </ui:CommandBarButton>
-                
+
                 <ui:CommandBarButton Label="{i18n:Tr HomePage.MoreActions, DefaultText='更多操作'}">
                     <ui:CommandBarButton.IconSource>
                         <ui:SymbolIconSource Symbol="More"/>
@@ -39,12 +39,7 @@
                                     <ui:SymbolIcon Symbol="Refresh"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="{i18n:Tr HomePage.MultiSelectMode, DefaultText='多选模式'}" Command="{Binding ToggleMultiSelectCommand}" HotKey="Ctrl+M">
-                                <MenuItem.Icon>
-                                    <ui:SymbolIcon Symbol="List"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem Header="{i18n:Tr HomePage.DeleteDevice, DefaultText='删除设备'}" Command="{Binding DeleteDeviceCommand}" CommandParameter="{Binding #DeviceListBox.SelectedItems}" IsEnabled="{Binding IsMultiSelectMode}">
+                            <MenuItem Header="{i18n:Tr HomePage.DeleteDevice, DefaultText='删除设备'}" Command="{Binding DeleteDeviceCommand}" CommandParameter="{Binding #DeviceListBox.SelectedItems}">
                                 <MenuItem.Icon>
                                     <ui:SymbolIcon Symbol="Delete"/>
                                 </MenuItem.Icon>
@@ -151,11 +146,10 @@
                             <Grid ColumnDefinitions="3*, 1.5*, Auto" Margin="0,4" Background="Transparent">
                                 <!-- 设备信息列 -->
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
-                                    <TextBlock Text="{Binding Name}"
-                                               Theme="{StaticResource BodyStrongTextBlockStyle}"/>
-                                    <TextBlock Text="{Binding Serial}"
-                                               Opacity="0.7"
-                                               Theme="{StaticResource CaptionTextBlockStyle}"/>
+                                    <TextBlock Text="{Binding Name}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                                    <TextBlock Text="{Binding Serial}" Opacity="0.7" Theme="{StaticResource CaptionTextBlockStyle}"/>
+                                    <TextBlock Text="{Binding SourceName}" Opacity="0.58" Theme="{StaticResource CaptionTextBlockStyle}"/>
+                                    <TextBlock Text="{Binding StatusText}" Opacity="0.58" Theme="{StaticResource CaptionTextBlockStyle}"/>
                                 </StackPanel>
 
                                 <!-- 连接方式列 -->
@@ -166,25 +160,27 @@
 
                                 <!-- 操作按钮列 - 直接绑定 DeviceItemViewModel 的命令 -->
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
-                                    <Button Command="{Binding MirrorCommand}" ToolTip.Tip="{i18n:Tr HomePage.MirrorToolTip, DefaultText='投屏'}">
+                                    <Button Command="{Binding MirrorCommand}" ToolTip.Tip="{i18n:Tr HomePage.MirrorToolTip, DefaultText='投屏'}" IsEnabled="{Binding CanMirror}">
                                         <ui:SymbolIcon Symbol="Play"/>
                                     </Button>
-                                    <Button Command="{Binding OpenFileManagerCommand}" ToolTip.Tip="{i18n:Tr HomePage.ActionFileTransfer, DefaultText='文件管理'}">
+                                    <Button Command="{Binding OpenFileManagerCommand}" ToolTip.Tip="{i18n:Tr HomePage.ActionFileTransfer, DefaultText='文件管理'}" IsEnabled="{Binding CanOpenFileManager}">
                                         <ui:SymbolIcon Symbol="Folder"/>
                                     </Button>
-                                    <Button Command="{Binding OpenAppManagerCommand}" ToolTip.Tip="{i18n:Tr HomePage.ActionAppManagement, DefaultText='应用管理'}">
+                                    <Button Command="{Binding OpenAppManagerCommand}" ToolTip.Tip="{i18n:Tr HomePage.ActionAppManagement, DefaultText='应用管理'}" IsEnabled="{Binding CanOpenAppManager}">
                                         <ui:SymbolIcon Symbol="AllApps"/>
                                     </Button>
                                     <Button ToolTip.Tip="{i18n:Tr HomePage.ActionMore, DefaultText='更多'}">
                                         <ui:SymbolIcon Symbol="More"/>
                                         <Button.Flyout>
                                             <MenuFlyout>
-                                                <MenuItem Header="{i18n:Tr HomePage.ActionNewDisplay, DefaultText='新建显示'}" Command="{Binding NewDisplayCommand}"/>
-                                                <MenuItem Header="{i18n:Tr HomePage.ActionOpenConsole, DefaultText='打开终端'}" Command="{Binding OpenShellCommand}"/>
-                                                <MenuItem Header="{i18n:Tr HomePage.ActionDeviceSettings, DefaultText='设备设置'}" Command="{Binding OpenDeviceSettingsCommand}"/>
-                                                <MenuItem Header="{i18n:Tr HomePage.ActionListEncoder, DefaultText='编码器列表'}" Command="{Binding ListEncodersCommand}"/>
+                                                <MenuItem Header="{i18n:Tr HomePage.ActionNewDisplay, DefaultText='新建显示'}" Command="{Binding NewDisplayCommand}" IsEnabled="{Binding CanNewDisplay}"/>
+                                                <MenuItem Header="{i18n:Tr HomePage.ActionOpenConsole, DefaultText='打开终端'}" Command="{Binding OpenShellCommand}" IsEnabled="{Binding CanOpenShell}"/>
+                                                <MenuItem Header="{i18n:Tr HomePage.ActionDeviceSettings, DefaultText='设备设置'}" Command="{Binding OpenDeviceSettingsCommand}" IsEnabled="{Binding CanOpenDeviceSettings}"/>
+                                                <MenuItem Header="{i18n:Tr HomePage.ActionListEncoder, DefaultText='编码器列表'}" Command="{Binding ListEncodersCommand}" IsEnabled="{Binding CanListEncoders}"/>
+                                                <MenuItem Header="{i18n:Tr HomePage.ConnectRemote, DefaultText='连接远程设备'}" Command="{Binding ConnectRemoteDeviceCommand}" IsEnabled="{Binding CanConnectRemote}"/>
+                                                <MenuItem Header="{i18n:Tr HomePage.RenameRemote, DefaultText='重命名远程设备'}" Command="{Binding RenameRemoteDeviceCommand}" IsEnabled="{Binding CanRenameRemote}"/>
                                                 <MenuItem Header="-" />
-                                                <MenuItem Header="{i18n:Tr HomePage.DeleteDevice, DefaultText='删除设备'}" Command="{Binding DeleteDeviceCommand}">
+                                                <MenuItem Header="{i18n:Tr HomePage.DeleteDevice, DefaultText='删除设备'}" Command="{Binding DeleteDeviceCommand}" IsEnabled="{Binding CanDelete}">
                                                     <MenuItem.Icon>
                                                         <ui:SymbolIcon Symbol="Delete"/>
                                                     </MenuItem.Icon>

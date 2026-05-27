@@ -38,6 +38,11 @@
                         <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Home}"/>
                     </ui:NavigationViewItem.IconSource>
                 </ui:NavigationViewItem>
+                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavServers, DefaultText='服务器'}" Tag="Servers" Margin="1.1">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Globe}"/>
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
                 <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavFile, DefaultText='文件管理'}" Tag="File" Margin="1.1">
                     <ui:NavigationViewItem.IconSource>
                         <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Folder}"/>

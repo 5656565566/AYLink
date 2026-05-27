@@ -19,7 +19,7 @@ public partial class FilePageViewModel : TabbedPageViewModelBase<FileTabViewMode
 
     public FilePageViewModel()
     {
-        // 默认添加一个本地标签页，且不可关闭
+        // 默认添加一个本地标签页 且不可关闭
         var defaultTab = new FileTabViewModel
         {
             IsClosable = false

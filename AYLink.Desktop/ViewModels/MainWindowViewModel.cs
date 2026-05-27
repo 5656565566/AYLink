@@ -59,6 +59,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public ObservableCollection<NavigationItemViewModel> NavigationItems { get; } =
     [
         new("Home",LocalizationManager.Instance.GetString("MainWindow.NavHome", "首页"), Symbol.Home),
+        new("Servers", LocalizationManager.Instance.GetString("MainWindow.NavServers", "服务器"), Symbol.Globe),
         new("File",LocalizationManager.Instance.GetString("MainWindow.NavFile", "文件管理"), Symbol.Folder),
         new("Screen",LocalizationManager.Instance.GetString("MainWindow.NavScreen", "投屏"), Symbol.Play),
         new("App",LocalizationManager.Instance.GetString("MainWindow.NavApp", "应用管理"), Symbol.Repair),
@@ -70,6 +71,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         // 注册所有页面
         RegisterPage(new HomePageViewModel());
+        RegisterPage(new ServersPageViewModel());
         RegisterPage(new FilePageViewModel());
         RegisterPage(new ScreenPageViewModel());
         RegisterPage(new AppPageViewModel());
@@ -77,6 +79,7 @@ public partial class MainWindowViewModel : ViewModelBase
         RegisterPage(new TaskPageViewModel());
         RegisterPage(new SettingsPageViewModel());
         RegisterPage(new DeviceSettingViewModel());
+        RegisterPage(new ServerSettingViewModel());
 
         // 订阅导航服务事件
         _navigationService.NavigatedWithParameter += OnNavigated;
@@ -105,6 +108,8 @@ public partial class MainWindowViewModel : ViewModelBase
         _audioPlayer.ConfigureAudioDevice(appConfig.AudioOutputDevice);
         _audioPlayer.SetGlobalVolume(appConfig.GlobalVolume);
         _audioPlayer.SetMuteInBackground(appConfig.MuteInBackground);
+
+        _ = AgentSessionService.Instance.InitializeAsync();
     }
 
     /// <summary>

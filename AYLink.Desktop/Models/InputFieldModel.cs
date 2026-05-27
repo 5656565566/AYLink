@@ -7,4 +7,5 @@ public class InputFieldModel
     public string Watermark { get; set; } = string.Empty;
     public string Value { get; set; } = string.Empty;
     public bool IsRequired { get; set; } = false;
+    public bool IsPassword { get; set; } = false;
 }
