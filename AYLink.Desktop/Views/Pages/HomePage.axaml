@@ -177,7 +177,6 @@
                                                 <MenuItem Header="{i18n:Tr HomePage.ActionOpenConsole, DefaultText='打开终端'}" Command="{Binding OpenShellCommand}" IsEnabled="{Binding CanOpenShell}"/>
                                                 <MenuItem Header="{i18n:Tr HomePage.ActionDeviceSettings, DefaultText='设备设置'}" Command="{Binding OpenDeviceSettingsCommand}" IsEnabled="{Binding CanOpenDeviceSettings}"/>
                                                 <MenuItem Header="{i18n:Tr HomePage.ActionListEncoder, DefaultText='编码器列表'}" Command="{Binding ListEncodersCommand}" IsEnabled="{Binding CanListEncoders}"/>
-                                                <MenuItem Header="{i18n:Tr HomePage.ConnectRemote, DefaultText='连接远程设备'}" Command="{Binding ConnectRemoteDeviceCommand}" IsEnabled="{Binding CanConnectRemote}"/>
                                                 <MenuItem Header="{i18n:Tr HomePage.RenameRemote, DefaultText='重命名远程设备'}" Command="{Binding RenameRemoteDeviceCommand}" IsEnabled="{Binding CanRenameRemote}"/>
                                                 <MenuItem Header="-" />
                                                 <MenuItem Header="{i18n:Tr HomePage.DeleteDevice, DefaultText='删除设备'}" Command="{Binding DeleteDeviceCommand}" IsEnabled="{Binding CanDelete}">

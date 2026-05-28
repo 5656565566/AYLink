@@ -43,9 +43,8 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     public bool CanListEncoders => IsLocal && HasCapability(DeviceCapability.ListEncoders);
     public bool CanNewDisplay => IsLocal && HasCapability(DeviceCapability.NewDisplay);
     public bool CanDelete => IsLocal && HasCapability(DeviceCapability.Disconnect);
-    public bool CanConnectRemote => IsRemote && HasCapability(DeviceCapability.Connect);
     public bool CanRenameRemote => IsRemote && HasCapability(DeviceCapability.Rename);
-    public bool HasRemoteActions => CanConnectRemote || CanRenameRemote;
+    public bool HasRemoteActions => CanRenameRemote;
 
     /// <summary>
     /// 删除设备
@@ -75,35 +74,6 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
         NotificationService.Instance.ShowInfo(
             localizer.GetString("DeviceItem.DisconnectedTitle", "已断开"),
             string.Format(localizer.GetString("DeviceItem.DisconnectedMessage", "设备 {0} 已断开连接"), Name));
-
-        if (_refreshAction != null)
-        {
-            await _refreshAction();
-        }
-    }
-
-    /// <summary>
-    /// 连接远程设备
-    /// 调用 Agent provider 的 connect 接口
-    /// </summary>
-    [RelayCommand]
-    private async Task ConnectRemoteDevice()
-    {
-        if (!CanConnectRemote)
-        {
-            return;
-        }
-
-        var updated = await _deviceCatalog.ConnectRemoteDeviceAsync(Device);
-        if (updated == null)
-        {
-            NotificationService.Instance.ShowError("连接失败", $"无法连接远程设备 {Name}");
-            return;
-        }
-
-        Device = updated;
-        NotifyDescriptorChanged();
-        NotificationService.Instance.ShowSuccess("连接成功", $"已连接远程设备 {Name}");
 
         if (_refreshAction != null)
         {

@@ -64,6 +64,7 @@ public partial class HomePageViewModel : PageViewModelBase
         var localizer = Services.Localization.LocalizationManager.Instance;
         var fields = new List<InputFieldModel>
         {
+            new() { Key = "name", Watermark = localizer.GetString("ServersPage.DeviceName", "设备名称（可选）") },
             new() { Key = "ip", Watermark = localizer.GetString("HomePage.AddDeviceIpWatermark", "IP 地址 (例如: 127.0.0.1)"), IsRequired = true },
             new() { Key = "port", Watermark = localizer.GetString("HomePage.AddDevicePortWatermark", "端口号 (可选, 默认为 5555)") },
             new() { Key = "pairPort", Watermark = localizer.GetString("HomePage.AddDevicePairPortWatermark", "配对端口 (可选 安卓 无线调试配对 流程)") },
@@ -93,6 +94,7 @@ public partial class HomePageViewModel : PageViewModelBase
         int.TryParse(data.GetValueOrDefault("pairPort"), out var pairPort);
         var request = new DeviceCreationRequest
         {
+            Name = data.GetValueOrDefault("name", string.Empty).Trim(),
             Host = ip,
             Port = port <= 0 ? 5555 : port,
             PairingPort = pairPort,
