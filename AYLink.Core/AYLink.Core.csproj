@@ -17,7 +17,7 @@
     <PackageReference Include="NLog" Version="6.1.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <!-- WebRTC 连接 -->
-    <PackageReference Include="SIPSorcery" Version="10.0.3" />
+    <PackageReference Include="SIPSorcery" Version="10.0.8" />
   </ItemGroup>
 
 </Project>

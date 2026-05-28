@@ -25,6 +25,8 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
     private SwrContext* _resamplerCtx;
     private AudioCodec _currentCodec;
     private readonly bool _handshake = handshake;
+    private volatile bool _isStopping;
+    private bool _isDisposed;
 
     public const int TARGET_SAMPLE_RATE = 48000; // 按理说可以动态处理节省计算量但是其实没必要
     public const int TARGET_CHANNELS = 2;
@@ -35,6 +37,11 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
     /// 参数: pcmData
     /// </summary>
     public event Action<byte[]>? OnAudioDataDecoded;
+
+    public void RequestStop()
+    {
+        _isStopping = true;
+    }
 
     private void Handshake()
     {
@@ -110,7 +117,10 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
         }
         catch (Exception ex)
         {
-            Trace.WriteLine($"Audio initialization or playback failed: {ex}");
+            if (!_isStopping && !_isDisposed && ex is not OperationCanceledException)
+            {
+                Trace.WriteLine($"Audio initialization or playback failed: {ex}");
+            }
             Dispose();
         }
     }
@@ -178,7 +188,7 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
         var frame = ffmpeg.av_frame_alloc();
         try
         {
-            while (_socket.Connected)
+            while (!_isStopping && _socket.Connected)
             {
                 byte[] header = ReceiveExact(12);
                 int dataSize = ReadPacketSize(header);
@@ -247,7 +257,7 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
 
     private void PlayRAW()
     {
-        while (_socket.Connected)
+        while (!_isStopping && _socket.Connected)
         {
             ReceiveExact(8);
             byte[] sizeBytes = ReceiveExact(4);
@@ -298,20 +308,38 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
     {
         byte[] buffer = new byte[length];
         int offset = 0;
-        while (offset < length && _socket.Connected)
+        while (offset < length && _socket.Connected && !_isStopping)
         {
             try
             {
                 int received = _socket.Receive(buffer, offset, length - offset, SocketFlags.None);
-                if (received == 0) throw new EndOfStreamException("Socket closed prematurely.");
+                if (received == 0)
+                {
+                    throw _isStopping
+                        ? new OperationCanceledException("Audio decoder is stopping.")
+                        : new EndOfStreamException("Socket closed prematurely.");
+                }
                 offset += received;
+            }
+            catch (ObjectDisposedException) when (_isStopping || _isDisposed)
+            {
+                throw new OperationCanceledException("Audio decoder is stopping.");
             }
             catch (SocketException ex)
             {
+                if (_isStopping || _isDisposed)
+                {
+                    throw new OperationCanceledException("Audio decoder is stopping.", ex);
+                }
                 throw new EndOfStreamException($"Socket exception during receive: {ex.Message}", ex);
             }
         }
-        
+
+        if (_isStopping || _isDisposed)
+        {
+            throw new OperationCanceledException("Audio decoder is stopping.");
+        }
+
         if (offset < length)
         {
             throw new EndOfStreamException($"Incomplete read: expected {length} bytes, but got {offset} bytes.");
@@ -322,6 +350,10 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
 
     public void Dispose()
     {
+        if (_isDisposed) return;
+
+        _isStopping = true;
+        _isDisposed = true;
         _socket?.Close();
 
         if (_resamplerCtx != null)

@@ -1,6 +1,8 @@
 using AYLink.Core.ADB;
+using AYLink.Core.Devices;
 using AYLink.Core.Models;
 using AYLink.Desktop.Models;
+using AYLink.Desktop.Services.Agent;
 using AYLink.Desktop.Services.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -14,6 +16,8 @@ namespace AYLink.Desktop.ViewModels.Pages;
 
 public partial class FilePaneViewModel : ViewModelBase
 {
+    private readonly ObservableCollection<FileSource> _customSources = [];
+
     [ObservableProperty]
     public partial ObservableCollection<FileSource> AvailableSources { get; set; } = [];
 
@@ -60,6 +64,11 @@ public partial class FilePaneViewModel : ViewModelBase
             }
         }
 
+        foreach (var source in _customSources)
+        {
+            AvailableSources.Add(source);
+        }
+
         if (autoSelect)
         {
             // 恢复选中状态或默认选中第一个
@@ -101,6 +110,44 @@ public partial class FilePaneViewModel : ViewModelBase
         SelectedSource = deviceSource;
     }
 
+    public void SelectRemoteDevice(DeviceDescriptor remoteDevice, string serverId, string? initialPath = null)
+    {
+        var runtime = Services.AgentSessionService.Instance.FindServer(serverId)
+            ?? throw new InvalidOperationException($"未找到远程服务器 {serverId}");
+
+        var localizer = Services.Localization.LocalizationManager.Instance;
+        var basePath = string.IsNullOrWhiteSpace(initialPath) ? "/sdcard/" : initialPath.Trim();
+        var internalSource = new FileSource
+        {
+            Name = string.Format(localizer.GetString("FilePage.SourceAndroidInternal", "{0} - 内部存储"), remoteDevice.Name),
+            AgentFileManager = new AgentFileManager(runtime, remoteDevice.RemoteDeviceId ?? 0),
+            InitialPath = "/sdcard/"
+        };
+
+        var customSource = new FileSource
+        {
+            Name = initialSourceName(remoteDevice.Name),
+            AgentFileManager = internalSource.AgentFileManager,
+            InitialPath = basePath
+        };
+
+        _customSources.Clear();
+        _customSources.Add(internalSource);
+        if (!string.Equals(basePath, "/sdcard/", StringComparison.OrdinalIgnoreCase))
+        {
+            _customSources.Add(customSource);
+        }
+
+        RefreshSources(autoSelect: false);
+        SelectedSource = AvailableSources.FirstOrDefault(source =>
+            source.AgentFileManager != null &&
+            string.Equals(source.InitialPath, basePath, StringComparison.OrdinalIgnoreCase))
+            ?? AvailableSources.FirstOrDefault(source => source.AgentFileManager != null);
+
+        string initialSourceName(string deviceName)
+            => string.Format(localizer.GetString("FilePage.SourceAndroidInternal", "{0} - 内部存储"), deviceName);
+    }
+
     [RelayCommand]
     public async Task DeleteFile(FileSystemModel? file)
     {
@@ -135,7 +182,9 @@ public partial class FilePaneViewModel : ViewModelBase
             }
             else
             {
-                success = await SelectedSource.Device!.FileManager.DeleteFileAsync(targetPath);
+                success = SelectedSource.IsRemoteAgent
+                    ? await SelectedSource.AgentFileManager!.DeleteFileAsync(targetPath)
+                    : await SelectedSource.Device!.FileManager.DeleteFileAsync(targetPath);
             }
 
             if (success)
@@ -190,7 +239,14 @@ public partial class FilePaneViewModel : ViewModelBase
             }
             else
             {
-                await LoadDeviceFilesAsync(SelectedSource.Device!, CurrentPath);
+                if (SelectedSource.IsRemoteAgent)
+                {
+                    await LoadRemoteFilesAsync(SelectedSource.AgentFileManager!, CurrentPath);
+                }
+                else
+                {
+                    await LoadDeviceFilesAsync(SelectedSource.Device!, CurrentPath);
+                }
             }
         }
         catch (Exception ex)
@@ -240,6 +296,12 @@ public partial class FilePaneViewModel : ViewModelBase
     private async Task LoadDeviceFilesAsync(DeviceModel device, string path)
     {
         var items = await device.FileManager.ListDirectoryAsync(path);
+        Files = items;
+    }
+
+    private async Task LoadRemoteFilesAsync(AgentFileManager manager, string path)
+    {
+        var items = await manager.ListDirectoryAsync(path);
         Files = items;
     }
 
@@ -330,7 +392,9 @@ public partial class FilePaneViewModel : ViewModelBase
             }
             else
             {
-                success = await SelectedSource.Device!.FileManager.DeleteFileAsync(targetPath);
+                success = SelectedSource.IsRemoteAgent
+                    ? await SelectedSource.AgentFileManager!.DeleteFileAsync(targetPath)
+                    : await SelectedSource.Device!.FileManager.DeleteFileAsync(targetPath);
             }
 
             if (success)

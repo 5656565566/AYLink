@@ -32,33 +32,18 @@
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
-                Margin="12"
+                Margin="2"
                 IsVisible="{Binding !HasServers}">
-            <StackPanel Spacing="16"
+            <StackPanel Spacing="12"
                         HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
-                <ui:SymbolIcon Symbol="Globe" FontSize="64" Opacity="0.5"/>
-                <TextBlock Text="{i18n:Tr ServersPage.EmptyTitle, DefaultText='还没有服务器'}"
-                           Theme="{StaticResource TitleTextBlockStyle}"
+                        VerticalAlignment="Center"
+                        Opacity="0.6">
+                <TextBlock Text="{i18n:Tr ServersPage.EmptyTitle, DefaultText='没有可用的服务器'}"
+                           Theme="{StaticResource SubtitleTextBlockStyle}"
                            HorizontalAlignment="Center"/>
-                <TextBlock Text="{i18n:Tr ServersPage.EmptyDescription, DefaultText='先添加一个 AYLink.Agent 服务器，再把远程设备接入到首页。'}"
+                <TextBlock Text="{i18n:Tr ServersPage.EmptyDescription, DefaultText='点击「添加服务器」按钮连接新服务器'}"
                            Theme="{StaticResource BodyTextBlockStyle}"
-                           Opacity="0.7"
                            HorizontalAlignment="Center"/>
-                <Button Content="{i18n:Tr ServersPage.AddServer, DefaultText='添加服务器'}" 
-                        Command="{Binding AddServerCommand}"
-                        Classes="accent"
-                        HorizontalAlignment="Center"
-                        Margin="0,12,0,0">
-                    <Button.ContentTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <ui:SymbolIcon Symbol="Add" FontSize="16"/>
-                                <TextBlock Text="{Binding}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </Button.ContentTemplate>
-                </Button>
             </StackPanel>
         </Border>
 

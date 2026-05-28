@@ -19,6 +19,7 @@ public sealed class DeviceCatalogService
     public static DeviceCatalogService Instance { get; } = new();
 
     private readonly LocalDeviceProvider _localProvider = new();
+    private readonly LocalDeviceAliasService _localAliases = LocalDeviceAliasService.Instance;
     private readonly AgentSessionService _agentSessions = AgentSessionService.Instance;
 
     private DeviceCatalogService()
@@ -46,7 +47,7 @@ public sealed class DeviceCatalogService
     public async Task<IReadOnlyList<DeviceDescriptor>> RefreshAllAsync(CancellationToken cancellationToken = default)
     {
         var all = new List<DeviceDescriptor>();
-        all.AddRange(await _localProvider.RefreshDevicesAsync(cancellationToken));
+        all.AddRange((await _localProvider.RefreshDevicesAsync(cancellationToken)).Select(ApplyLocalAlias));
 
         foreach (var server in _agentSessions.Servers)
         {
@@ -72,7 +73,15 @@ public sealed class DeviceCatalogService
     /// <param name="device">匹配到的本地设备模型</param>
     /// <returns>是否成功找到本地设备</returns>
     public bool TryGetLocalDevice(string deviceId, out AYLink.Core.Models.DeviceModel? device)
-        => _localProvider.TryGetLocalDevice(deviceId, out device);
+    {
+        if (!_localProvider.TryGetLocalDevice(deviceId, out device) || device == null)
+        {
+            return false;
+        }
+
+        ApplyLocalAlias(device);
+        return true;
+    }
 
     /// <summary>
     /// 检查本地设备是否在线
@@ -90,7 +99,7 @@ public sealed class DeviceCatalogService
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>新增后的本地设备描述；失败时返回 null</returns>
     public Task<DeviceDescriptor?> AddLocalDeviceAsync(DeviceCreationRequest request, CancellationToken cancellationToken = default)
-        => _localProvider.AddDeviceAsync(request, cancellationToken);
+        => AddLocalDeviceCoreAsync(request, cancellationToken);
 
     /// <summary>
     /// 断开本地设备
@@ -100,6 +109,25 @@ public sealed class DeviceCatalogService
     /// <returns>是否成功进入断开流程</returns>
     public Task<bool> DisconnectLocalDeviceAsync(string deviceId, CancellationToken cancellationToken = default)
         => _localProvider.DisconnectDeviceAsync(deviceId, cancellationToken);
+
+    /// <summary>
+    /// 统一重命名设备
+    /// 本地设备使用桌面端别名持久化 远程设备调用对应 Agent Provider
+    /// </summary>
+    /// <param name="descriptor">设备描述</param>
+    /// <param name="newName">新的设备名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新后的设备描述；失败时返回 null</returns>
+    public async Task<DeviceDescriptor?> RenameDeviceAsync(DeviceDescriptor descriptor, string newName, CancellationToken cancellationToken = default)
+    {
+        if (descriptor.SourceKind == DeviceSourceKind.Local)
+        {
+            return await RenameLocalDeviceAsync(descriptor, newName, cancellationToken);
+        }
+
+        var provider = CreateRemoteProvider(descriptor.ProviderId);
+        return provider == null ? null : await provider.RenameDeviceAsync(descriptor.Id, newName, cancellationToken);
+    }
 
     /// <summary>
     /// 连接远程设备
@@ -120,11 +148,8 @@ public sealed class DeviceCatalogService
     /// <param name="newName">新的设备名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>更新后的设备描述；失败时返回 null</returns>
-    public async Task<DeviceDescriptor?> RenameRemoteDeviceAsync(DeviceDescriptor descriptor, string newName, CancellationToken cancellationToken = default)
-    {
-        var provider = CreateRemoteProvider(descriptor.ProviderId);
-        return provider == null ? null : await provider.RenameDeviceAsync(descriptor.Id, newName, cancellationToken);
-    }
+    public Task<DeviceDescriptor?> RenameRemoteDeviceAsync(DeviceDescriptor descriptor, string newName, CancellationToken cancellationToken = default)
+        => RenameDeviceAsync(descriptor, newName, cancellationToken);
 
     /// <summary>
     /// 向指定远程服务器新增设备
@@ -148,5 +173,72 @@ public sealed class DeviceCatalogService
     {
         var server = _agentSessions.FindServer(providerId);
         return server == null ? null : new AgentDeviceProvider(server);
+    }
+
+    private async Task<DeviceDescriptor?> AddLocalDeviceCoreAsync(DeviceCreationRequest request, CancellationToken cancellationToken)
+    {
+        var added = await _localProvider.AddDeviceAsync(request, cancellationToken);
+        if (added == null)
+        {
+            return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Name))
+        {
+            _localAliases.SetAlias(added.Serial, request.Name);
+            added = ApplyLocalAlias(added);
+        }
+
+        DevicesChanged?.Invoke();
+        return added;
+    }
+
+    private async Task<DeviceDescriptor?> RenameLocalDeviceAsync(DeviceDescriptor descriptor, string newName, CancellationToken cancellationToken)
+    {
+        var trimmedName = newName.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedName))
+        {
+            return null;
+        }
+
+        _localAliases.SetAlias(descriptor.Serial, trimmedName);
+        var renamed = await _localProvider.RenameDeviceAsync(descriptor.Id, trimmedName, cancellationToken);
+        DevicesChanged?.Invoke();
+        return renamed == null ? ApplyLocalAlias(descriptor) : ApplyLocalAlias(renamed);
+    }
+
+    private DeviceDescriptor ApplyLocalAlias(DeviceDescriptor descriptor)
+    {
+        if (descriptor.SourceKind != DeviceSourceKind.Local)
+        {
+            return descriptor;
+        }
+
+        var alias = _localAliases.GetAlias(descriptor.Serial);
+        return string.IsNullOrWhiteSpace(alias)
+            ? descriptor
+            : new DeviceDescriptor
+            {
+                Id = descriptor.Id,
+                ProviderId = descriptor.ProviderId,
+                ProviderName = descriptor.ProviderName,
+                SourceKind = descriptor.SourceKind,
+                Name = alias,
+                Serial = descriptor.Serial,
+                ConnectionType = descriptor.ConnectionType,
+                Status = descriptor.Status,
+                IsConnected = descriptor.IsConnected,
+                Capabilities = descriptor.Capabilities,
+                RemoteDeviceId = descriptor.RemoteDeviceId
+            };
+    }
+
+    private void ApplyLocalAlias(AYLink.Core.Models.DeviceModel device)
+    {
+        var alias = _localAliases.GetAlias(device.Serial);
+        if (!string.IsNullOrWhiteSpace(alias))
+        {
+            device.Name = alias;
+        }
     }
 }

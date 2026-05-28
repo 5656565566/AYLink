@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -123,6 +124,75 @@ public sealed class AgentApiClient
         => SendAsync<AgentDeviceDto>(HttpMethod.Put, $"/api/devices/{deviceId}/rename", new { Name = name }, accessToken, cancellationToken);
 
     /// <summary>
+    /// 获取指定远程设备的应用列表
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>应用列表</returns>
+    public Task<IReadOnlyList<AgentAppDto>> GetAppsAsync(string accessToken, int deviceId, CancellationToken cancellationToken = default)
+        => SendAsync<IReadOnlyList<AgentAppDto>>(HttpMethod.Get, $"/api/devices/{deviceId}/apps", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 请求远程启动指定应用
+    /// </summary>
+    public Task<AgentBooleanResponse> LaunchAppAsync(string accessToken, int deviceId, string packageName, CancellationToken cancellationToken = default)
+        => SendAsync<AgentBooleanResponse>(HttpMethod.Post, $"/api/devices/{deviceId}/apps/launch", new { packageName }, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 请求远程卸载指定应用
+    /// </summary>
+    public Task<AgentBooleanResponse> UninstallAppAsync(string accessToken, int deviceId, string packageName, CancellationToken cancellationToken = default)
+        => SendAsync<AgentBooleanResponse>(HttpMethod.Post, $"/api/devices/{deviceId}/apps/uninstall", new { packageName }, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 获取指定应用的详细信息
+    /// </summary>
+    public Task<AgentAppInfoDto> GetAppInfoAsync(string accessToken, int deviceId, string packageName, CancellationToken cancellationToken = default)
+        => SendAsync<AgentAppInfoDto>(HttpMethod.Post, $"/api/devices/{deviceId}/apps/info", new { packageName }, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 下载指定应用的 APK 文件
+    /// </summary>
+    public Task<AgentDownloadResponse> DownloadAppAsync(string accessToken, int deviceId, string packageName, CancellationToken cancellationToken = default)
+        => SendDownloadAsync(HttpMethod.Post, $"/api/devices/{deviceId}/apps/download", new { packageName }, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 上传并安装 APK 文件
+    /// </summary>
+    public async Task<AgentBooleanResponse> InstallAppAsync(string accessToken, int deviceId, string fileName, Stream fileStream, CancellationToken cancellationToken = default)
+    {
+        using var form = new MultipartFormDataContent();
+        using var streamContent = new StreamContent(fileStream);
+        form.Add(streamContent, "file", fileName);
+        return await SendMultipartAsync<AgentBooleanResponse>(HttpMethod.Post, $"/api/devices/{deviceId}/apps/install", form, accessToken, cancellationToken);
+    }
+
+    /// <summary>
+    /// 获取指定目录下的文件列表
+    /// </summary>
+    public Task<AgentFileListResponse> ListFilesAsync(string accessToken, int deviceId, string path, CancellationToken cancellationToken = default)
+        => SendAsync<AgentFileListResponse>(HttpMethod.Post, $"/api/devices/{deviceId}/files/list", new { path }, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 下载指定文件
+    /// </summary>
+    public Task<AgentDownloadResponse> DownloadFileAsync(string accessToken, int deviceId, string path, CancellationToken cancellationToken = default)
+        => SendDownloadAsync(HttpMethod.Post, $"/api/devices/{deviceId}/files/download", new { path }, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 重命名指定文件或目录
+    /// </summary>
+    public Task<AgentBooleanResponse> RenameFileAsync(string accessToken, int deviceId, string path, string newName, CancellationToken cancellationToken = default)
+        => SendAsync<AgentBooleanResponse>(HttpMethod.Post, $"/api/devices/{deviceId}/files/rename", new { path, newName }, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 删除指定文件或目录
+    /// </summary>
+    public Task<AgentBooleanResponse> DeleteFileAsync(string accessToken, int deviceId, string path, CancellationToken cancellationToken = default)
+        => SendAsync<AgentBooleanResponse>(HttpMethod.Post, $"/api/devices/{deviceId}/files/delete", new { path }, accessToken, cancellationToken);
+
+    /// <summary>
     /// 获取 Agent 服务端的全局 WebRTC 网络设置
     /// </summary>
     /// <param name="accessToken">访问令牌</param>
@@ -215,6 +285,22 @@ public sealed class AgentApiClient
         return builder.Uri;
     }
 
+    /// <summary>
+    /// 构造当前 Agent 的终端 WebSocket 地址
+    /// </summary>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <returns>WebSocket 连接地址</returns>
+    public Uri BuildTerminalWebSocketUri(int deviceId)
+    {
+        var baseUri = _httpClient.BaseAddress ?? throw new InvalidOperationException("BaseAddress is not configured.");
+        return new UriBuilder(baseUri)
+        {
+            Scheme = string.Equals(baseUri.Scheme, "https", StringComparison.OrdinalIgnoreCase) ? "wss" : "ws",
+            Path = $"/api/devices/{deviceId}/terminal/ws",
+            Query = string.Empty
+        }.Uri;
+    }
+
     private async Task<T> SendAsync<T>(
         HttpMethod method,
         string path,
@@ -254,6 +340,76 @@ public sealed class AgentApiClient
 
         return JsonConvert.DeserializeObject<T>(content)
             ?? throw new AgentApiException(HttpStatusCode.InternalServerError, "Unable to parse agent response.");
+    }
+
+    private async Task<T> SendMultipartAsync<T>(
+        HttpMethod method,
+        string path,
+        HttpContent content,
+        string? accessToken,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(method, path);
+        if (!string.IsNullOrWhiteSpace(accessToken))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
+
+        request.Content = content;
+
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        var body = response.Content == null
+            ? string.Empty
+            : await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            Debug.WriteLine($"[AgentApi] {method} {path} failed: {(int)response.StatusCode} {response.ReasonPhrase}; body={body}");
+            throw new AgentApiException(response.StatusCode, ParseErrorMessage(body) ?? response.ReasonPhrase ?? "Request failed.");
+        }
+
+        if (typeof(T) == typeof(object) || string.IsNullOrWhiteSpace(body))
+        {
+            return default!;
+        }
+
+        return JsonConvert.DeserializeObject<T>(body)
+            ?? throw new AgentApiException(HttpStatusCode.InternalServerError, "Unable to parse agent response.");
+    }
+
+    private async Task<AgentDownloadResponse> SendDownloadAsync(
+        HttpMethod method,
+        string path,
+        object? payload,
+        string? accessToken,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(method, path);
+        if (!string.IsNullOrWhiteSpace(accessToken))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
+
+        if (payload != null)
+        {
+            request.Content = new StringContent(
+                JsonConvert.SerializeObject(payload),
+                Encoding.UTF8,
+                "application/json");
+        }
+
+        var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = response.Content == null
+                ? string.Empty
+                : await response.Content.ReadAsStringAsync(cancellationToken);
+            response.Dispose();
+            Debug.WriteLine($"[AgentApi] {method} {path} failed: {(int)response.StatusCode} {response.ReasonPhrase}; body={body}");
+            throw new AgentApiException(response.StatusCode, ParseErrorMessage(body) ?? response.ReasonPhrase ?? "Request failed.");
+        }
+
+        return new AgentDownloadResponse(response);
     }
 
     private static string NormalizeBaseUrl(string value)
@@ -634,6 +790,108 @@ public sealed class AgentWebRtcIceServerDto
     /// </summary>
     [JsonProperty(nameof(Credential))]
     public string? Credential { get; set; }
+}
+
+/// <summary>
+/// Agent 应用摘要模型
+/// </summary>
+public sealed class AgentAppDto
+{
+    [JsonProperty(nameof(Name))]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(PackageName))]
+    public string PackageName { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Agent 应用详情模型
+/// </summary>
+public sealed class AgentAppInfoDto
+{
+    [JsonProperty("packageName")]
+    public string PackageName { get; set; } = string.Empty;
+
+    [JsonProperty("versionName")]
+    public string VersionName { get; set; } = string.Empty;
+
+    [JsonProperty("versionCode")]
+    public string VersionCode { get; set; } = string.Empty;
+
+    [JsonProperty("firstInstallTime")]
+    public string FirstInstallTime { get; set; } = string.Empty;
+
+    [JsonProperty("lastUpdateTime")]
+    public string LastUpdateTime { get; set; } = string.Empty;
+
+    [JsonProperty("installerPackageName")]
+    public string InstallerPackageName { get; set; } = string.Empty;
+
+    [JsonProperty("primaryApkPath")]
+    public string PrimaryApkPath { get; set; } = string.Empty;
+
+    [JsonProperty("apkPaths")]
+    public List<string> ApkPaths { get; set; } = [];
+}
+
+/// <summary>
+/// Agent 文件列表响应模型
+/// </summary>
+public sealed class AgentFileListResponse
+{
+    [JsonProperty("path")]
+    public string Path { get; set; } = string.Empty;
+
+    [JsonProperty("items")]
+    public List<AgentFileEntryDto> Items { get; set; } = [];
+}
+
+/// <summary>
+/// Agent 文件条目模型
+/// </summary>
+public sealed class AgentFileEntryDto
+{
+    [JsonProperty(nameof(Name))]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(IsDirectory))]
+    public bool IsDirectory { get; set; }
+
+    [JsonProperty(nameof(Size))]
+    public ulong Size { get; set; }
+}
+
+/// <summary>
+/// Agent 下载响应包装
+/// </summary>
+public sealed class AgentDownloadResponse(HttpResponseMessage response) : IDisposable
+{
+    private readonly HttpResponseMessage _response = response;
+
+    /// <summary>
+    /// 下载内容流
+    /// </summary>
+    public Stream Stream => _response.Content.ReadAsStream();
+
+    /// <summary>
+    /// 响应中给出的文件名
+    /// </summary>
+    public string FileName => ParseFileName(_response.Content.Headers.ContentDisposition?.FileName) ?? "download.bin";
+
+    public void Dispose()
+    {
+        _response.Dispose();
+    }
+
+    private static string? ParseFileName(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return value.Trim().Trim('"');
+    }
 }
 
 /// <summary>

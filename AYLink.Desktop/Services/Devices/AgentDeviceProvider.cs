@@ -174,6 +174,24 @@ public sealed class AgentDeviceProvider(AgentServerRuntime runtime) : IDevicePro
     /// <returns>统一设备描述</returns>
     private DeviceDescriptor Map(AgentDeviceDto dto)
     {
+        var capabilities = DeviceCapability.None;
+        if (HasPermission("devices.control"))
+        {
+            capabilities |= DeviceCapability.Connect | DeviceCapability.Mirror | DeviceCapability.AppManager;
+        }
+        if (HasPermission("devices.manage"))
+        {
+            capabilities |= DeviceCapability.Rename;
+        }
+        if (HasPermission("files.access"))
+        {
+            capabilities |= DeviceCapability.FileManager;
+        }
+        if (HasPermission("terminal.access"))
+        {
+            capabilities |= DeviceCapability.Shell;
+        }
+
         return new DeviceDescriptor
         {
             Id = $"{ProviderId}:{dto.Id}",
@@ -185,9 +203,14 @@ public sealed class AgentDeviceProvider(AgentServerRuntime runtime) : IDevicePro
             ConnectionType = InferConnectionType(dto.Serial, dto.IpAddress),
             Status = dto.Status,
             IsConnected = string.Equals(dto.Status, "online", StringComparison.OrdinalIgnoreCase),
-            Capabilities = DeviceCapability.Connect | DeviceCapability.Rename | DeviceCapability.Mirror,
+            Capabilities = capabilities,
             RemoteDeviceId = dto.Id
         };
+    }
+
+    private bool HasPermission(string permission)
+    {
+        return _runtime.LastPermissions.Contains(permission, StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>

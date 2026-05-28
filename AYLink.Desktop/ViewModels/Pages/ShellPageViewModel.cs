@@ -1,4 +1,7 @@
 using AYLink.Core.Models;
+using AYLink.Core.Devices;
+using AYLink.Desktop.Services;
+using System.Linq;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
@@ -15,5 +18,41 @@ public partial class ShellPageViewModel : TabbedPageViewModelBase<ShellTabViewMo
 
     protected override ShellTabViewModel CreateTab(DeviceModel device) => new(device);
 
+    public override void OnNavigatedTo(object? parameter = null)
+    {
+        IsActive = true;
+
+        if (parameter is ShellNavigationArgs args)
+        {
+            if (args.RemoteDevice != null && !string.IsNullOrWhiteSpace(args.ServerId))
+            {
+                AddRemoteTab(args.RemoteDevice, args.ServerId);
+                return;
+            }
+
+            if (args.Device != null)
+            {
+                AddNewTabCommand.Execute(args.Device);
+                return;
+            }
+        }
+
+        base.OnNavigatedTo(parameter);
+    }
+
     protected override void OnTabClosed(ShellTabViewModel tab) { }
+
+    private void AddRemoteTab(DeviceDescriptor remoteDevice, string serverId)
+    {
+        var existing = Tabs.FirstOrDefault(tab => tab.RemoteDeviceId == remoteDevice.Id);
+        if (existing != null)
+        {
+            SelectedTab = existing;
+            return;
+        }
+
+        var runtime = Services.AgentSessionService.Instance.FindServer(serverId)
+            ?? throw new System.InvalidOperationException($"未找到远程服务器 {serverId}");
+        RegisterTab(new ShellTabViewModel(remoteDevice, runtime));
+    }
 }

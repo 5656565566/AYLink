@@ -1,9 +1,11 @@
 using AdvancedSharpAdbClient;
 using AdvancedSharpAdbClient.Models;
 using AdvancedSharpAdbClient.Receivers;
+using AYLink.Core.Devices;
 using AYLink.Core.Models;
 using AYLink.Core.Scrcpy;
 using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Agent;
 using AYLink.Desktop.Services.Notifications;
 using AYLink.Desktop.Services.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -23,6 +25,10 @@ namespace AYLink.Desktop.ViewModels.Pages;
 /// </summary>
 public partial class AppTabViewModel : TabItemViewModelBase
 {
+    private readonly DeviceDescriptor? _remoteDevice;
+    private readonly AgentServerRuntime? _remoteServer;
+    private readonly AgentAppService? _remoteAppService;
+
     /// <summary>
     /// 当前显示的应用列表（经过搜索过滤）
     /// </summary>
@@ -71,11 +77,23 @@ public partial class AppTabViewModel : TabItemViewModelBase
     private readonly List<AppInfo> _masterAppList = [];
     private readonly NotificationService _notifications = NotificationService.Instance;
     private readonly IUiDispatcher _uiDispatcher = UiDispatcher.Instance;
+    public string? RemoteDeviceId => _remoteDevice?.Id;
+    public bool IsRemote => _remoteDevice != null;
+    public bool CanInstallApk => Device != null || _remoteAppService != null;
 
     public AppTabViewModel(DeviceModel device)
     {
         Device = device;
         Title = device.Name;
+        _ = LoadAppsAsync();
+    }
+
+    public AppTabViewModel(DeviceDescriptor remoteDevice, AgentServerRuntime remoteServer)
+    {
+        _remoteDevice = remoteDevice;
+        _remoteServer = remoteServer;
+        _remoteAppService = new AgentAppService(remoteServer, remoteDevice.RemoteDeviceId ?? 0);
+        Title = remoteDevice.Name;
         _ = LoadAppsAsync();
     }
 
@@ -85,8 +103,6 @@ public partial class AppTabViewModel : TabItemViewModelBase
     [RelayCommand]
     private async Task LoadAppsAsync()
     {
-        if (Device == null) return;
-
         IsLoading = true;
         StatusMessage = Services.Localization.LocalizationManager.Instance.GetString("AppTab.LoadingApps", "正在加载应用列表...");
         AppCountText = string.Empty;
@@ -96,8 +112,13 @@ public partial class AppTabViewModel : TabItemViewModelBase
         {
             var appList = await Task.Run(() =>
             {
+                if (_remoteAppService != null)
+                {
+                    return _remoteAppService.ListAppsAsync().GetAwaiter().GetResult().ToList();
+                }
+
                 ScrcpyTool tool = ScrcpyService.Instance.Tool;
-                return tool.GetAppInfos(Device);
+                return tool.GetAppInfos(Device!);
             });
 
             _masterAppList.Clear();
@@ -171,7 +192,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
     private void InstallApk(IReadOnlyList<string>? filePaths)
     {
         var localizer = Services.Localization.LocalizationManager.Instance;
-        if (Device == null)
+        if (!CanInstallApk)
         {
             _notifications.ShowWarning(
                 localizer.GetString("Dialog.Tip", "提示"),
@@ -252,13 +273,28 @@ public partial class AppTabViewModel : TabItemViewModelBase
                         }
                     }
 
-                    await AdbClient.Instance.InstallAsync(
-                        device.DeviceData,
-                        stream,
-                        callback,
-                        cts.Token,
-                        "-r"
-                    );
+                    if (_remoteAppService != null)
+                    {
+                        string remoteMsg = string.Format(localizer.GetString("AppTab.Uploading", "正在上传: {0}"), fileName);
+                        toastManager.Update(toast, currentToast =>
+                        {
+                            currentToast.Content = remoteMsg;
+                            currentToast.Progress = 10;
+                            currentToast.IsIndeterminate = true;
+                        });
+                        TaskService.Instance.Update(managedTask, 10, remoteMsg);
+                        await _remoteAppService.InstallAsync(filePath, cts.Token);
+                    }
+                    else
+                    {
+                        await AdbClient.Instance.InstallAsync(
+                            device!.DeviceData,
+                            stream,
+                            callback,
+                            cts.Token,
+                            "-r"
+                        );
+                    }
                 }
 
                 ToastManager.Instance.Dismiss(toast);
@@ -290,7 +326,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
     [RelayCommand]
     private async Task UninstallAppAsync(AppInfo? app)
     {
-        if (Device == null || app == null) return;
+        if ((Device == null && _remoteAppService == null) || app == null) return;
 
         var localizer = Services.Localization.LocalizationManager.Instance;
         var result = await DialogService.ShowMessageAsync(
@@ -323,10 +359,17 @@ public partial class AppTabViewModel : TabItemViewModelBase
         {
             try
             {
-                await AdbClient.Instance.UninstallAsync(
-                    device.DeviceData,
-                    app.PackageName,
-                    CancellationToken.None);
+                if (_remoteAppService != null)
+                {
+                    await _remoteAppService.UninstallAsync(app.PackageName, CancellationToken.None);
+                }
+                else
+                {
+                    await AdbClient.Instance.UninstallAsync(
+                        device!.DeviceData,
+                        app.PackageName,
+                        CancellationToken.None);
+                }
 
                 ToastManager.Instance.Dismiss(toast);
                 string successMsg = string.Format(localizer.GetString("AppTab.UninstallSuccessMessage", "{0} 已卸载"), app.Name);
@@ -354,19 +397,26 @@ public partial class AppTabViewModel : TabItemViewModelBase
     [RelayCommand]
     private async Task LaunchAppAsync(AppInfo? app)
     {
-        if (Device == null || app == null) return;
+        if ((Device == null && _remoteAppService == null) || app == null) return;
         var localizer = Services.Localization.LocalizationManager.Instance;
 
         try
         {
-            await Task.Run(() =>
+            if (_remoteAppService != null)
             {
-                var receiver = new ConsoleOutputReceiver();
-                AdbClient.Instance.ExecuteRemoteCommand(
-                    $"am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER {app.PackageName}",
-                    Device.DeviceData,
-                    receiver);
-            });
+                await _remoteAppService.LaunchAsync(app.PackageName);
+            }
+            else
+            {
+                await Task.Run(() =>
+                {
+                    var receiver = new ConsoleOutputReceiver();
+                    AdbClient.Instance.ExecuteRemoteCommand(
+                        $"am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER {app.PackageName}",
+                        Device!.DeviceData,
+                        receiver);
+                });
+            }
             _notifications.ShowSuccess(
                 localizer.GetString("AppTab.LaunchSuccessTitle", "启动成功"),
                 string.Format(localizer.GetString("AppTab.LaunchSuccessMessage", "{0} 已启动"), app.Name));
@@ -385,7 +435,21 @@ public partial class AppTabViewModel : TabItemViewModelBase
     [RelayCommand]
     private void LaunchAppNewDisplay(AppInfo? app)
     {
-        if (Device == null || app == null) return;
+        if (app == null) return;
+
+        if (_remoteDevice != null && _remoteServer != null)
+        {
+            NavigationService.Instance.NavigateTo("Screen", new ScreenNavigationArgs
+            {
+                RemoteDevice = _remoteDevice,
+                ServerId = _remoteServer.Config.Id,
+                AppPackageName = app.PackageName,
+                AppDisplayName = app.Name
+            });
+            return;
+        }
+
+        if (Device == null) return;
 
         NavigationService.Instance.NavigateTo("Screen", new ScreenNavigationArgs
         {
@@ -434,30 +498,77 @@ public partial class AppTabViewModel : TabItemViewModelBase
     [RelayCommand]
     private async Task OpenAppInfoAsync(AppInfo? app)
     {
-        if (Device == null || app == null) return;
+        if ((_remoteAppService == null && Device == null) || app == null) return;
 
         var localizer = Services.Localization.LocalizationManager.Instance;
 
         try
         {
-            await Task.Run(() =>
+            if (_remoteAppService != null)
             {
-                var receiver = new ConsoleOutputReceiver();
-                AdbClient.Instance.ExecuteRemoteCommand(
-                    $"am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:{app.PackageName}",
-                    Device.DeviceData,
-                    receiver);
-            });
+                var info = await _remoteAppService.GetInfoAsync(app.PackageName);
+                var message = string.Join(Environment.NewLine, new[]
+                {
+                    $"Package: {info.PackageName}",
+                    $"VersionName: {info.VersionName}",
+                    $"VersionCode: {info.VersionCode}",
+                    $"FirstInstallTime: {info.FirstInstallTime}",
+                    $"LastUpdateTime: {info.LastUpdateTime}",
+                    $"Installer: {info.InstallerPackageName}",
+                    $"APK: {info.PrimaryApkPath}"
+                }.Where(item => !string.IsNullOrWhiteSpace(item) && !item.EndsWith(": ")));
+                await DialogService.ShowMessageAsync(localizer.GetString("AppTab.AppInfoOpenedTitle", "应用信息"), message);
+            }
+            else
+            {
+                await Task.Run(() =>
+                {
+                    var receiver = new ConsoleOutputReceiver();
+                    AdbClient.Instance.ExecuteRemoteCommand(
+                        $"am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:{app.PackageName}",
+                        Device!.DeviceData,
+                        receiver);
+                });
 
-            _notifications.ShowInfo(
-                localizer.GetString("AppTab.AppInfoOpenedTitle", "应用信息"),
-                string.Format(localizer.GetString("AppTab.AppInfoOpenedMessage", "已在设备上打开 {0} 的应用信息"), app.Name));
+                _notifications.ShowInfo(
+                    localizer.GetString("AppTab.AppInfoOpenedTitle", "应用信息"),
+                    string.Format(localizer.GetString("AppTab.AppInfoOpenedMessage", "已在设备上打开 {0} 的应用信息"), app.Name));
+            }
         }
         catch (Exception ex)
         {
             _notifications.ShowError(
                 localizer.GetString("AppTab.AppInfoFailedTitle", "打开失败"),
                 string.Format(localizer.GetString("AppTab.AppInfoFailedMessage", "打开应用信息失败: {0}"), ex.Message));
+        }
+    }
+
+    /// <summary>
+    /// 下载应用 APK 到本地
+    /// </summary>
+    [RelayCommand]
+    private async Task DownloadAppAsync(AppInfo? app)
+    {
+        if (_remoteAppService == null || app == null)
+        {
+            _notifications.ShowWarning("暂不支持", "当前仅支持远程 Agent 设备下载 APK。");
+            return;
+        }
+
+        var localizer = Services.Localization.LocalizationManager.Instance;
+        try
+        {
+            var savePath = Path.Combine(Path.GetTempPath(), $"{app.PackageName}.apk");
+            await _remoteAppService.DownloadAsync(app.PackageName, savePath);
+            _notifications.ShowSuccess(
+                localizer.GetString("AppTab.CopySuccessTitle", "已完成"),
+                $"APK 已下载到 {savePath}");
+        }
+        catch (Exception ex)
+        {
+            _notifications.ShowError(
+                localizer.GetString("AppTab.LoadFailedTitle", "加载失败"),
+                ex.Message);
         }
     }
 }

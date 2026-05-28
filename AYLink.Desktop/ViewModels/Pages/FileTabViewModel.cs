@@ -1,8 +1,10 @@
 using AdvancedSharpAdbClient.DeviceCommands;
+using AYLink.Core.Devices;
 using AYLink.Core.Models;
 using AYLink.Desktop.Services.Notifications;
 using AYLink.Desktop.Services.Tasks;
 using CommunityToolkit.Mvvm.Input;
+using System;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
@@ -10,6 +12,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
 {
     public FilePaneViewModel LeftPane { get; } = new();
     public FilePaneViewModel RightPane { get; } = new();
+    public string? RemoteDeviceId { get; }
 
     public FileTabViewModel(DeviceModel? device = null)
     {
@@ -27,6 +30,14 @@ public partial class FileTabViewModel : TabItemViewModelBase
             LeftPane.SelectLocalHome();
             RightPane.SelectLocalHome();
         }
+    }
+
+    public FileTabViewModel(DeviceDescriptor remoteDevice, string serverId, string? initialPath = null)
+    {
+        RemoteDeviceId = remoteDevice.Id;
+        Title = remoteDevice.Name;
+        LeftPane.SelectLocalHome();
+        RightPane.SelectRemoteDevice(remoteDevice, serverId, initialPath);
     }
 
     /// <summary>
@@ -117,15 +128,44 @@ public partial class FileTabViewModel : TabItemViewModelBase
             else if (sourcePane.SelectedSource.IsLocal && !targetPane.SelectedSource.IsLocal)
             {
                 // 本地到设备 (上传)
-                await targetPane.SelectedSource.Device!.FileManager.UploadFileAsync(sourcePath, targetPath, progress);
+                if (targetPane.SelectedSource.IsRemoteAgent)
+                {
+                    NotificationService.Instance.ShowWarning(
+                        localizer2.GetString("FilePage.NotSupportedTitle", "不支持"),
+                        "当前 Agent 后端尚未提供文件上传接口。");
+                    taskService.Fail(managedTask, "当前 Agent 后端尚未提供文件上传接口。");
+                    toastManager.Dismiss(toast);
+                    return;
+                }
+                else
+                {
+                    await targetPane.SelectedSource.Device!.FileManager.UploadFileAsync(sourcePath, targetPath, progress);
+                }
             }
             else if (!sourcePane.SelectedSource.IsLocal && targetPane.SelectedSource.IsLocal)
             {
                 // 设备到本地 (下载)
-                await sourcePane.SelectedSource.Device!.FileManager.DownloadFileAsync(sourcePath, targetPath, progress);
+                if (sourcePane.SelectedSource.IsRemoteAgent)
+                {
+                    await sourcePane.SelectedSource.AgentFileManager!.DownloadFileAsync(sourcePath, targetPath, progress);
+                }
+                else
+                {
+                    await sourcePane.SelectedSource.Device!.FileManager.DownloadFileAsync(sourcePath, targetPath, progress);
+                }
             }
             else
             {
+                if (sourcePane.SelectedSource.IsRemoteAgent || targetPane.SelectedSource.IsRemoteAgent)
+                {
+                    NotificationService.Instance.ShowWarning(
+                        localizer2.GetString("FilePage.NotSupportedTitle", "不支持"),
+                        "当前远程 Agent 文件管理暂不支持设备到设备直传。");
+                    taskService.Fail(managedTask, "当前远程 Agent 文件管理暂不支持设备到设备直传。");
+                    toastManager.Dismiss(toast);
+                    return;
+                }
+
                 // 设备到设备
                 if (sourcePane.SelectedSource.Device!.Serial == targetPane.SelectedSource.Device!.Serial)
                 {

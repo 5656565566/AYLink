@@ -85,7 +85,7 @@ public sealed class LocalDeviceProvider : IDeviceProvider
     /// </summary>
     /// <param name="deviceId">本地设备标识</param>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>连接后的设备描述；失败时返回 null</returns>
+    /// <returns>连接后的设备描述 失败时返回 null</returns>
     public async Task<DeviceDescriptor?> ConnectDeviceAsync(string deviceId, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -106,15 +106,29 @@ public sealed class LocalDeviceProvider : IDeviceProvider
     }
 
     /// <summary>
-    /// 本地 Provider 当前未实现设备重命名
+    /// 重命名本地设备的显示名称
+    /// 当前仅更新运行时内存对象 持久化由上层桌面服务负责
     /// </summary>
     /// <param name="deviceId">本地设备标识</param>
     /// <param name="newName">新的设备名称</param>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>始终返回 null</returns>
+    /// <returns>更新后的设备描述 失败时返回 null</returns>
     public Task<DeviceDescriptor?> RenameDeviceAsync(string deviceId, string newName, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult<DeviceDescriptor?>(null);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (string.IsNullOrWhiteSpace(deviceId) || string.IsNullOrWhiteSpace(newName))
+        {
+            return Task.FromResult<DeviceDescriptor?>(null);
+        }
+
+        var device = AdbManager.Instance.GetDeviceBySerial(deviceId);
+        if (device == null)
+        {
+            return Task.FromResult<DeviceDescriptor?>(null);
+        }
+
+        device.Name = newName.Trim();
+        return Task.FromResult<DeviceDescriptor?>(Map(device));
     }
 
     /// <summary>
@@ -186,6 +200,7 @@ public sealed class LocalDeviceProvider : IDeviceProvider
                 DeviceCapability.DeviceSettings |
                 DeviceCapability.ListEncoders |
                 DeviceCapability.NewDisplay |
+                DeviceCapability.Rename |
                 DeviceCapability.Disconnect
         };
     }

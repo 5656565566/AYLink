@@ -4,6 +4,7 @@ using AYLink.Core.Devices;
 using AYLink.Core.Models;
 using AYLink.Core.Scrcpy;
 using AYLink.Desktop.Models;
+using AYLink.Desktop.Services;
 using AYLink.Desktop.Services.Devices;
 using AYLink.Desktop.Services.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -36,15 +37,15 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     public bool IsLocal => Device.SourceKind == DeviceSourceKind.Local;
     public bool IsRemote => Device.SourceKind == DeviceSourceKind.Agent;
     public bool CanMirror => HasCapability(DeviceCapability.Mirror);
-    public bool CanOpenFileManager => IsLocal && HasCapability(DeviceCapability.FileManager);
-    public bool CanOpenAppManager => IsLocal && HasCapability(DeviceCapability.AppManager);
-    public bool CanOpenShell => IsLocal && HasCapability(DeviceCapability.Shell);
+    public bool CanOpenFileManager => HasCapability(DeviceCapability.FileManager);
+    public bool CanOpenAppManager => HasCapability(DeviceCapability.AppManager);
+    public bool CanOpenShell => HasCapability(DeviceCapability.Shell);
     public bool CanOpenDeviceSettings => IsLocal && HasCapability(DeviceCapability.DeviceSettings);
     public bool CanListEncoders => IsLocal && HasCapability(DeviceCapability.ListEncoders);
     public bool CanNewDisplay => IsLocal && HasCapability(DeviceCapability.NewDisplay);
     public bool CanDelete => IsLocal && HasCapability(DeviceCapability.Disconnect);
-    public bool CanRenameRemote => IsRemote && HasCapability(DeviceCapability.Rename);
-    public bool HasRemoteActions => CanRenameRemote;
+    public bool CanRename => HasCapability(DeviceCapability.Rename);
+    public bool HasRemoteActions => IsRemote && CanRename;
 
     /// <summary>
     /// 删除设备
@@ -82,12 +83,12 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     }
 
     /// <summary>
-    /// 重命名远程设备
+    /// 重命名设备
     /// </summary>
     [RelayCommand]
-    private async Task RenameRemoteDevice()
+    private async Task RenameDevice()
     {
-        if (!CanRenameRemote)
+        if (!CanRename)
         {
             return;
         }
@@ -116,10 +117,10 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
             return;
         }
 
-        var updated = await _deviceCatalog.RenameRemoteDeviceAsync(Device, newName);
+        var updated = await _deviceCatalog.RenameDeviceAsync(Device, newName);
         if (updated == null)
         {
-            NotificationService.Instance.ShowError("重命名失败", $"无法更新远程设备 {Name}");
+            NotificationService.Instance.ShowError("重命名失败", $"无法更新设备 {Name}");
             return;
         }
 
@@ -163,10 +164,23 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     [RelayCommand]
     private async Task OpenFileManager()
     {
+        if (IsRemote)
+        {
+            Navigation.NavigateTo("File", new FileNavigationArgs
+            {
+                RemoteDevice = Device,
+                ServerId = Device.ProviderId
+            });
+            return;
+        }
+
         var localDevice = await GetLocalDeviceOrNotifyAsync();
         if (localDevice != null)
         {
-            Navigation.NavigateTo("File", localDevice);
+            Navigation.NavigateTo("File", new FileNavigationArgs
+            {
+                Device = localDevice
+            });
         }
     }
 
@@ -176,10 +190,23 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     [RelayCommand]
     private async Task OpenAppManager()
     {
+        if (IsRemote)
+        {
+            Navigation.NavigateTo("App", new AppNavigationArgs
+            {
+                RemoteDevice = Device,
+                ServerId = Device.ProviderId
+            });
+            return;
+        }
+
         var localDevice = await GetLocalDeviceOrNotifyAsync();
         if (localDevice != null)
         {
-            Navigation.NavigateTo("App", localDevice);
+            Navigation.NavigateTo("App", new AppNavigationArgs
+            {
+                Device = localDevice
+            });
         }
     }
 
@@ -189,10 +216,23 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     [RelayCommand]
     private async Task OpenShell()
     {
+        if (IsRemote)
+        {
+            Navigation.NavigateTo("Shell", new ShellNavigationArgs
+            {
+                RemoteDevice = Device,
+                ServerId = Device.ProviderId
+            });
+            return;
+        }
+
         var localDevice = await GetLocalDeviceOrNotifyAsync();
         if (localDevice != null)
         {
-            Navigation.NavigateTo("Shell", localDevice);
+            Navigation.NavigateTo("Shell", new ShellNavigationArgs
+            {
+                Device = localDevice
+            });
         }
     }
 

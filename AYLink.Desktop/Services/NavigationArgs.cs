@@ -53,3 +53,41 @@ public sealed class ScreenNavigationArgs : NavigationArgs
 
     public string? AppDisplayName { get; init; }
 }
+
+/// <summary>
+/// 文件管理页导航参数
+/// </summary>
+public sealed class FileNavigationArgs : NavigationArgs
+{
+    public AYLink.Core.Models.DeviceModel? Device { get; init; }
+
+    public DeviceDescriptor? RemoteDevice { get; init; }
+
+    public string? ServerId { get; init; }
+
+    public string? InitialPath { get; init; }
+}
+
+/// <summary>
+/// 应用管理页导航参数
+/// </summary>
+public sealed class AppNavigationArgs : NavigationArgs
+{
+    public AYLink.Core.Models.DeviceModel? Device { get; init; }
+
+    public DeviceDescriptor? RemoteDevice { get; init; }
+
+    public string? ServerId { get; init; }
+}
+
+/// <summary>
+/// 终端页导航参数
+/// </summary>
+public sealed class ShellNavigationArgs : NavigationArgs
+{
+    public AYLink.Core.Models.DeviceModel? Device { get; init; }
+
+    public DeviceDescriptor? RemoteDevice { get; init; }
+
+    public string? ServerId { get; init; }
+}

@@ -1,6 +1,9 @@
 using AYLink.Core.Models;
+using AYLink.Core.Devices;
+using AYLink.Desktop.Services;
 using CommunityToolkit.Mvvm.Input;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
@@ -16,6 +19,42 @@ public partial class AppPageViewModel : TabbedPageViewModelBase<AppTabViewModel>
     public override string EmptyStateDescription => Services.Localization.LocalizationManager.Instance.GetString("AppPage.EmptyStateDescription", "请在首页选择一个设备来管理应用");
 
     protected override AppTabViewModel CreateTab(DeviceModel device) => new(device);
+
+    public override void OnNavigatedTo(object? parameter = null)
+    {
+        IsActive = true;
+
+        if (parameter is AppNavigationArgs args)
+        {
+            if (args.RemoteDevice != null && !string.IsNullOrWhiteSpace(args.ServerId))
+            {
+                AddRemoteTab(args.RemoteDevice, args.ServerId);
+                return;
+            }
+
+            if (args.Device != null)
+            {
+                AddNewTabCommand.Execute(args.Device);
+                return;
+            }
+        }
+
+        base.OnNavigatedTo(parameter);
+    }
+
+    private void AddRemoteTab(DeviceDescriptor remoteDevice, string serverId)
+    {
+        var existing = Tabs.FirstOrDefault(tab => tab.RemoteDeviceId == remoteDevice.Id);
+        if (existing != null)
+        {
+            SelectedTab = existing;
+            return;
+        }
+
+        var runtime = AgentSessionService.Instance.FindServer(serverId)
+            ?? throw new System.InvalidOperationException($"未找到远程服务器 {serverId}");
+        RegisterTab(new AppTabViewModel(remoteDevice, runtime));
+    }
 
     /// <summary>
     /// 卸载选中应用（右键菜单命令）
@@ -74,6 +113,15 @@ public partial class AppPageViewModel : TabbedPageViewModelBase<AppTabViewModel>
         if (app != null && SelectedTab != null)
         {
             await SelectedTab.OpenAppInfoCommand.ExecuteAsync(app);
+        }
+    }
+
+    [RelayCommand]
+    private async Task DownloadApp(AppInfo? app)
+    {
+        if (app != null && SelectedTab != null)
+        {
+            await SelectedTab.DownloadAppCommand.ExecuteAsync(app);
         }
     }
 
