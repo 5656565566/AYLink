@@ -1,0 +1,177 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="620"
+             x:Class="AYLink.Desktop.Views.Pages.ServersPage"
+             x:DataType="vm:ServersPageViewModel">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- 顶部工具栏 -->
+        <ui:CommandBar Grid.Row="0" DefaultLabelPosition="Right" Background="Transparent">
+            <ui:CommandBar.PrimaryCommands>
+                <ui:CommandBarButton Label="{i18n:Tr ServersPage.AddServer, DefaultText='添加服务器'}" Command="{Binding AddServerCommand}">
+                    <ui:CommandBarButton.IconSource>
+                        <ui:SymbolIconSource Symbol="Add"/>
+                    </ui:CommandBarButton.IconSource>
+                </ui:CommandBarButton>
+                <ui:CommandBarButton Label="{i18n:Tr ServersPage.RefreshAll, DefaultText='刷新全部'}" Command="{Binding RefreshAllCommand}">
+                    <ui:CommandBarButton.IconSource>
+                        <ui:SymbolIconSource Symbol="Refresh"/>
+                    </ui:CommandBarButton.IconSource>
+                </ui:CommandBarButton>
+            </ui:CommandBar.PrimaryCommands>
+        </ui:CommandBar>
+
+        <!-- 空状态提示 -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Margin="2"
+                IsVisible="{Binding !HasServers}">
+            <StackPanel Spacing="12"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Opacity="0.6">
+                <TextBlock Text="{i18n:Tr ServersPage.EmptyTitle, DefaultText='没有可用的服务器'}"
+                           Theme="{StaticResource SubtitleTextBlockStyle}"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="{i18n:Tr ServersPage.EmptyDescription, DefaultText='点击「添加服务器」按钮连接新服务器'}"
+                           Theme="{StaticResource BodyTextBlockStyle}"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 服务器列表 -->
+        <ScrollViewer Grid.Row="1" IsVisible="{Binding HasServers}" Padding="12">
+            <ItemsControl ItemsSource="{Binding Servers}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="12"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:AgentServerItemViewModel">
+                        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="20">
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                                <!-- 标题与基础信息 -->
+                                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding DisplayName}" Theme="{StaticResource SubtitleTextBlockStyle}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <Border CornerRadius="4" 
+                                                Padding="8,4" 
+                                                Background="{DynamicResource SystemAccentColorLight3}" 
+                                                IsVisible="{Binding CanManageDevices}"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding StateText}" 
+                                                       FontSize="12" 
+                                                       Foreground="{DynamicResource SystemAccentColorDark1}" 
+                                                       FontWeight="Bold"
+                                                       VerticalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       Margin="0,0,0,1"/>
+                                        </Border>
+                                        <Border CornerRadius="4" 
+                                                Padding="8,4" 
+                                                Background="{DynamicResource SystemFillColorCriticalBackgroundBrush}" 
+                                                IsVisible="{Binding !CanManageDevices}"
+                                                VerticalAlignment="Center"
+                                                MaxWidth="300">
+                                            <TextBlock Text="{Binding StateText}" 
+                                                       FontSize="12" 
+                                                       Foreground="{DynamicResource SystemFillColorCriticalBrush}" 
+                                                       FontWeight="Bold"
+                                                       VerticalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       Margin="0,0,0,1"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip.Tip="{Binding LastError}"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <ui:SymbolIcon Symbol="Link" FontSize="14" Opacity="0.5"/>
+                                        <TextBlock Text="{Binding DisplayUrl}" Opacity="0.7" Theme="{StaticResource BodyTextBlockStyle}"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- 顶部操作区 -->
+                                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                                    <Button Command="{Binding OpenSettingsCommand}"
+                                            ToolTip.Tip="{i18n:Tr ServersPage.OpenSettings, DefaultText='设置'}"
+                                            IsVisible="{Binding CanOpenSettings}">
+                                        <ui:SymbolIcon Symbol="Settings"/>
+                                    </Button>
+                                    <Button Command="{Binding EditServerCommand}" ToolTip.Tip="{i18n:Tr ServersPage.EditServer, DefaultText='编辑'}">
+                                        <ui:SymbolIcon Symbol="Edit"/>
+                                    </Button>
+                                    <Button Command="{Binding DeleteServerCommand}" ToolTip.Tip="{i18n:Tr ServersPage.DeleteServer, DefaultText='删除'}">
+                                        <ui:SymbolIcon Symbol="Delete" Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                    </Button>
+                                </StackPanel>
+
+                                <Separator Grid.Row="1" Grid.ColumnSpan="2" Margin="0,16" Background="{DynamicResource DividerStrokeColorDefaultBrush}"/>
+
+                                <!-- 详情与底部操作区 -->
+                                <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" VerticalAlignment="Bottom">
+                                    <StackPanel Grid.Column="0" Spacing="8" VerticalAlignment="Center">
+                                        <Grid ColumnDefinitions="90,*">
+                                            <TextBlock Grid.Column="0" Text="{i18n:Tr ServersPage.Username, DefaultText='当前账户:'}" Opacity="0.6" Theme="{StaticResource CaptionTextBlockStyle}"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding LastKnownUserName}" Theme="{StaticResource CaptionTextBlockStyle}"/>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="90,*">
+                                            <TextBlock Grid.Column="0" Text="{i18n:Tr ServersPage.LastSync, DefaultText='最后同步:'}" Opacity="0.6" Theme="{StaticResource CaptionTextBlockStyle}"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding LastSyncText}" Opacity="0.8" Theme="{StaticResource CaptionTextBlockStyle}"/>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <!-- 底部操作按钮 -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
+                                        <Button Content="{i18n:Tr ServersPage.Login, DefaultText='重新登录'}" 
+                                                Command="{Binding LoginServerCommand}" 
+                                                IsVisible="{Binding CanLogin}"/>
+                                                
+                                        <Button Content="{i18n:Tr ServersPage.RefreshServer, DefaultText='刷新状态'}" 
+                                                Command="{Binding RefreshServerCommand}"
+                                                IsEnabled="{Binding !IsConnecting}">
+                                            <Button.ContentTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <ui:SymbolIcon Symbol="Refresh" FontSize="14"/>
+                                                        <TextBlock Text="{Binding}"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </Button.ContentTemplate>
+                                        </Button>
+                                        
+                                        <Button Content="{i18n:Tr ServersPage.AddRemoteDevice, DefaultText='添加设备'}" 
+                                                Command="{Binding AddDeviceCommand}" 
+                                                IsEnabled="{Binding CanManageDevices}"
+                                                Classes="accent">
+                                            <Button.ContentTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <ui:SymbolIcon Symbol="Add" FontSize="14"/>
+                                                        <TextBlock Text="{Binding}"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </Button.ContentTemplate>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

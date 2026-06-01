@@ -1,11 +1,10 @@
-﻿using AYLink.Core.Models;
+using AYLink.Core.Devices;
+using AYLink.Core.Models;
 using AYLink.Core.Scrcpy.Control;
-using AYLink.Core.Scrcpy;
-using AYLink.Core.Utils;
-using AYLink.Desktop.Models;
+using AYLink.Core.Agent;
 using AYLink.Desktop.Services;
-using AYLink.Desktop.Services.Audio;
 using AYLink.Desktop.Services.Input;
+using AYLink.Desktop.Services.ScreenSessions;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -14,7 +13,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Diagnostics;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using static AYLink.Core.Scrcpy.Control.ControlMsgModel;
 
@@ -22,9 +21,9 @@ namespace AYLink.Desktop.ViewModels.Pages;
 
 /// <summary>
 /// 投屏标签页 ViewModel - 每个设备对应一个标签页
-/// 管理 ScrcpyClient 连接、视频渲染和控制输入
+/// 管理投屏会话、视频渲染和控制输入
 /// </summary>
-public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
+public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable, IAsyncTabStopAware
 {
     [ObservableProperty]
     public partial bool IsConnected { get; set; }
@@ -34,56 +33,56 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     [ObservableProperty]
     public partial Avalonia.Media.Imaging.WriteableBitmap? VideoSource { get; set; }
-    
+
     [ObservableProperty]
     private bool _isMouseLocked;
-    
+
     public IInputProcessor InputProcessor { get; private set; } = new DefaultInputProcessor();
 
     private Size _screenSize;
-    private readonly string? _appPackageName;
-    private readonly string? _appDisplayName;
     private bool _disposed;
-    private readonly AudioPlayer _audioPlayer = AudioPlayer.Instance;
     private Size _containerSize;
     private bool _hasReceivedFirstVideoFrame;
+    private int _renderedFrameCount;
     private Size? _pendingResizeSize;
     private Size? _lastResizeRequestSize;
     private readonly DispatcherTimer _resizeThrottleTimer;
     private readonly IMouseLockService _mouseLockService = new SdlMouseLockService();
     private readonly ScreenInputCoordinator _inputCoordinator;
-    private readonly ScreenSessionController _sessionController;
+    private readonly IScreenSession _screenSession;
+    private readonly IResizableScreenSession? _resizableScreenSession;
     private static readonly TimeSpan ResizeThrottleInterval = TimeSpan.FromMilliseconds(120);
 
     /// <summary>
     /// 视频 Image 控件引用
     /// </summary>
     private Image? _videoImage;
+
     private Func<bool> _keyboardInputGate = static () => true;
 
-    public ScreenTabViewModel(DeviceModel device, string? appPackageName = null, string? appDisplayName = null)
+    private readonly IScreenSessionFactory _screenSessionFactory;
+    private readonly DeviceDescriptor? _remoteDevice;
+    private readonly AgentServerRuntime? _remoteServer;
+
+    public ScreenTabViewModel(
+        IScreenSession screenSession,
+        IScreenSessionFactory screenSessionFactory,
+        DeviceModel? device,
+        string title,
+        DeviceDescriptor? remoteDevice = null,
+        AgentServerRuntime? remoteServer = null)
     {
         Device = device;
-        _appPackageName = appPackageName;
-        _appDisplayName = appDisplayName;
-        _resizeThrottleTimer = new DispatcherTimer
-        {
-            Interval = ResizeThrottleInterval
-        };
-        _resizeThrottleTimer.Tick += OnResizeThrottleTimerTick;
-        _sessionController = new ScreenSessionController(device, appPackageName, _audioPlayer);
-        _inputCoordinator = new ScreenInputCoordinator(
-            () => InputProcessor,
-            _mouseLockService,
-            () => IsMouseLocked,
-            CanHandleKeyboardInput,
-            () => Device?.DeviceData != null,
-            NormalizeCoordinates,
-            ApplyMouseLockState);
-        _sessionController.VideoFrameDecoded += OnVideoFrameDecoded;
+        _screenSession = screenSession ?? throw new ArgumentNullException(nameof(screenSession));
+        _screenSessionFactory = screenSessionFactory ?? throw new ArgumentNullException(nameof(screenSessionFactory));
+        _remoteDevice = remoteDevice;
+        _remoteServer = remoteServer;
+        _resizableScreenSession = _screenSession as IResizableScreenSession;
+        _resizeThrottleTimer = CreateResizeTimer();
+        _inputCoordinator = CreateInputCoordinator();
 
-        var titleAppName = string.IsNullOrWhiteSpace(appDisplayName) ? appPackageName : appDisplayName;
-        Title = titleAppName != null ? $"{device.Name} - {titleAppName}" : device.Name;
+        BindScreenSession();
+        Title = title;
     }
 
     public void SetKeyboardInputGate(Func<bool> keyboardInputGate)
@@ -97,30 +96,21 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     /// </summary>
     public void AttachVideoImage(Image videoImage)
     {
-        // 如果是同一个实例 无需处理
         if (ReferenceEquals(_videoImage, videoImage)) return;
 
-        // 先解绑旧控件的事件（如果有旧引用）
         DetachEventHandlers();
 
         _videoImage = videoImage;
         _mouseLockService.Attach(videoImage);
 
-        if (Device != null && !IsConnected)
+        if (!IsConnected)
         {
-            // 首次连接
             _ = ConnectDeviceAsync();
         }
-        else if (IsConnected)
+        else
         {
-            // 已连接状态下重新挂载（重排/视图切换）- 重新绑定输入事件
             SetupEventHandlers();
-            
-            // 强行刷新一次画面 防止视图复用时卡在上一帧旧图
-            Dispatcher.UIThread.Post(() =>
-            {
-                _videoImage?.InvalidateVisual();
-            });
+            Dispatcher.UIThread.Post(() => _videoImage?.InvalidateVisual());
         }
     }
 
@@ -128,7 +118,6 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     /// 分离视频显示控件引用
     /// 仅解绑事件并置空引用
     /// 避免重排标签页时导致后端中断
-    /// 事件的真正清理和后端停止在 Dispose 时执行
     /// </summary>
     public void DetachVideoImage()
     {
@@ -142,7 +131,6 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     /// </summary>
     protected override void CloseTab()
     {
-        Dispose();
         base.CloseTab();
     }
 
@@ -151,37 +139,17 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
     /// </summary>
     private async Task ConnectDeviceAsync()
     {
-        if (Device?.AdbClient == null || _videoImage == null) return;
+        if (_videoImage == null || _disposed)
+        {
+            return;
+        }
 
         try
         {
-            var deviceConfig = ConfigManager.Instance.LoadConfig<DeviceConfig>(
-                HashHelper.ToMd5Hash(Device.Serial));
-            Device.ServerOptions ??= new ServerOptions();
-            deviceConfig.ApplyConfig(Device.ServerOptions);
-
-            // 根据配置选择输入处理器
-            if (InputProcessor != null)
-            {
-                InputProcessor.CursorLockRequested -= OnCursorLockRequested;
-                InputProcessor.Dispose();
-            }
-
-            if (Device.ServerOptions.HidKeyboard || Device.ServerOptions.HidMouse)
-            {
-                InputProcessor = new HidInputProcessor(Device.ServerOptions.HidKeyboard, Device.ServerOptions.HidMouse);
-            }
-            else
-            {
-                InputProcessor = new DefaultInputProcessor();
-            }
-
+            await RecreateInputProcessorAsync();
             InputProcessor.CursorLockRequested += OnCursorLockRequested;
             InputProcessor.SetCursorLocked(IsMouseLocked);
-            await _sessionController.ConnectAsync(InputProcessor);
-
-            IsConnected = true;
-
+            await _screenSession.StartAsync(InputProcessor);
             SetupEventHandlers();
         }
         catch (Exception ex)
@@ -193,7 +161,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         }
     }
 
-    public bool IsFlexDisplayEnabled => _sessionController.IsFlexDisplayEnabled;
+    public bool IsFlexDisplayEnabled => _resizableScreenSession?.IsFlexDisplayEnabled == true;
 
     private void OnVideoFrameDecoded(int width, int height, IntPtr bgraDataPtr, int rowBytes)
     {
@@ -208,6 +176,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 if (!_hasReceivedFirstVideoFrame)
                 {
                     _hasReceivedFirstVideoFrame = true;
+                    Debug.WriteLine($"[ScreenTab] first video frame rendered candidate: size={width}x{height}");
                     FlushPendingResize();
                 }
 
@@ -233,6 +202,12 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                         buf.Address.ToPointer(),
                         buf.RowBytes * height,
                         rowBytes * height);
+                }
+
+                _renderedFrameCount++;
+                if (_renderedFrameCount <= 3 || _renderedFrameCount % 120 == 0)
+                {
+                    Debug.WriteLine($"[ScreenTab] frame copied to bitmap: count={_renderedFrameCount}, size={width}x{height}, rowBytes={rowBytes}");
                 }
 
                 _videoImage?.InvalidateVisual();
@@ -314,7 +289,6 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             return;
         }
 
-        // 发送按下+释放
         SendKeyDown(keycode);
         SendKeyUp(keycode);
     }
@@ -324,14 +298,14 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         switch (buttonName)
         {
             case "ScreenOn":
-                _sessionController.Client?.SendControlCommand(new ControlMsg
+                SendControlCommand(new ControlMsg
                 {
                     Type = ControlMsgType.SetScreenPowerMode,
                     Data = true
                 }.Serialize());
                 break;
             case "ScreenOff":
-                _sessionController.Client?.SendControlCommand(new ControlMsg
+                SendControlCommand(new ControlMsg
                 {
                     Type = ControlMsgType.SetScreenPowerMode,
                     Data = false
@@ -353,7 +327,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 MetaState = 0
             }
         };
-        _sessionController.Client?.SendControlCommand(keyMsg.Serialize());
+        SendControlCommand(keyMsg.Serialize());
     }
 
     private void SendKeyUp(int keycode)
@@ -369,7 +343,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
                 MetaState = 0
             }
         };
-        _sessionController.Client?.SendControlCommand(keyMsg.Serialize());
+        SendControlCommand(keyMsg.Serialize());
     }
 
     private static int GetButtonKeycode(string buttonName)
@@ -430,7 +404,8 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private void SendResizeDisplayIfNeeded(Size newSize)
     {
-        if (_sessionController.SendResizeDisplayIfNeeded(newSize, _hasReceivedFirstVideoFrame, _lastResizeRequestSize))
+        if (_resizableScreenSession != null &&
+            _resizableScreenSession.SendResizeDisplayIfNeeded(newSize, _hasReceivedFirstVideoFrame, _lastResizeRequestSize))
         {
             _lastResizeRequestSize = newSize;
         }
@@ -438,6 +413,21 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
 
     private bool CanHandleKeyboardInput()
         => _keyboardInputGate();
+
+    /// <summary>
+    /// 在标签页销毁前停止当前投屏会话
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        await _screenSession.StopAsync(cancellationToken);
+        IsConnected = false;
+    }
 
     private Point NormalizeCoordinates(Point viewPoint)
     {
@@ -447,12 +437,11 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         double controlWidth = _videoImage.Bounds.Width;
         double controlHeight = _videoImage.Bounds.Height;
 
-        // 根据实际使用的 Stretch 模式计算实际渲染图片的缩放比例
         double scaleX = controlWidth / _screenSize.Width;
         double scaleY = controlHeight / _screenSize.Height;
-        
+
         double scale = _videoImage.Stretch == Stretch.Fill ? 1.0 : Math.Min(scaleX, scaleY);
-        
+
         if (_videoImage.Stretch == Stretch.Fill)
         {
             return new Point(
@@ -461,19 +450,15 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
             );
         }
 
-        // 计算渲染出来的实际图片大小
         double drawnWidth = _screenSize.Width * scale;
         double drawnHeight = _screenSize.Height * scale;
 
-        // 图片默认在中心，计算相对控件边缘的留白偏移量
         double offsetX = (controlWidth - drawnWidth) / 2;
         double offsetY = (controlHeight - drawnHeight) / 2;
 
-        // 将鼠标相对控件坐标 转换成 相对图片坐标
         double imageX = viewPoint.X - offsetX;
         double imageY = viewPoint.Y - offsetY;
 
-        // 还原回原始视频的坐标系 (去除缩放比例)
         return new Point(
             Math.Clamp(imageX / scale, 0, _screenSize.Width),
             Math.Clamp(imageY / scale, 0, _screenSize.Height));
@@ -493,24 +478,123 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable
         {
             if (disposing)
             {
-                // 释放托管资源
                 _disposed = true;
                 DetachEventHandlers();
                 DetachVideoImage();
+                _screenSession.VideoFrameDecoded -= OnVideoFrameDecoded;
+                _screenSession.SessionError -= OnSessionError;
+                _screenSession.StateChanged -= OnSessionStateChanged;
+
                 if (InputProcessor != null)
                 {
                     InputProcessor.CursorLockRequested -= OnCursorLockRequested;
                     InputProcessor.Dispose();
                 }
+
                 _inputCoordinator.Dispose();
                 _mouseLockService.Dispose();
-                _sessionController.Dispose();
+                _screenSession.Dispose();
                 _resizeThrottleTimer.Stop();
 
                 VideoSource?.Dispose();
                 VideoSource = null;
             }
+
             _disposed = true;
         }
+    }
+
+    private void SendControlCommand(byte[] payload)
+    {
+        if (payload.Length == 0)
+        {
+            return;
+        }
+
+        _screenSession.SendControl(payload);
+    }
+
+    private DispatcherTimer CreateResizeTimer()
+    {
+        var timer = new DispatcherTimer
+        {
+            Interval = ResizeThrottleInterval
+        };
+        timer.Tick += OnResizeThrottleTimerTick;
+        return timer;
+    }
+
+    private ScreenInputCoordinator CreateInputCoordinator()
+    {
+        return new ScreenInputCoordinator(
+            () => InputProcessor,
+            _mouseLockService,
+            () => IsMouseLocked,
+            CanHandleKeyboardInput,
+            () => IsConnected,
+            NormalizeCoordinates,
+            ApplyMouseLockState);
+    }
+
+    private void BindScreenSession()
+    {
+        _screenSession.VideoFrameDecoded += OnVideoFrameDecoded;
+        _screenSession.SessionError += OnSessionError;
+        _screenSession.StateChanged += OnSessionStateChanged;
+    }
+
+    private async Task RecreateInputProcessorAsync()
+    {
+        if (InputProcessor != null)
+        {
+            InputProcessor.CursorLockRequested -= OnCursorLockRequested;
+            InputProcessor.Dispose();
+        }
+
+        if (_remoteDevice != null && _remoteServer != null)
+        {
+            var settings = await LoadRemoteInputSettingsAsync();
+            InputProcessor = _screenSessionFactory.CreateRemoteInputProcessor(settings.HidKeyboard, settings.HidMouse);
+            return;
+        }
+
+        InputProcessor = _screenSessionFactory.CreateInputProcessor(Device);
+    }
+
+    private async Task<RemoteInputSettings> LoadRemoteInputSettingsAsync()
+    {
+        if (_remoteDevice?.RemoteDeviceId is not int remoteDeviceId || remoteDeviceId <= 0 || _remoteServer == null)
+        {
+            return RemoteInputSettings.Disabled;
+        }
+
+        try
+        {
+            var accessToken = await _remoteServer.EnsureAccessTokenAsync();
+            var settings = await _remoteServer.Client.GetDeviceSettingsAsync(accessToken, remoteDeviceId);
+            _remoteServer.TouchSuccess();
+            return new RemoteInputSettings(settings.HidKeyboard, settings.HidMouse);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ScreenTab] LoadRemoteInputSettingsAsync failed: {ex}");
+            return RemoteInputSettings.Disabled;
+        }
+    }
+
+    private void OnSessionError(Exception ex)
+    {
+        Debug.WriteLine($"[ScreenTab] session error: {ex}");
+    }
+
+    private void OnSessionStateChanged(ScreenSessionState state)
+    {
+        IsConnected = state == ScreenSessionState.Connected;
+        Debug.WriteLine($"[ScreenTab] session state: {state}");
+    }
+
+    private readonly record struct RemoteInputSettings(bool HidKeyboard, bool HidMouse)
+    {
+        public static RemoteInputSettings Disabled => new(false, false);
     }
 }

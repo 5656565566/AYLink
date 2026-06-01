@@ -43,7 +43,7 @@ public partial class AppPage : UserControl
         }
 
         var localizer = Services.Localization.LocalizationManager.Instance;
-        if (tabVm?.Device == null)
+        if (tabVm == null || !tabVm.CanInstallApk)
         {
             Services.Notifications.NotificationService.Instance.ShowWarning(
                 localizer.GetString("Dialog.Tip", "提示"),
@@ -109,7 +109,10 @@ public partial class AppPage : UserControl
 
     private void CtxDownload_Click(object? sender, RoutedEventArgs e)
     {
-        // TODO: 实现下载 APK 到本地
+        if (DataContext is AppPageViewModel vm && vm.SelectedTab?.SelectedApp is AppInfo app)
+        {
+            vm.DownloadAppCommand.Execute(app);
+        }
     }
 
     private void CtxCopyPackage_Click(object? sender, RoutedEventArgs e)

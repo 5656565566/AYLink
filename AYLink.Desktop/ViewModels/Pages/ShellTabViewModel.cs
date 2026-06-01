@@ -1,6 +1,9 @@
 using AdvancedSharpAdbClient;
 using AYLink.Controls.Terminal;
+using AYLink.Core.Devices;
 using AYLink.Core.Models;
+using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Agent;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System;
@@ -17,11 +20,16 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
     [ObservableProperty]
     public partial bool IsConnected { get; set; }
 
+    public string? RemoteDeviceId => _remoteDevice?.Id;
+
     private CancellationTokenSource? _sessionCts;
     private IAdbSocket? _adbSocket;
     private Stream? _shellStream;
     private bool _disposed;
     private TerminalControl? _terminalControl;
+    private readonly DeviceDescriptor? _remoteDevice;
+    private readonly AgentServerRuntime? _remoteServer;
+    private AgentTerminalSession? _remoteTerminalSession;
 
     private readonly SemaphoreSlim _writeLock = new(1, 1);
 
@@ -29,6 +37,14 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
     {
         Device = device;
         Title = device.Name;
+        StatusMessage = Services.Localization.LocalizationManager.Instance.GetString("ShellTab.NotConnected", "未连接");
+    }
+
+    public ShellTabViewModel(DeviceDescriptor remoteDevice, AgentServerRuntime remoteServer)
+    {
+        _remoteDevice = remoteDevice;
+        _remoteServer = remoteServer;
+        Title = remoteDevice.Name;
         StatusMessage = Services.Localization.LocalizationManager.Instance.GetString("ShellTab.NotConnected", "未连接");
     }
 
@@ -44,7 +60,7 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
         _terminalControl.UserInput += OnUserInput;
         _terminalControl.TerminalResized += OnTerminalResized;
 
-        if (Device != null && !IsConnected)
+        if ((Device != null || _remoteDevice != null) && !IsConnected)
         {
             _ = StartShellSessionAsync();
         }
@@ -68,7 +84,15 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
 
     private async Task StartShellSessionAsync()
     {
-        if (Device?.AdbClient == null || IsConnected) return;
+        if (IsConnected) return;
+
+        if (_remoteDevice != null && _remoteServer != null)
+        {
+            await StartRemoteShellSessionAsync();
+            return;
+        }
+
+        if (Device?.AdbClient == null) return;
 
         try
         {
@@ -115,18 +139,27 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
 
     private async void OnTerminalResized(object? sender, TerminalSizeEventArgs e)
     {
-        if (_shellStream == null || !IsConnected) return;
+        if (!IsConnected) return;
         try
         {
-            string sizeStr = $"{e.Rows}x{e.Cols},0x0";
-            byte[] sizeBytes = Encoding.UTF8.GetBytes(sizeStr);
-            byte[] packet = new byte[5 + sizeBytes.Length];
-            packet[0] = 5;
-            byte[] lenBytes = BitConverter.GetBytes(sizeBytes.Length);
-            Array.Copy(lenBytes, 0, packet, 1, 4);
-            Array.Copy(sizeBytes, 0, packet, 5, sizeBytes.Length);
+            if (_remoteTerminalSession != null)
+            {
+                await _remoteTerminalSession.ResizeAsync(e.Cols, e.Rows);
+            }
+            else
+            {
+                if (_shellStream == null) return;
 
-            await SendPacketSafeAsync(packet, "Resize");
+                string sizeStr = $"{e.Rows}x{e.Cols},0x0";
+                byte[] sizeBytes = Encoding.UTF8.GetBytes(sizeStr);
+                byte[] packet = new byte[5 + sizeBytes.Length];
+                packet[0] = 5;
+                byte[] lenBytes = BitConverter.GetBytes(sizeBytes.Length);
+                Array.Copy(lenBytes, 0, packet, 1, 4);
+                Array.Copy(sizeBytes, 0, packet, 5, sizeBytes.Length);
+
+                await SendPacketSafeAsync(packet, "Resize");
+            }
         }
         catch (Exception ex)
         {
@@ -210,21 +243,28 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
 
     private async void OnUserInput(object? sender, TerminalDataEventArgs e)
     {
-        if (_shellStream == null || !IsConnected || string.IsNullOrEmpty(e.Data)) return;
+        if (!IsConnected || string.IsNullOrEmpty(e.Data)) return;
 
         try
         {
-            byte[] textBytes = Encoding.UTF8.GetBytes(e.Data);
-            byte[] packet = new byte[5 + textBytes.Length];
+            if (_remoteTerminalSession != null)
+            {
+                await _remoteTerminalSession.SendInputAsync(e.Data);
+            }
+            else
+            {
+                if (_shellStream == null) return;
 
-            packet[0] = 0; // ID: STDIN
-            byte[] lenBytes = BitConverter.GetBytes(textBytes.Length);
-            Array.Copy(lenBytes, 0, packet, 1, 4);
-            Array.Copy(textBytes, 0, packet, 5, textBytes.Length);
+                byte[] textBytes = Encoding.UTF8.GetBytes(e.Data);
+                byte[] packet = new byte[5 + textBytes.Length];
 
-            string debugText = e.Data.Replace("\r", "\\r").Replace("\n", "\\n").Replace("\x03", "^C");
+                packet[0] = 0; // ID: STDIN
+                byte[] lenBytes = BitConverter.GetBytes(textBytes.Length);
+                Array.Copy(lenBytes, 0, packet, 1, 4);
+                Array.Copy(textBytes, 0, packet, 5, textBytes.Length);
 
-            await SendPacketSafeAsync(packet, "UserInput");
+                await SendPacketSafeAsync(packet, "UserInput");
+            }
         }
         catch (Exception ex)
         {
@@ -277,6 +317,13 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
 
     private void CloseShellSession()
     {
+        if (_remoteTerminalSession != null)
+        {
+            var remote = _remoteTerminalSession;
+            _remoteTerminalSession = null;
+            _ = remote.DisposeAsync();
+        }
+
         _sessionCts?.Cancel();
         _shellStream?.Dispose();
         _adbSocket?.Dispose();
@@ -286,6 +333,63 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
         _shellStream = null;
         _adbSocket = null;
         _sessionCts = null;
+    }
+
+    private async Task StartRemoteShellSessionAsync()
+    {
+        if (_remoteDevice?.RemoteDeviceId == null || _remoteServer == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _remoteTerminalSession = new AgentTerminalSession(_remoteServer, _remoteDevice.RemoteDeviceId.Value);
+            _remoteTerminalSession.Ready += OnRemoteTerminalReady;
+            _remoteTerminalSession.OutputReceived += WriteToTerminal;
+            _remoteTerminalSession.ErrorReceived += OnRemoteTerminalError;
+            _remoteTerminalSession.Closed += OnRemoteTerminalClosed;
+            await _remoteTerminalSession.StartAsync();
+
+            IsConnected = true;
+            var localizer = Services.Localization.LocalizationManager.Instance;
+            StatusMessage = string.Format(localizer.GetString("ShellTab.ConnectedStatus", "已连接 - {0}"), _remoteDevice.Name);
+            WriteToTerminal($"\x1b[32m{string.Format(localizer.GetString("ShellTab.ConnectedMessage", "已连接到设备: {0} ({1})"), _remoteDevice.Name, _remoteDevice.Serial)}\x1b[0m\r\n");
+        }
+        catch (Exception ex)
+        {
+            var localizer = Services.Localization.LocalizationManager.Instance;
+            WriteToTerminal($"\x1b[31m{string.Format(localizer.GetString("ShellTab.SessionStartFailed", "会话启动失败: {0}"), ex.Message)}\x1b[0m\r\n");
+            StatusMessage = string.Format(localizer.GetString("ShellTab.ConnectionFailed", "连接失败: {0}"), ex.Message);
+            CloseShellSession();
+        }
+    }
+
+    private async void OnRemoteTerminalReady()
+    {
+        if (_terminalControl == null || _remoteTerminalSession == null)
+        {
+            return;
+        }
+
+        var cols = Math.Max(1, _terminalControl.Terminal.Cols);
+        var rows = Math.Max(1, _terminalControl.Terminal.Rows);
+        await _remoteTerminalSession.ResizeAsync(cols, rows);
+    }
+
+    private void OnRemoteTerminalError(string message)
+    {
+        Debug.WriteLine($"[ShellTab-Remote] {message}");
+    }
+
+    private void OnRemoteTerminalClosed()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            IsConnected = false;
+            StatusMessage = Services.Localization.LocalizationManager.Instance.GetString("ShellTab.DisconnectedStatus", "已断开");
+        });
+        WriteToTerminal($"\r\n\x1b[33m{Services.Localization.LocalizationManager.Instance.GetString("ShellTab.SessionDisconnected", "会话已断开")}\x1b[0m\r\n");
     }
 
     public void Dispose()

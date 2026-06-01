@@ -1,5 +1,7 @@
 using AYLink.Core.Models;
 using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Audio;
+using AYLink.Desktop.Services.ScreenSessions;
 using System;
 using System.Linq;
 
@@ -10,6 +12,8 @@ namespace AYLink.Desktop.ViewModels.Pages;
 /// </summary>
 public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabViewModel>
 {
+    private readonly IScreenSessionFactory _screenSessionFactory = new ScreenSessionFactory(AudioPlayer.Instance);
+
     public override string PageKey => "Screen";
     public override string Title => Services.Localization.LocalizationManager.Instance.GetString("ScreenPage.Title", "投屏");
     public override string EmptyStateIcon => "Play";
@@ -23,18 +27,40 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
 
     protected override ScreenTabViewModel CreateTab(DeviceModel device)
     {
-        var tab = new ScreenTabViewModel(device);
+        var tab = new ScreenTabViewModel(
+            _screenSessionFactory.CreateLocalSession(device, null, null),
+            _screenSessionFactory,
+            device,
+            device.Name);
         ConfigureTab(tab);
         return tab;
     }
 
-    protected override void OnTabClosed(ScreenTabViewModel tab) => tab.Dispose();
+    protected override void OnTabClosed(ScreenTabViewModel tab) { }
 
     public override void OnNavigatedTo(object? parameter = null)
     {
         if (parameter is ScreenNavigationArgs args)
         {
-            AddNewTabWithApp(args.Device, args.AppPackageName, args.AppDisplayName);
+            if (args.RemoteDevice != null && !string.IsNullOrWhiteSpace(args.ServerId))
+            {
+                AddRemoteTab(
+                    args.RemoteDevice,
+                    args.ServerId,
+                    args.AppPackageName,
+                    args.AppDisplayName,
+                    args.NewDisplay,
+                    args.NewDisplayWidth,
+                    args.NewDisplayHeight,
+                    args.NewDisplayDpi);
+                IsActive = true;
+                return;
+            }
+
+            if (args.Device != null)
+            {
+                AddNewTabWithApp(args.Device, args.AppPackageName, args.AppDisplayName);
+            }
             IsActive = true;
             return;
         }
@@ -47,7 +73,57 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
     /// </summary>
     public void AddNewTabWithApp(DeviceModel device, string? appPackageName, string? appDisplayName)
     {
-        var newTab = new ScreenTabViewModel(device, appPackageName, appDisplayName);
+        var titleAppName = string.IsNullOrWhiteSpace(appDisplayName) ? appPackageName : appDisplayName;
+        var title = titleAppName != null ? $"{device.Name} - {titleAppName}" : device.Name;
+        var newTab = new ScreenTabViewModel(
+            _screenSessionFactory.CreateLocalSession(device, appPackageName, appDisplayName),
+            _screenSessionFactory,
+            device,
+            title);
+        ConfigureTab(newTab);
+        RegisterTab(newTab);
+    }
+
+    /// <summary>
+    /// 添加远程 Agent 投屏标签页
+    /// </summary>
+    /// <param name="remoteDevice">远程设备摘要</param>
+    /// <param name="serverId">所属服务器标识</param>
+    /// <param name="appPackageName">可选应用包名</param>
+    /// <param name="appDisplayName">可选应用显示名称</param>
+    public void AddRemoteTab(
+        AYLink.Core.Devices.DeviceDescriptor remoteDevice,
+        string serverId,
+        string? appPackageName,
+        string? appDisplayName,
+        bool newDisplay = false,
+        int? newDisplayWidth = null,
+        int? newDisplayHeight = null,
+        int? newDisplayDpi = null)
+    {
+        var server = AgentSessionService.Instance.FindServer(serverId);
+        if (server == null)
+        {
+            throw new InvalidOperationException($"未找到远程服务器 {serverId}");
+        }
+
+        var titleAppName = string.IsNullOrWhiteSpace(appDisplayName) ? appPackageName : appDisplayName;
+        var title = titleAppName != null ? $"{remoteDevice.Name} - {titleAppName}" : remoteDevice.Name;
+        var newTab = new ScreenTabViewModel(
+            _screenSessionFactory.CreateRemoteSession(
+                remoteDevice,
+                server,
+                appPackageName,
+                appDisplayName,
+                newDisplay,
+                newDisplayWidth,
+                newDisplayHeight,
+                newDisplayDpi),
+            _screenSessionFactory,
+            null,
+            title,
+            remoteDevice,
+            server);
         ConfigureTab(newTab);
         RegisterTab(newTab);
     }
@@ -63,11 +139,6 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
     /// </summary>
     public override void Dispose()
     {
-        foreach (var tab in Tabs)
-        {
-            tab.Dispose();
-        }
-
         base.Dispose();
         GC.SuppressFinalize(this);
     }

@@ -104,6 +104,9 @@
         <DataTemplate DataType="vm:HomePageViewModel">
             <views:HomePage />
         </DataTemplate>
+        <DataTemplate DataType="vm:ServersPageViewModel">
+            <views:ServersPage />
+        </DataTemplate>
         <DataTemplate DataType="vm:FilePageViewModel">
             <views:FilePage />
         </DataTemplate>
@@ -124,6 +127,9 @@
         </DataTemplate>
         <DataTemplate DataType="vm:DeviceSettingViewModel">
             <views:DeviceSettingView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:ServerSettingViewModel">
+            <views:ServerSettingView />
         </DataTemplate>
     </Application.DataTemplates>
 </Application>

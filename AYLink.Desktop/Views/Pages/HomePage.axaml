@@ -16,10 +16,10 @@
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,*">
-
+        
         <!-- 顶部工具栏 -->
         <ui:CommandBar Grid.Row="0" DefaultLabelPosition="Right" Background="Transparent">
-
+            
             <!-- 主要操作 -->
             <ui:CommandBar.PrimaryCommands>
                 <ui:CommandBarButton Label="{i18n:Tr HomePage.AddDevice, DefaultText='添加设备'}" Command="{Binding AddDeviceCommand}">
@@ -27,7 +27,7 @@
                         <ui:SymbolIconSource Symbol="Add"/>
                     </ui:CommandBarButton.IconSource>
                 </ui:CommandBarButton>
-                
+
                 <ui:CommandBarButton Label="{i18n:Tr HomePage.MoreActions, DefaultText='更多操作'}">
                     <ui:CommandBarButton.IconSource>
                         <ui:SymbolIconSource Symbol="More"/>
@@ -39,12 +39,7 @@
                                     <ui:SymbolIcon Symbol="Refresh"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="{i18n:Tr HomePage.MultiSelectMode, DefaultText='多选模式'}" Command="{Binding ToggleMultiSelectCommand}" HotKey="Ctrl+M">
-                                <MenuItem.Icon>
-                                    <ui:SymbolIcon Symbol="List"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem Header="{i18n:Tr HomePage.DeleteDevice, DefaultText='删除设备'}" Command="{Binding DeleteDeviceCommand}" CommandParameter="{Binding #DeviceListBox.SelectedItems}" IsEnabled="{Binding IsMultiSelectMode}">
+                            <MenuItem Header="{i18n:Tr HomePage.DeleteDevice, DefaultText='删除设备'}" Command="{Binding DeleteDeviceCommand}" CommandParameter="{Binding #DeviceListBox.SelectedItems}">
                                 <MenuItem.Icon>
                                     <ui:SymbolIcon Symbol="Delete"/>
                                 </MenuItem.Icon>
@@ -131,10 +126,11 @@
                         BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                         BorderThickness="0,0,0,1"
                         Padding="16,8">
-                    <Grid ColumnDefinitions="3*, 1.5*, Auto">
+                    <Grid ColumnDefinitions="3*, 1.3*, 1.3*, Auto">
                         <TextBlock Grid.Column="0" Text="{i18n:Tr HomePage.HeaderDeviceInfo, DefaultText='设备信息'}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
-                        <TextBlock Grid.Column="1" Text="{i18n:Tr HomePage.HeaderConnectionType, DefaultText='连接方式'}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
-                        <TextBlock Grid.Column="2" Text="{i18n:Tr HomePage.HeaderActions, DefaultText='操作'}" HorizontalAlignment="Right" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                        <TextBlock Grid.Column="1" Text="{i18n:Tr HomePage.HeaderSource, DefaultText='来源'}" Margin="-64,0,0,0" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                        <TextBlock Grid.Column="2" Text="{i18n:Tr HomePage.HeaderConnectionType, DefaultText='连接方式'}" Margin="-24,0,0,0" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                        <TextBlock Grid.Column="3" Text="{i18n:Tr HomePage.HeaderActions, DefaultText='操作'}" HorizontalAlignment="Right" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
                     </Grid>
                 </Border>
 
@@ -148,43 +144,52 @@
                          BorderThickness="0">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:DeviceItemViewModel">
-                            <Grid ColumnDefinitions="3*, 1.5*, Auto" Margin="0,4" Background="Transparent">
+                            <Grid ColumnDefinitions="3*, 1.3*, 1.3*, Auto" Margin="0,4" Background="Transparent">
                                 <!-- 设备信息列 -->
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
-                                    <TextBlock Text="{Binding Name}"
-                                               Theme="{StaticResource BodyStrongTextBlockStyle}"/>
-                                    <TextBlock Text="{Binding Serial}"
-                                               Opacity="0.7"
-                                               Theme="{StaticResource CaptionTextBlockStyle}"/>
+                                    <TextBlock Text="{Binding Name}" Theme="{StaticResource BodyStrongTextBlockStyle}"/>
+                                    <TextBlock Text="{Binding Serial}" Opacity="0.7" Theme="{StaticResource CaptionTextBlockStyle}"/>
                                 </StackPanel>
 
+                                <!-- 来源列 -->
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding SourceName}"
+                                           VerticalAlignment="Center"
+                                           Opacity="0.72"
+                                           Theme="{StaticResource CaptionTextBlockStyle}"/>
+
                                 <!-- 连接方式列 -->
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <StackPanel Grid.Column="2"
+                                            Orientation="Horizontal"
+                                            Spacing="8"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Center">
                                     <ui:SymbolIcon FontSize="18" Symbol="{Binding ConnectionType, Converter={StaticResource ConnectionTypeToIconConverter}}"/>
-                                    <TextBlock Text="{Binding ConnectionType}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding ConnectionTypeText}" VerticalAlignment="Center"/>
                                 </StackPanel>
 
                                 <!-- 操作按钮列 - 直接绑定 DeviceItemViewModel 的命令 -->
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
-                                    <Button Command="{Binding MirrorCommand}" ToolTip.Tip="{i18n:Tr HomePage.MirrorToolTip, DefaultText='投屏'}">
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
+                                    <Button Command="{Binding MirrorCommand}" ToolTip.Tip="{i18n:Tr HomePage.MirrorToolTip, DefaultText='投屏'}" IsEnabled="{Binding CanMirror}">
                                         <ui:SymbolIcon Symbol="Play"/>
                                     </Button>
-                                    <Button Command="{Binding OpenFileManagerCommand}" ToolTip.Tip="{i18n:Tr HomePage.ActionFileTransfer, DefaultText='文件管理'}">
+                                    <Button Command="{Binding OpenFileManagerCommand}" ToolTip.Tip="{i18n:Tr HomePage.ActionFileTransfer, DefaultText='文件管理'}" IsEnabled="{Binding CanOpenFileManager}">
                                         <ui:SymbolIcon Symbol="Folder"/>
                                     </Button>
-                                    <Button Command="{Binding OpenAppManagerCommand}" ToolTip.Tip="{i18n:Tr HomePage.ActionAppManagement, DefaultText='应用管理'}">
+                                    <Button Command="{Binding OpenAppManagerCommand}" ToolTip.Tip="{i18n:Tr HomePage.ActionAppManagement, DefaultText='应用管理'}" IsEnabled="{Binding CanOpenAppManager}">
                                         <ui:SymbolIcon Symbol="AllApps"/>
                                     </Button>
                                     <Button ToolTip.Tip="{i18n:Tr HomePage.ActionMore, DefaultText='更多'}">
                                         <ui:SymbolIcon Symbol="More"/>
                                         <Button.Flyout>
                                             <MenuFlyout>
-                                                <MenuItem Header="{i18n:Tr HomePage.ActionNewDisplay, DefaultText='新建显示'}" Command="{Binding NewDisplayCommand}"/>
-                                                <MenuItem Header="{i18n:Tr HomePage.ActionOpenConsole, DefaultText='打开终端'}" Command="{Binding OpenShellCommand}"/>
-                                                <MenuItem Header="{i18n:Tr HomePage.ActionDeviceSettings, DefaultText='设备设置'}" Command="{Binding OpenDeviceSettingsCommand}"/>
-                                                <MenuItem Header="{i18n:Tr HomePage.ActionListEncoder, DefaultText='编码器列表'}" Command="{Binding ListEncodersCommand}"/>
+                                                <MenuItem Header="{i18n:Tr HomePage.ActionNewDisplay, DefaultText='新建显示'}" Command="{Binding NewDisplayCommand}" IsEnabled="{Binding CanNewDisplay}"/>
+                                                <MenuItem Header="{i18n:Tr HomePage.ActionOpenConsole, DefaultText='打开终端'}" Command="{Binding OpenShellCommand}" IsEnabled="{Binding CanOpenShell}"/>
+                                                <MenuItem Header="{i18n:Tr HomePage.ActionDeviceSettings, DefaultText='设备设置'}" Command="{Binding OpenDeviceSettingsCommand}" IsEnabled="{Binding CanOpenDeviceSettings}"/>
+                                                <MenuItem Header="{i18n:Tr HomePage.ActionListEncoder, DefaultText='编码器列表'}" Command="{Binding ListEncodersCommand}" IsEnabled="{Binding CanListEncoders}"/>
+                                                <MenuItem Header="{i18n:Tr HomePage.RenameDevice, DefaultText='重命名'}" Command="{Binding RenameDeviceCommand}" IsEnabled="{Binding CanRename}"/>
                                                 <MenuItem Header="-" />
-                                                <MenuItem Header="{i18n:Tr HomePage.DeleteDevice, DefaultText='删除设备'}" Command="{Binding DeleteDeviceCommand}">
+                                                <MenuItem Header="{i18n:Tr HomePage.DeleteDevice, DefaultText='删除设备'}" Command="{Binding DeleteDeviceCommand}" IsEnabled="{Binding CanDelete}">
                                                     <MenuItem.Icon>
                                                         <ui:SymbolIcon Symbol="Delete"/>
                                                     </MenuItem.Icon>

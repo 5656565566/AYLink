@@ -261,6 +261,7 @@ public class ScrcpyClient : IDisposable
         if (!_isRunning) return;
 
         _isRunning = false;
+        _audioDecoder?.RequestStop();
 
         SafeCloseSocket(_videoSocket);
         SafeCloseSocket(_audioSocket);

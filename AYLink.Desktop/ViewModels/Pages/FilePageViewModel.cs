@@ -1,7 +1,9 @@
 using AYLink.Core.Models;
+using AYLink.Core.Devices;
 using AYLink.Desktop.Services;
 using CommunityToolkit.Mvvm.Input;
 using FluentAvalonia.UI.Controls;
+using System.Linq;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
@@ -19,7 +21,7 @@ public partial class FilePageViewModel : TabbedPageViewModelBase<FileTabViewMode
 
     public FilePageViewModel()
     {
-        // 默认添加一个本地标签页，且不可关闭
+        // 默认添加一个本地标签页 且不可关闭
         var defaultTab = new FileTabViewModel
         {
             IsClosable = false
@@ -28,6 +30,40 @@ public partial class FilePageViewModel : TabbedPageViewModelBase<FileTabViewMode
     }
 
     protected override FileTabViewModel CreateTab(DeviceModel device) => new(device);
+
+    public override void OnNavigatedTo(object? parameter = null)
+    {
+        IsActive = true;
+
+        if (parameter is FileNavigationArgs args)
+        {
+            if (args.RemoteDevice != null && !string.IsNullOrWhiteSpace(args.ServerId))
+            {
+                AddRemoteTab(args.RemoteDevice, args.ServerId, args.InitialPath);
+                return;
+            }
+
+            if (args.Device != null)
+            {
+                AddNewTabCommand.Execute(args.Device);
+                return;
+            }
+        }
+
+        base.OnNavigatedTo(parameter);
+    }
+
+    private void AddRemoteTab(DeviceDescriptor remoteDevice, string serverId, string? initialPath)
+    {
+        var existing = Tabs.FirstOrDefault(tab => tab.RemoteDeviceId == remoteDevice.Id);
+        if (existing != null)
+        {
+            SelectedTab = existing;
+            return;
+        }
+
+        RegisterTab(new FileTabViewModel(remoteDevice, serverId, initialPath));
+    }
 
     /// <summary>
     /// 拦截关闭：至少保留一个标签页

@@ -202,16 +202,11 @@ public partial class DetachedTabWindow : Window
         }
     }
 
-    private void OnTabCloseRequested(TabItemViewModelBase tab)
+    private async void OnTabCloseRequested(TabItemViewModelBase tab)
     {
         tab.OnCloseRequested -= OnTabCloseRequested;
-
-        if (tab is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
-
         Tabs.Remove(tab);
+        await TabShutdownHelper.StopAndDisposeAsync(tab);
 
         if (Tabs.Count == 0)
         {
@@ -219,7 +214,7 @@ public partial class DetachedTabWindow : Window
         }
     }
 
-    private void OnWindowClosed(object? sender, EventArgs e)
+    private async void OnWindowClosed(object? sender, EventArgs e)
     {
         Services.AppWindowActivationService.Instance.Unregister(this);
 
@@ -236,16 +231,13 @@ public partial class DetachedTabWindow : Window
         foreach (var tab in tabsCopy)
         {
             tab.OnCloseRequested -= OnTabCloseRequested;
-            if (tab is IDisposable disposable)
+            try
             {
-                try
-                {
-                    disposable.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[DetachedTabWindow] Dispose tab error: {ex.Message}");
-                }
+                await TabShutdownHelper.StopAndDisposeAsync(tab);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DetachedTabWindow] Dispose tab error: {ex.Message}");
             }
         }
     }

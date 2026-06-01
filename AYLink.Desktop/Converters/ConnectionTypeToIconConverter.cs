@@ -11,7 +11,8 @@ public class ConnectionTypeToIconConverter : IValueConverter
     {
         if (value is string connectionType)
         {
-            if (connectionType.Equals("WiFi", StringComparison.OrdinalIgnoreCase))
+            if (connectionType.Equals("WiFi", StringComparison.OrdinalIgnoreCase) ||
+                connectionType.Equals("Wi-Fi", StringComparison.OrdinalIgnoreCase))
             {
                 return Symbol.Wifi4;
             }

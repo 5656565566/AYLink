@@ -113,7 +113,7 @@
 
 			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.AudioBitrate, DefaultText='音频比特率'}" Description="{i18n:Tr DeviceSettings.AudioBitrate_Description, DefaultText='请求服务端使用的音频比特率 (单位: bps) 例如: 128000 (128kbps)'}">
 				<ui:SettingsExpander.Footer>
-					<TextBox MinWidth="150" Text="{Binding DeviceConfig.AudioBitRate, StringFormat={}{0}}" />
+					<TextBox MinWidth="150" Text="{Binding AudioBitRateInput, StringFormat={}{0}}" />
 				</ui:SettingsExpander.Footer>
 			</ui:SettingsExpander>
 
@@ -167,7 +167,7 @@
 
 			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.ScreenOffTimeout, DefaultText='无操作自动息屏'}" Description="{i18n:Tr DeviceSettings.ScreenOffTimeout_Description, DefaultText='设置一个延迟（毫秒），如果客户端在这段时间内没有交互，则关闭设备屏幕，-1表示禁用'}">
 				<ui:SettingsExpander.Footer>
-					<TextBox MinWidth="150" Text="{Binding DeviceConfig.ScreenOffTimeout}" />
+					<TextBox MinWidth="150" Text="{Binding ScreenOffTimeoutInput}" />
 				</ui:SettingsExpander.Footer>
 			</ui:SettingsExpander>
 			
@@ -205,13 +205,13 @@
 
 			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.CameraSize, DefaultText='摄像头分辨率'}" Description="{i18n:Tr DeviceSettings.CameraSize_Description, DefaultText='期望的摄像头分辨率'}">
 				<ui:SettingsExpander.Footer>
-					<TextBox MinWidth="150" Text="{Binding DeviceConfig.CameraSize}" />
+					<TextBox MinWidth="150" Text="{Binding CameraSizeInput}" />
 				</ui:SettingsExpander.Footer>
 			</ui:SettingsExpander>
 
 			<ui:SettingsExpander Header="{i18n:Tr DeviceSettings.CameraFps, DefaultText='摄像头帧率'}" Description="{i18n:Tr DeviceSettings.CameraFps_Description, DefaultText='期望的摄像头帧率'}">
 				<ui:SettingsExpander.Footer>
-					<TextBox MinWidth="150" Text="{Binding DeviceConfig.CameraFps}" />
+					<TextBox MinWidth="150" Text="{Binding CameraFpsInput}" />
 				</ui:SettingsExpander.Footer>
 			</ui:SettingsExpander>
 

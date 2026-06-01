@@ -36,6 +36,12 @@ public partial class InputDialog : UserControl
                 Classes = { "clearButton" }
             };
 
+            if (field.IsPassword)
+            {
+                textBox.PasswordChar = '•';
+                textBox.Classes.Add("revealPasswordButton");
+            }
+
             if (!string.IsNullOrEmpty(field.Label))
             {
                 // 如果有 Label 可以添加一个 TextBlock 或者使用 FloatingWatermark

@@ -1,4 +1,5 @@
 using System;
+using AYLink.Core.Devices;
 
 namespace AYLink.Desktop.Services;
 
@@ -42,9 +43,73 @@ public abstract class NavigationArgs
 /// </summary>
 public sealed class ScreenNavigationArgs : NavigationArgs
 {
-    public required AYLink.Core.Models.DeviceModel Device { get; init; }
+    public AYLink.Core.Models.DeviceModel? Device { get; init; }
+
+    public DeviceDescriptor? RemoteDevice { get; init; }
+
+    public string? ServerId { get; init; }
 
     public string? AppPackageName { get; init; }
 
     public string? AppDisplayName { get; init; }
+
+    public bool NewDisplay { get; init; }
+
+    public int? NewDisplayWidth { get; init; }
+
+    public int? NewDisplayHeight { get; init; }
+
+    public int? NewDisplayDpi { get; init; }
+}
+
+/// <summary>
+/// 文件管理页导航参数
+/// </summary>
+public sealed class FileNavigationArgs : NavigationArgs
+{
+    public AYLink.Core.Models.DeviceModel? Device { get; init; }
+
+    public DeviceDescriptor? RemoteDevice { get; init; }
+
+    public string? ServerId { get; init; }
+
+    public string? InitialPath { get; init; }
+}
+
+/// <summary>
+/// 应用管理页导航参数
+/// </summary>
+public sealed class AppNavigationArgs : NavigationArgs
+{
+    public AYLink.Core.Models.DeviceModel? Device { get; init; }
+
+    public DeviceDescriptor? RemoteDevice { get; init; }
+
+    public string? ServerId { get; init; }
+}
+
+/// <summary>
+/// 终端页导航参数
+/// </summary>
+public sealed class ShellNavigationArgs : NavigationArgs
+{
+    public AYLink.Core.Models.DeviceModel? Device { get; init; }
+
+    public DeviceDescriptor? RemoteDevice { get; init; }
+
+    public string? ServerId { get; init; }
+}
+
+/// <summary>
+/// 设备设置页导航参数
+/// </summary>
+public sealed class DeviceSettingNavigationArgs : NavigationArgs
+{
+    public string DeviceSerial { get; init; } = string.Empty;
+
+    public string DeviceName { get; init; } = string.Empty;
+
+    public DeviceDescriptor? RemoteDevice { get; init; }
+
+    public string? ServerId { get; init; }
 }
