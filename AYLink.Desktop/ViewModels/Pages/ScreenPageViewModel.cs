@@ -44,7 +44,15 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
         {
             if (args.RemoteDevice != null && !string.IsNullOrWhiteSpace(args.ServerId))
             {
-                AddRemoteTab(args.RemoteDevice, args.ServerId, args.AppPackageName, args.AppDisplayName);
+                AddRemoteTab(
+                    args.RemoteDevice,
+                    args.ServerId,
+                    args.AppPackageName,
+                    args.AppDisplayName,
+                    args.NewDisplay,
+                    args.NewDisplayWidth,
+                    args.NewDisplayHeight,
+                    args.NewDisplayDpi);
                 IsActive = true;
                 return;
             }
@@ -83,7 +91,15 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
     /// <param name="serverId">所属服务器标识</param>
     /// <param name="appPackageName">可选应用包名</param>
     /// <param name="appDisplayName">可选应用显示名称</param>
-    public void AddRemoteTab(AYLink.Core.Devices.DeviceDescriptor remoteDevice, string serverId, string? appPackageName, string? appDisplayName)
+    public void AddRemoteTab(
+        AYLink.Core.Devices.DeviceDescriptor remoteDevice,
+        string serverId,
+        string? appPackageName,
+        string? appDisplayName,
+        bool newDisplay = false,
+        int? newDisplayWidth = null,
+        int? newDisplayHeight = null,
+        int? newDisplayDpi = null)
     {
         var server = AgentSessionService.Instance.FindServer(serverId);
         if (server == null)
@@ -94,7 +110,15 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
         var titleAppName = string.IsNullOrWhiteSpace(appDisplayName) ? appPackageName : appDisplayName;
         var title = titleAppName != null ? $"{remoteDevice.Name} - {titleAppName}" : remoteDevice.Name;
         var newTab = new ScreenTabViewModel(
-            _screenSessionFactory.CreateRemoteSession(remoteDevice, server, appPackageName, appDisplayName),
+            _screenSessionFactory.CreateRemoteSession(
+                remoteDevice,
+                server,
+                appPackageName,
+                appDisplayName,
+                newDisplay,
+                newDisplayWidth,
+                newDisplayHeight,
+                newDisplayDpi),
             _screenSessionFactory,
             null,
             title);

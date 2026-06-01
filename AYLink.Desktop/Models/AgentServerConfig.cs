@@ -59,6 +59,16 @@ public class AgentServerConfig
     /// </summary>
     public DateTimeOffset? LastSyncAt { get; set; }
 
+    /// <summary>
+    /// 最近一次同步的服务端语言区域代码
+    /// </summary>
+    public string AgentLocale { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 缓存的服务端扁平化语言字典
+    /// </summary>
+    public Dictionary<string, string> AgentTranslations { get; set; } = [];
+
     public bool EnableWebRtcOverride { get; set; } = false;
     public string LocalIceTransportPolicy { get; set; } = "all";
     public List<AgentServerIceServerConfig> LocalIceServers { get; set; } = [];

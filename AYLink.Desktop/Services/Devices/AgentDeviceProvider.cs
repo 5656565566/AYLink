@@ -111,14 +111,28 @@ public sealed class AgentDeviceProvider(AgentServerRuntime runtime) : IDevicePro
     }
 
     /// <summary>
-    /// 远程 Provider 当前未实现主动断开能力
+    /// 删除指定远程设备
     /// </summary>
     /// <param name="deviceId">统一远程设备标识</param>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>始终返回 false</returns>
-    public Task<bool> DisconnectDeviceAsync(string deviceId, CancellationToken cancellationToken = default)
+    /// <returns>删除是否成功</returns>
+    public async Task<bool> DisconnectDeviceAsync(string deviceId, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(false);
+        if (!TryParseRemoteId(deviceId, out var remoteId))
+        {
+            return false;
+        }
+
+        var accessToken = await _runtime.EnsureAccessTokenAsync(cancellationToken);
+        var deleted = await _runtime.Client.DeleteDeviceAsync(accessToken, remoteId, cancellationToken);
+        if (!deleted)
+        {
+            return false;
+        }
+
+        _lastDevices.RemoveAll(item => item.Id == deviceId);
+        _runtime.TouchSuccess();
+        return true;
     }
 
     /// <summary>
@@ -177,11 +191,11 @@ public sealed class AgentDeviceProvider(AgentServerRuntime runtime) : IDevicePro
         var capabilities = DeviceCapability.None;
         if (HasPermission("devices.control"))
         {
-            capabilities |= DeviceCapability.Connect | DeviceCapability.Mirror | DeviceCapability.AppManager;
+            capabilities |= DeviceCapability.Connect | DeviceCapability.Mirror | DeviceCapability.AppManager | DeviceCapability.ListEncoders | DeviceCapability.NewDisplay;
         }
         if (HasPermission("devices.manage"))
         {
-            capabilities |= DeviceCapability.Rename;
+            capabilities |= DeviceCapability.Rename | DeviceCapability.Disconnect;
         }
         if (HasPermission("files.access"))
         {

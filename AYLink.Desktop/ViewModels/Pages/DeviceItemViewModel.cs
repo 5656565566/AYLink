@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using System.Threading.Tasks;
 using AYLink.Core.Devices;
 using AYLink.Core.Models;
@@ -41,15 +42,15 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     public bool CanOpenAppManager => HasCapability(DeviceCapability.AppManager);
     public bool CanOpenShell => HasCapability(DeviceCapability.Shell);
     public bool CanOpenDeviceSettings => IsLocal && HasCapability(DeviceCapability.DeviceSettings);
-    public bool CanListEncoders => IsLocal && HasCapability(DeviceCapability.ListEncoders);
-    public bool CanNewDisplay => IsLocal && HasCapability(DeviceCapability.NewDisplay);
-    public bool CanDelete => IsLocal && HasCapability(DeviceCapability.Disconnect);
+    public bool CanListEncoders => HasCapability(DeviceCapability.ListEncoders);
+    public bool CanNewDisplay => HasCapability(DeviceCapability.NewDisplay);
+    public bool CanDelete => HasCapability(DeviceCapability.Disconnect);
     public bool CanRename => HasCapability(DeviceCapability.Rename);
     public bool HasRemoteActions => IsRemote && CanRename;
 
     /// <summary>
     /// 删除设备
-    /// 当前仅支持本地设备断开
+    /// 本地设备执行断开 远程设备执行删除
     /// </summary>
     [RelayCommand]
     private async Task DeleteDevice()
@@ -60,10 +61,17 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
         }
 
         var localizer = Services.Localization.LocalizationManager.Instance;
+        var isRemoteDelete = IsRemote;
         var result = await DialogService.ShowMessageAsync(
-            localizer.GetString("DeviceItem.ConfirmDisconnectTitle", "确认断开"),
-            string.Format(localizer.GetString("DeviceItem.ConfirmDisconnectMessage", "确定要断开设备 {0} ({1}) 吗？"), Name, Serial),
-            localizer.GetString("DeviceItem.DisconnectButton", "断开"),
+            isRemoteDelete
+                ? localizer.GetString("HomePage.DeleteDevice", "删除设备")
+                : localizer.GetString("DeviceItem.ConfirmDisconnectTitle", "确认断开"),
+            isRemoteDelete
+                ? string.Format(localizer.GetString("HomePage.DeleteSingleMessage", "确定要删除设备 {0} 吗？"), Name)
+                : string.Format(localizer.GetString("DeviceItem.ConfirmDisconnectMessage", "确定要断开设备 {0} ({1}) 吗？"), Name, Serial),
+            isRemoteDelete
+                ? localizer.GetString("HomePage.DeleteDevice", "删除设备")
+                : localizer.GetString("DeviceItem.DisconnectButton", "断开"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
         if (result != ContentDialogResult.Primary)
@@ -71,10 +79,24 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
             return;
         }
 
-        await _deviceCatalog.DisconnectLocalDeviceAsync(Device.Id);
+        var success = await _deviceCatalog.DisconnectDeviceAsync(Device);
+        if (!success)
+        {
+            NotificationService.Instance.ShowError(
+                isRemoteDelete ? localizer.GetString("HomePage.DeleteDevice", "删除设备") : localizer.GetString("DeviceItem.ConfirmDisconnectTitle", "确认断开"),
+                isRemoteDelete
+                    ? string.Format(localizer.GetString("HomePage.DeleteFailedMessage", "无法删除设备 {0}"), Name)
+                    : string.Format(localizer.GetString("HomePage.DisconnectFailedMessage", "无法断开设备 {0}"), Name));
+            return;
+        }
+
         NotificationService.Instance.ShowInfo(
-            localizer.GetString("DeviceItem.DisconnectedTitle", "已断开"),
-            string.Format(localizer.GetString("DeviceItem.DisconnectedMessage", "设备 {0} 已断开连接"), Name));
+            isRemoteDelete
+                ? localizer.GetString("HomePage.DeleteDevice", "删除设备")
+                : localizer.GetString("DeviceItem.DisconnectedTitle", "已断开"),
+            isRemoteDelete
+                ? string.Format(localizer.GetString("HomePage.DeleteSuccessMessage", "设备 {0} 已删除"), Name)
+                : string.Format(localizer.GetString("DeviceItem.DisconnectedMessage", "设备 {0} 已断开连接"), Name));
 
         if (_refreshAction != null)
         {
@@ -254,17 +276,11 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     }
 
     /// <summary>
-    /// 查看编码器列表 - 仅本地设备可用
+    /// 查看编码器列表
     /// </summary>
     [RelayCommand]
     private async Task ListEncoders()
     {
-        var localDevice = await GetLocalDeviceOrNotifyAsync();
-        if (localDevice == null)
-        {
-            return;
-        }
-
         var localizer = Services.Localization.LocalizationManager.Instance;
         var dialog = new Views.Dialogs.ProgressDialog();
         _ = dialog.ShowAsync(
@@ -272,32 +288,51 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
             localizer.GetString("DeviceItem.FetchingEncodersMessage", "正在获取设备编码器列表..."),
             isIndeterminate: true);
 
-        var encoders = await Task.Run(() => ScrcpyService.Instance.Tool.GetEncoders(localDevice));
-        dialog.Hide();
+        try
+        {
+            IReadOnlyList<string> encoders;
+            if (IsRemote)
+            {
+                encoders = await GetRemoteEncodersAsync();
+            }
+            else
+            {
+                var localDevice = await GetLocalDeviceOrNotifyAsync();
+                if (localDevice == null)
+                {
+                    return;
+                }
 
-        if (encoders.Count > 0)
-        {
-            await DialogService.ShowMessageAsync(localizer.GetString("DeviceItem.EncoderListTitle", "编码器列表"), string.Join("\n", encoders));
+                encoders = await Task.Run(() => (IReadOnlyList<string>)ScrcpyService.Instance.Tool.GetEncoders(localDevice));
+            }
+
+            if (encoders.Count > 0)
+            {
+                await DialogService.ShowMessageAsync(localizer.GetString("DeviceItem.EncoderListTitle", "编码器列表"), string.Join("\n", encoders));
+            }
+            else
+            {
+                NotificationService.Instance.ShowWarning(localizer.GetString("Dialog.Tip", "提示"), localizer.GetString("DeviceItem.NoEncodersFound", "未找到可用的编码器"));
+            }
         }
-        else
+        catch (Exception ex)
         {
-            NotificationService.Instance.ShowWarning(localizer.GetString("Dialog.Tip", "提示"), localizer.GetString("DeviceItem.NoEncodersFound", "未找到可用的编码器"));
+            NotificationService.Instance.ShowError(
+                localizer.GetString("DeviceItem.EncoderListTitle", "编码器列表"),
+                ex.Message);
+        }
+        finally
+        {
+            dialog.Hide();
         }
     }
 
     /// <summary>
-    /// 新建显示 - 仅本地设备可用
+    /// 新建显示
     /// </summary>
     [RelayCommand]
     private async Task NewDisplay()
     {
-        var localDevice = await GetLocalDeviceOrNotifyAsync();
-        if (localDevice == null)
-        {
-            return;
-        }
-
-        localDevice.ServerOptions ??= new ServerOptions();
         var localizer = Services.Localization.LocalizationManager.Instance;
         var fields = new List<InputFieldModel>
         {
@@ -328,6 +363,35 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
             return;
         }
 
+        if (IsRemote)
+        {
+            if (!TryParseNewDisplay(inputRes, out var width, out var height, out var dpi))
+            {
+                NotificationService.Instance.ShowWarning(
+                    localizer.GetString("Dialog.Tip", "提示"),
+                    localizer.GetString("DeviceItem.ResolutionWatermark", "格式: 宽x高/DPI (例如: 1920x1080/420)"));
+                return;
+            }
+
+            Navigation.NavigateTo("Screen", new ScreenNavigationArgs
+            {
+                RemoteDevice = Device,
+                ServerId = Device.ProviderId,
+                NewDisplay = true,
+                NewDisplayWidth = width,
+                NewDisplayHeight = height,
+                NewDisplayDpi = dpi
+            });
+            return;
+        }
+
+        var localDevice = await GetLocalDeviceOrNotifyAsync();
+        if (localDevice == null)
+        {
+            return;
+        }
+
+        localDevice.ServerOptions ??= new ServerOptions();
         localDevice.ServerOptions.DisplayId = -1;
         localDevice.ServerOptions.NewDisplay = inputRes;
         Navigation.NavigateTo("Screen", localDevice);
@@ -337,6 +401,44 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     /// 检查统一能力位
     /// </summary>
     private bool HasCapability(DeviceCapability capability) => (Device.Capabilities & capability) == capability;
+
+    private async Task<IReadOnlyList<string>> GetRemoteEncodersAsync()
+    {
+        var runtime = AgentSessionService.Instance.FindServer(Device.ProviderId)
+            ?? throw new InvalidOperationException($"未找到远程服务器 {Device.ProviderId}");
+        var remoteDeviceId = Device.RemoteDeviceId
+            ?? throw new InvalidOperationException("当前远程设备缺少服务端 ID。");
+        var accessToken = await runtime.EnsureAccessTokenAsync();
+        var encoders = await runtime.Client.GetEncodersAsync(accessToken, remoteDeviceId);
+        runtime.TouchSuccess();
+        return encoders;
+    }
+
+    private static bool TryParseNewDisplay(string value, out int width, out int height, out int dpi)
+    {
+        width = 0;
+        height = 0;
+        dpi = 0;
+
+        var segments = value.Trim().Split('/');
+        if (segments.Length != 2)
+        {
+            return false;
+        }
+
+        var sizeSegments = segments[0].Split('x', 'X');
+        if (sizeSegments.Length != 2)
+        {
+            return false;
+        }
+
+        return int.TryParse(sizeSegments[0], out width) &&
+               int.TryParse(sizeSegments[1], out height) &&
+               int.TryParse(segments[1], out dpi) &&
+               width > 0 &&
+               height > 0 &&
+               dpi > 0;
+    }
 
     /// <summary>
     /// 将首页统一设备项还原为本地 DeviceModel 以复用现有本地页面链路

@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using AYLink.Core.Agent;
 using AYLink.Desktop.Models;
+using AYLink.Desktop.Services.Localization;
+using Newtonsoft.Json.Linq;
 
 namespace AYLink.Desktop.Services;
 
@@ -204,6 +206,7 @@ public sealed class AgentSessionService
         {
             var response = await runtime.Client.LoginAsync(username.Trim(), password, cancellationToken);
             ApplyLoginResponse(runtime, response, username.Trim());
+            await SyncServerLocalizationAsync(runtime, cancellationToken);
             runtime.TouchSuccess();
             Save();
             NotifyChanged();
@@ -212,7 +215,7 @@ public sealed class AgentSessionService
         catch (Exception ex)
         {
             runtime.State = AgentServerConnectionState.Error;
-            runtime.LastError = ex.Message;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
             NotifyChanged();
             return false;
         }
@@ -256,6 +259,7 @@ public sealed class AgentSessionService
             var me = await runtime.Client.GetCurrentUserAsync(runtime.Config.AccessToken, cancellationToken);
             runtime.Config.LastKnownUserName = me.User.Username;
             runtime.LastPermissions = me.Permissions;
+            await SyncServerLocalizationAsync(runtime, cancellationToken);
             runtime.TouchSuccess();
             Save();
             NotifyChanged();
@@ -265,7 +269,7 @@ public sealed class AgentSessionService
         {
             runtime.ClearTokens();
             runtime.State = AgentServerConnectionState.Unauthorized;
-            runtime.LastError = "登录状态已失效";
+            runtime.LastError = runtime.ResolveLocalizedText("Errors.Unauthorized", "登录状态已失效");
             Save();
             NotifyChanged();
             return false;
@@ -273,7 +277,7 @@ public sealed class AgentSessionService
         catch (Exception ex)
         {
             runtime.State = AgentServerConnectionState.Error;
-            runtime.LastError = ex.Message;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
             NotifyChanged();
             return false;
         }
@@ -322,6 +326,67 @@ public sealed class AgentSessionService
         runtime.Config.RefreshTokenExpiresAt = response.RefreshTokenExpiresAt;
         runtime.Config.LastKnownUserName = response.User.Username;
         runtime.LastPermissions = response.Permissions;
+    }
+
+    private async Task SyncServerLocalizationAsync(AgentServerRuntime runtime, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(runtime.Config.AccessToken))
+            {
+                return;
+            }
+
+            var language = await runtime.Client.GetServerLanguageAsync(runtime.Config.AccessToken, cancellationToken);
+            if (string.IsNullOrWhiteSpace(language.Locale))
+            {
+                return;
+            }
+
+            var payload = await runtime.Client.GetLocaleAsync(language.Locale, cancellationToken);
+            runtime.Config.AgentLocale = language.Locale.Trim();
+            runtime.Config.AgentTranslations = FlattenTranslations(payload);
+        }
+        catch
+        {
+            // 语言缓存同步失败不应影响主流程
+        }
+    }
+
+    private static Dictionary<string, string> FlattenTranslations(Dictionary<string, object> payload)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var pair in payload)
+        {
+            var token = pair.Value switch
+            {
+                null => JValue.CreateNull(),
+                JToken jToken => jToken,
+                _ => JToken.FromObject(pair.Value)
+            };
+            FlattenToken(result, pair.Key, token);
+        }
+
+        return result;
+    }
+
+    private static void FlattenToken(Dictionary<string, string> target, string prefix, JToken token)
+    {
+        if (token.Type == JTokenType.Object)
+        {
+            foreach (var property in token.Children<JProperty>())
+            {
+                var key = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}.{property.Name}";
+                FlattenToken(target, key, property.Value);
+            }
+
+            return;
+        }
+
+        if (token.Type == JTokenType.String)
+        {
+            target[prefix] = token.Value<string>() ?? string.Empty;
+        }
     }
 }
 
@@ -428,5 +493,51 @@ public sealed class AgentServerRuntime
     public void ResetClient()
     {
         _client = null;
+    }
+
+    /// <summary>
+    /// 将 Agent 返回的本地化键转换为适合当前桌面端显示的文本
+    /// </summary>
+    /// <param name="messageKey">服务端本地化键</param>
+    /// <param name="fallbackMessage">回退消息</param>
+    /// <returns>可展示给用户的消息</returns>
+    public string ResolveLocalizedText(string? messageKey, string? fallbackMessage = null)
+    {
+        if (!string.IsNullOrWhiteSpace(messageKey))
+        {
+            if (Config.AgentTranslations.TryGetValue(messageKey, out var remoteText) &&
+                !string.IsNullOrWhiteSpace(remoteText))
+            {
+                return remoteText;
+            }
+
+            var localText = LocalizationManager.Instance.GetString(messageKey, string.Empty);
+            if (!string.IsNullOrWhiteSpace(localText) && !string.Equals(localText, $"#{messageKey}#", StringComparison.Ordinal))
+            {
+                return localText;
+            }
+        }
+
+        return string.IsNullOrWhiteSpace(fallbackMessage)
+            ? "操作失败"
+            : fallbackMessage;
+    }
+
+    /// <summary>
+    /// 将异常转换为适合当前桌面端显示的消息
+    /// </summary>
+    /// <param name="exception">异常对象</param>
+    /// <param name="fallbackMessage">回退消息</param>
+    /// <returns>可展示给用户的异常消息</returns>
+    public string ResolveExceptionMessage(Exception exception, string? fallbackMessage = null)
+    {
+        if (exception is AgentApiException apiException)
+        {
+            return ResolveLocalizedText(apiException.MessageKey, apiException.Message);
+        }
+
+        return string.IsNullOrWhiteSpace(exception.Message)
+            ? ResolveLocalizedText(null, fallbackMessage)
+            : exception.Message;
     }
 }

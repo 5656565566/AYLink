@@ -52,6 +52,14 @@ public sealed class ScreenNavigationArgs : NavigationArgs
     public string? AppPackageName { get; init; }
 
     public string? AppDisplayName { get; init; }
+
+    public bool NewDisplay { get; init; }
+
+    public int? NewDisplayWidth { get; init; }
+
+    public int? NewDisplayHeight { get; init; }
+
+    public int? NewDisplayDpi { get; init; }
 }
 
 /// <summary>

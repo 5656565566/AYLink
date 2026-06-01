@@ -36,14 +36,18 @@ internal sealed class AgentScreenSession : IScreenSession
         AgentServerRuntime remoteServer,
         string? appPackageName,
         string? appDisplayName,
-        AudioPlayer audioPlayer)
+        AudioPlayer audioPlayer,
+        bool newDisplay = false,
+        int? newDisplayWidth = null,
+        int? newDisplayHeight = null,
+        int? newDisplayDpi = null)
     {
         ArgumentNullException.ThrowIfNull(remoteDevice);
         ArgumentNullException.ThrowIfNull(remoteServer);
 
         _audioPlayer = audioPlayer ?? throw new ArgumentNullException(nameof(audioPlayer));
         _session = new AgentWebRtcSession(remoteServer.Client, remoteServer.EnsureAccessTokenAsync);
-        _options = CreateSessionOptions(remoteDevice, remoteServer.Config, appPackageName, appDisplayName);
+        _options = CreateSessionOptions(remoteDevice, remoteServer.Config, appPackageName, appDisplayName, newDisplay, newDisplayWidth, newDisplayHeight, newDisplayDpi);
         _videoFrameForwarder = HandleVideoFrameDecoded;
         _audioFrameForwarder = HandleAudioFrameDecoded;
 
@@ -126,13 +130,21 @@ internal sealed class AgentScreenSession : IScreenSession
         DeviceDescriptor remoteDevice,
         AgentServerConfig config,
         string? appPackageName,
-        string? appDisplayName)
+        string? appDisplayName,
+        bool newDisplay,
+        int? newDisplayWidth,
+        int? newDisplayHeight,
+        int? newDisplayDpi)
     {
         var options = new AgentWebRtcSessionOptions
         {
             DeviceId = remoteDevice.RemoteDeviceId?.ToString() ?? string.Empty,
             AppPackage = appPackageName ?? string.Empty,
-            AppName = appDisplayName ?? string.Empty
+            AppName = appDisplayName ?? string.Empty,
+            NewDisplay = newDisplay,
+            NewDisplayWidth = newDisplayWidth,
+            NewDisplayHeight = newDisplayHeight,
+            NewDisplayDpi = newDisplayDpi
         };
 
         if (config.EnableWebRtcOverride)

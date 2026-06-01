@@ -124,6 +124,34 @@ public sealed class AgentApiClient
         => SendAsync<AgentDeviceDto>(HttpMethod.Put, $"/api/devices/{deviceId}/rename", new { Name = name }, accessToken, cancellationToken);
 
     /// <summary>
+    /// 请求 Agent 服务端删除指定远程设备
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>删除是否成功</returns>
+    public async Task<bool> DeleteDeviceAsync(string accessToken, int deviceId, CancellationToken cancellationToken = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/devices/{deviceId}");
+        if (!string.IsNullOrWhiteSpace(accessToken))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
+
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (response.IsSuccessStatusCode)
+        {
+            return true;
+        }
+
+        var content = response.Content == null
+            ? string.Empty
+            : await response.Content.ReadAsStringAsync(cancellationToken);
+        Debug.WriteLine($"[AgentApi] DELETE /api/devices/{deviceId} failed: {(int)response.StatusCode} {response.ReasonPhrase}; body={content}");
+        throw CreateAgentApiException(response.StatusCode, response.ReasonPhrase, content);
+    }
+
+    /// <summary>
     /// 获取指定远程设备的应用列表
     /// </summary>
     /// <param name="accessToken">访问令牌</param>
@@ -132,6 +160,16 @@ public sealed class AgentApiClient
     /// <returns>应用列表</returns>
     public Task<IReadOnlyList<AgentAppDto>> GetAppsAsync(string accessToken, int deviceId, CancellationToken cancellationToken = default)
         => SendAsync<IReadOnlyList<AgentAppDto>>(HttpMethod.Get, $"/api/devices/{deviceId}/apps", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 获取指定远程设备的编码器列表
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>编码器列表</returns>
+    public Task<IReadOnlyList<string>> GetEncodersAsync(string accessToken, int deviceId, CancellationToken cancellationToken = default)
+        => SendAsync<IReadOnlyList<string>>(HttpMethod.Get, $"/api/devices/{deviceId}/encoders", null, accessToken, cancellationToken);
 
     /// <summary>
     /// 请求远程启动指定应用
@@ -200,6 +238,31 @@ public sealed class AgentApiClient
     /// <returns>WebRTC 网络设置</returns>
     public Task<AgentWebRtcNetworkSettingsDto> GetWebRtcNetworkSettingsAsync(string accessToken, CancellationToken cancellationToken = default)
         => SendAsync<AgentWebRtcNetworkSettingsDto>(HttpMethod.Get, "/api/settings/webrtc-network", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 获取 Agent 服务端当前语言设置
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>服务端当前语言</returns>
+    public Task<AgentLanguageSettingResponse> GetServerLanguageAsync(string accessToken, CancellationToken cancellationToken = default)
+        => SendAsync<AgentLanguageSettingResponse>(HttpMethod.Get, "/api/settings/language", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 获取 Agent 服务端指定语言包
+    /// </summary>
+    /// <param name="locale">语言区域代码</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>语言包内容</returns>
+    public Task<Dictionary<string, object>> GetLocaleAsync(string locale, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(locale))
+        {
+            throw new ArgumentException("Locale cannot be empty.", nameof(locale));
+        }
+
+        return SendAsync<Dictionary<string, object>>(HttpMethod.Get, $"/api/i18n/{Uri.EscapeDataString(locale.Trim())}", null, null, cancellationToken);
+    }
 
     /// <summary>
     /// 保存 Agent 服务端的全局 WebRTC 网络设置
@@ -330,7 +393,7 @@ public sealed class AgentApiClient
         if (!response.IsSuccessStatusCode)
         {
             Debug.WriteLine($"[AgentApi] {method} {path} failed: {(int)response.StatusCode} {response.ReasonPhrase}; body={content}");
-            throw new AgentApiException(response.StatusCode, ParseErrorMessage(content) ?? response.ReasonPhrase ?? "Request failed.");
+            throw CreateAgentApiException(response.StatusCode, response.ReasonPhrase, content);
         }
 
         if (typeof(T) == typeof(object) || string.IsNullOrWhiteSpace(content))
@@ -365,7 +428,7 @@ public sealed class AgentApiClient
         if (!response.IsSuccessStatusCode)
         {
             Debug.WriteLine($"[AgentApi] {method} {path} failed: {(int)response.StatusCode} {response.ReasonPhrase}; body={body}");
-            throw new AgentApiException(response.StatusCode, ParseErrorMessage(body) ?? response.ReasonPhrase ?? "Request failed.");
+            throw CreateAgentApiException(response.StatusCode, response.ReasonPhrase, body);
         }
 
         if (typeof(T) == typeof(object) || string.IsNullOrWhiteSpace(body))
@@ -406,7 +469,7 @@ public sealed class AgentApiClient
                 : await response.Content.ReadAsStringAsync(cancellationToken);
             response.Dispose();
             Debug.WriteLine($"[AgentApi] {method} {path} failed: {(int)response.StatusCode} {response.ReasonPhrase}; body={body}");
-            throw new AgentApiException(response.StatusCode, ParseErrorMessage(body) ?? response.ReasonPhrase ?? "Request failed.");
+            throw CreateAgentApiException(response.StatusCode, response.ReasonPhrase, body);
         }
 
         return new AgentDownloadResponse(response);
@@ -424,7 +487,17 @@ public sealed class AgentApiClient
         return trimmed.TrimEnd('/');
     }
 
-    private static string? ParseErrorMessage(string content)
+    private static AgentApiException CreateAgentApiException(HttpStatusCode statusCode, string? reasonPhrase, string content)
+    {
+        var error = ParseError(content);
+        return new AgentApiException(
+            statusCode,
+            error?.Message ?? reasonPhrase ?? "Request failed.",
+            error?.MessageKey,
+            error?.Code);
+    }
+
+    private static AgentErrorPayload? ParseError(string content)
     {
         if (string.IsNullOrWhiteSpace(content))
         {
@@ -434,11 +507,14 @@ public sealed class AgentApiClient
         try
         {
             var error = JsonConvert.DeserializeObject<AgentErrorResponse>(content);
-            return error?.Message;
+            return error?.Error;
         }
         catch
         {
-            return content;
+            return new AgentErrorPayload
+            {
+                Message = content
+            };
         }
     }
 }
@@ -448,12 +524,24 @@ public sealed class AgentApiClient
 /// </summary>
 /// <param name="statusCode">HTTP 状态码</param>
 /// <param name="message">错误消息</param>
-public sealed class AgentApiException(HttpStatusCode statusCode, string message) : Exception(message)
+/// <param name="messageKey">服务端返回的本地化键</param>
+/// <param name="errorCode">服务端返回的错误代码</param>
+public sealed class AgentApiException(HttpStatusCode statusCode, string message, string? messageKey = null, string? errorCode = null) : Exception(message)
 {
     /// <summary>
     /// 失败请求对应的 HTTP 状态码
     /// </summary>
     public HttpStatusCode StatusCode { get; } = statusCode;
+
+    /// <summary>
+    /// 服务端返回的本地化键
+    /// </summary>
+    public string? MessageKey { get; } = messageKey;
+
+    /// <summary>
+    /// 服务端返回的错误代码
+    /// </summary>
+    public string? ErrorCode { get; } = errorCode;
 }
 
 /// <summary>
@@ -476,7 +564,7 @@ public sealed class AgentBooleanResponse
     /// <summary>
     /// 当前请求是否成功
     /// </summary>
-    [JsonProperty("success")]
+    [JsonProperty("ok")]
     public bool Success { get; set; }
 }
 
@@ -793,6 +881,18 @@ public sealed class AgentWebRtcIceServerDto
 }
 
 /// <summary>
+/// Agent 服务端语言设置响应模型
+/// </summary>
+public sealed class AgentLanguageSettingResponse
+{
+    /// <summary>
+    /// 当前服务端语言区域代码
+    /// </summary>
+    [JsonProperty("locale")]
+    public string Locale { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// Agent 应用摘要模型
 /// </summary>
 public sealed class AgentAppDto
@@ -899,6 +999,30 @@ public sealed class AgentDownloadResponse(HttpResponseMessage response) : IDispo
 /// </summary>
 internal sealed class AgentErrorResponse
 {
+    /// <summary>
+    /// 服务端返回的错误对象
+    /// </summary>
+    [JsonProperty("error")]
+    public AgentErrorPayload? Error { get; set; }
+}
+
+/// <summary>
+/// Agent 错误负载模型
+/// </summary>
+internal sealed class AgentErrorPayload
+{
+    /// <summary>
+    /// 服务端错误代码
+    /// </summary>
+    [JsonProperty("code")]
+    public string? Code { get; set; }
+
+    /// <summary>
+    /// 服务端返回的本地化键
+    /// </summary>
+    [JsonProperty("messageKey")]
+    public string? MessageKey { get; set; }
+
     /// <summary>
     /// 服务端返回的错误消息
     /// </summary>

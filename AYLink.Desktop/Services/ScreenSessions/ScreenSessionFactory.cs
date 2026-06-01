@@ -28,9 +28,26 @@ internal sealed class ScreenSessionFactory : IScreenSessionFactory
         return new LocalScreenSession(device, appPackageName, _audioPlayer);
     }
 
-    public IScreenSession CreateRemoteSession(DeviceDescriptor remoteDevice, AgentServerRuntime remoteServer, string? appPackageName, string? appDisplayName)
+    public IScreenSession CreateRemoteSession(
+        DeviceDescriptor remoteDevice,
+        AgentServerRuntime remoteServer,
+        string? appPackageName,
+        string? appDisplayName,
+        bool newDisplay = false,
+        int? newDisplayWidth = null,
+        int? newDisplayHeight = null,
+        int? newDisplayDpi = null)
     {
-        return new AgentScreenSession(remoteDevice, remoteServer, appPackageName, appDisplayName, _audioPlayer);
+        return new AgentScreenSession(
+            remoteDevice,
+            remoteServer,
+            appPackageName,
+            appDisplayName,
+            _audioPlayer,
+            newDisplay,
+            newDisplayWidth,
+            newDisplayHeight,
+            newDisplayDpi);
     }
 
     public IInputProcessor CreateInputProcessor(DeviceModel? device)

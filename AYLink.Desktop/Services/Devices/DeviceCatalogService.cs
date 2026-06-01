@@ -111,6 +111,28 @@ public sealed class DeviceCatalogService
         => _localProvider.DisconnectDeviceAsync(deviceId, cancellationToken);
 
     /// <summary>
+    /// 统一删除或断开设备
+    /// 本地设备执行断开 远程设备执行 Agent 侧删除
+    /// </summary>
+    /// <param name="descriptor">设备描述</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作是否成功</returns>
+    public async Task<bool> DisconnectDeviceAsync(DeviceDescriptor descriptor, CancellationToken cancellationToken = default)
+    {
+        var success = descriptor.SourceKind == DeviceSourceKind.Local
+            ? await _localProvider.DisconnectDeviceAsync(descriptor.Id, cancellationToken)
+            : await (CreateRemoteProvider(descriptor.ProviderId)?.DisconnectDeviceAsync(descriptor.Id, cancellationToken)
+                ?? Task.FromResult(false));
+
+        if (success)
+        {
+            DevicesChanged?.Invoke();
+        }
+
+        return success;
+    }
+
+    /// <summary>
     /// 统一重命名设备
     /// 本地设备使用桌面端别名持久化 远程设备调用对应 Agent Provider
     /// </summary>

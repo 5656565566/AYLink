@@ -135,7 +135,7 @@ public partial class HomePageViewModel : PageViewModelBase
 
     /// <summary>
     /// 删除设备
-    /// 当前仅支持批量断开本地设备 远程设备删除仍在服务器侧管理
+    /// 本地设备执行断开 远程设备执行删除
     /// </summary>
     /// <param name="selectedItems">被选择的设备</param>
     /// <returns></returns>
@@ -158,19 +158,30 @@ public partial class HomePageViewModel : PageViewModelBase
 
         if (itemsToDelete.Count == 0)
         {
-            NotificationService.Instance.ShowWarning("暂不支持", "当前仅支持批量断开本地设备。");
             return;
         }
 
         var localizer = Services.Localization.LocalizationManager.Instance;
+        var hasRemoteDevice = itemsToDelete.Any(static item => item.IsRemote);
+        var hasLocalDevice = itemsToDelete.Any(static item => item.IsLocal);
+        var title = hasRemoteDevice
+            ? localizer.GetString("HomePage.DeleteDevice", "删除设备")
+            : localizer.GetString("HomePage.DisconnectConfirmTitle", "确认断开");
+        var confirmText = hasRemoteDevice && !hasLocalDevice
+            ? localizer.GetString("HomePage.DeleteDevice", "删除设备")
+            : localizer.GetString("HomePage.DisconnectConfirmButton", "断开");
         var message = itemsToDelete.Count == 1
-            ? string.Format(localizer.GetString("HomePage.DisconnectSingleMessage", "确定要断开设备 {0} 吗？"), itemsToDelete[0].Name)
-            : string.Format(localizer.GetString("HomePage.DisconnectMultipleMessage", "确定要断开选中的 {0} 台设备吗？"), itemsToDelete.Count);
+            ? hasRemoteDevice
+                ? string.Format(localizer.GetString("HomePage.DeleteSingleMessage", "确定要删除设备 {0} 吗？"), itemsToDelete[0].Name)
+                : string.Format(localizer.GetString("HomePage.DisconnectSingleMessage", "确定要断开设备 {0} 吗？"), itemsToDelete[0].Name)
+            : hasRemoteDevice
+                ? string.Format(localizer.GetString("HomePage.DeleteMultipleMessage", "确定要删除选中的 {0} 台设备吗？"), itemsToDelete.Count)
+                : string.Format(localizer.GetString("HomePage.DisconnectMultipleMessage", "确定要断开选中的 {0} 台设备吗？"), itemsToDelete.Count);
 
         var result = await DialogService.ShowMessageAsync(
-            localizer.GetString("HomePage.DisconnectConfirmTitle", "确认断开"),
+            title,
             message,
-            localizer.GetString("HomePage.DisconnectConfirmButton", "断开"),
+            confirmText,
             localizer.GetString("Dialog.Cancel", "取消"));
 
         if (result != ContentDialogResult.Primary)
@@ -178,14 +189,32 @@ public partial class HomePageViewModel : PageViewModelBase
             return;
         }
 
+        var successCount = 0;
         foreach (var vm in itemsToDelete)
         {
-            await _deviceCatalog.DisconnectLocalDeviceAsync(vm.Device.Id);
+            if (await _deviceCatalog.DisconnectDeviceAsync(vm.Device))
+            {
+                successCount++;
+            }
+        }
+
+        if (successCount == 0)
+        {
+            NotificationService.Instance.ShowError(
+                title,
+                hasRemoteDevice
+                    ? localizer.GetString("HomePage.DeleteFailedBatchMessage", "所选设备删除失败")
+                    : localizer.GetString("HomePage.DisconnectFailedBatchMessage", "所选设备断开失败"));
+            return;
         }
 
         NotificationService.Instance.ShowSuccess(
-            localizer.GetString("HomePage.DisconnectedTitle", "已断开"),
-            string.Format(localizer.GetString("HomePage.DisconnectedMessage", "已断开 {0} 台设备的连接"), itemsToDelete.Count));
+            hasRemoteDevice
+                ? localizer.GetString("HomePage.DeleteDevice", "删除设备")
+                : localizer.GetString("HomePage.DisconnectedTitle", "已断开"),
+            hasRemoteDevice
+                ? string.Format(localizer.GetString("HomePage.DeleteSuccessBatchMessage", "已删除 {0} 台设备"), successCount)
+                : string.Format(localizer.GetString("HomePage.DisconnectedMessage", "已断开 {0} 台设备的连接"), successCount));
         await RefreshDevices();
     }
 
