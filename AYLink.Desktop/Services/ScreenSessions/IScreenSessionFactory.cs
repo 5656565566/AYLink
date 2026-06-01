@@ -31,4 +31,9 @@ public interface IScreenSessionFactory
     /// 根据当前设备选择输入处理器
     /// </summary>
     IInputProcessor CreateInputProcessor(DeviceModel? device);
+
+    /// <summary>
+    /// 根据远程设备设置选择输入处理器
+    /// </summary>
+    IInputProcessor CreateRemoteInputProcessor(bool hidKeyboardEnabled, bool hidMouseEnabled);
 }

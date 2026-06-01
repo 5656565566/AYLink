@@ -444,7 +444,8 @@ public partial class AppTabViewModel : TabItemViewModelBase
                 RemoteDevice = _remoteDevice,
                 ServerId = _remoteServer.Config.Id,
                 AppPackageName = app.PackageName,
-                AppDisplayName = app.Name
+                AppDisplayName = app.Name,
+                NewDisplay = true
             });
             return;
         }
@@ -455,7 +456,8 @@ public partial class AppTabViewModel : TabItemViewModelBase
         {
             Device = Device,
             AppPackageName = app.PackageName,
-            AppDisplayName = app.Name
+            AppDisplayName = app.Name,
+            NewDisplay = true
         });
     }
 

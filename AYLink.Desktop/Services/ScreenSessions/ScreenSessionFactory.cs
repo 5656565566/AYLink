@@ -69,4 +69,14 @@ internal sealed class ScreenSessionFactory : IScreenSessionFactory
 
         return new DefaultInputProcessor();
     }
+
+    public IInputProcessor CreateRemoteInputProcessor(bool hidKeyboardEnabled, bool hidMouseEnabled)
+    {
+        if (hidKeyboardEnabled || hidMouseEnabled)
+        {
+            return new HidInputProcessor(hidKeyboardEnabled, hidMouseEnabled);
+        }
+
+        return new DefaultInputProcessor();
+    }
 }

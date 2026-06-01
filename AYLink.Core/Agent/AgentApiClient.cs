@@ -152,6 +152,37 @@ public sealed class AgentApiClient
     }
 
     /// <summary>
+    /// 获取指定远程设备的设置
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>设备设置</returns>
+    public Task<AgentDeviceSettingsDto> GetDeviceSettingsAsync(string accessToken, int deviceId, CancellationToken cancellationToken = default)
+        => SendAsync<AgentDeviceSettingsDto>(HttpMethod.Get, $"/api/devices/{deviceId}/settings", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 保存指定远程设备的设置
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="settings">设备设置</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>服务端规范化后的设备设置</returns>
+    public Task<AgentDeviceSettingsDto> SaveDeviceSettingsAsync(string accessToken, int deviceId, AgentDeviceSettingsDto settings, CancellationToken cancellationToken = default)
+        => SendAsync<AgentDeviceSettingsDto>(HttpMethod.Put, $"/api/devices/{deviceId}/settings", settings, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 将指定远程设备设置恢复为默认值
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>恢复后的默认设备设置</returns>
+    public Task<AgentDeviceSettingsDto> ResetDeviceSettingsAsync(string accessToken, int deviceId, CancellationToken cancellationToken = default)
+        => SendAsync<AgentDeviceSettingsDto>(HttpMethod.Delete, $"/api/devices/{deviceId}/settings", null, accessToken, cancellationToken);
+
+    /// <summary>
     /// 获取指定远程设备的应用列表
     /// </summary>
     /// <param name="accessToken">访问令牌</param>
@@ -878,6 +909,105 @@ public sealed class AgentWebRtcIceServerDto
     /// </summary>
     [JsonProperty(nameof(Credential))]
     public string? Credential { get; set; }
+}
+
+/// <summary>
+/// Agent 设备设置模型
+/// </summary>
+public sealed class AgentDeviceSettingsDto
+{
+    [JsonProperty(nameof(Video))]
+    public bool Video { get; set; }
+
+    [JsonProperty(nameof(Audio))]
+    public bool Audio { get; set; }
+
+    [JsonProperty(nameof(Control))]
+    public bool Control { get; set; }
+
+    [JsonProperty(nameof(VideoCodec))]
+    public string VideoCodec { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(MaxSize))]
+    public int? MaxSize { get; set; }
+
+    [JsonProperty(nameof(VideoBitRate))]
+    public int? VideoBitRate { get; set; }
+
+    [JsonProperty(nameof(MaxFps))]
+    public double? MaxFps { get; set; }
+
+    [JsonProperty(nameof(AudioCodec))]
+    public string AudioCodec { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(AudioBitRate))]
+    public int? AudioBitRate { get; set; }
+
+    [JsonProperty(nameof(VideoSource))]
+    public string VideoSource { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(AudioSource))]
+    public string AudioSource { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(StayAwake))]
+    public bool StayAwake { get; set; }
+
+    [JsonProperty(nameof(ShowTouches))]
+    public bool ShowTouches { get; set; }
+
+    [JsonProperty(nameof(PowerOn))]
+    public bool PowerOn { get; set; }
+
+    [JsonProperty(nameof(PowerOffOnClose))]
+    public bool PowerOffOnClose { get; set; }
+
+    [JsonProperty(nameof(ScreenOffTimeout))]
+    public int? ScreenOffTimeout { get; set; }
+
+    [JsonProperty(nameof(HidKeyboard))]
+    public bool HidKeyboard { get; set; }
+
+    [JsonProperty(nameof(HidMouse))]
+    public bool HidMouse { get; set; }
+
+    [JsonProperty(nameof(CameraFacing))]
+    public string CameraFacing { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(CameraId))]
+    public string CameraId { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(CameraSize))]
+    public string CameraSize { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(CameraFps))]
+    public string CameraFps { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(CameraHighSpeed))]
+    public bool CameraHighSpeed { get; set; }
+
+    [JsonProperty(nameof(AudioDup))]
+    public bool AudioDup { get; set; }
+
+    [JsonProperty(nameof(VdDestroyContent))]
+    public bool VdDestroyContent { get; set; }
+
+    [JsonProperty(nameof(VdSystemDecorations))]
+    public bool VdSystemDecorations { get; set; }
+
+    [JsonProperty(nameof(NewDisplay))]
+    public string NewDisplay { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(FlexDisplay))]
+    public bool FlexDisplay { get; set; }
+
+    [JsonProperty(nameof(VideoEncoder))]
+    public string VideoEncoder { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(AudioEncoder))]
+    public string AudioEncoder { get; set; } = string.Empty;
+
+    [JsonProperty(nameof(CodecOptions))]
+    public string CodecOptions { get; set; } = string.Empty;
 }
 
 /// <summary>

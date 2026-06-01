@@ -99,3 +99,17 @@ public sealed class ShellNavigationArgs : NavigationArgs
 
     public string? ServerId { get; init; }
 }
+
+/// <summary>
+/// 设备设置页导航参数
+/// </summary>
+public sealed class DeviceSettingNavigationArgs : NavigationArgs
+{
+    public string DeviceSerial { get; init; } = string.Empty;
+
+    public string DeviceName { get; init; } = string.Empty;
+
+    public DeviceDescriptor? RemoteDevice { get; init; }
+
+    public string? ServerId { get; init; }
+}

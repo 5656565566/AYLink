@@ -398,6 +398,7 @@ public sealed class AgentServerRuntime
 {
     private AgentApiClient? _client;
     private readonly Action _persistAction;
+    private readonly SemaphoreSlim _tokenRefreshLock = new(1, 1);
 
     /// <summary>
     /// 初始化一个新的 Agent 服务器运行时实例
@@ -449,20 +450,35 @@ public sealed class AgentServerRuntime
             return Config.AccessToken;
         }
 
-        if (string.IsNullOrWhiteSpace(Config.RefreshToken))
+        await _tokenRefreshLock.WaitAsync(cancellationToken);
+        try
         {
-            throw new InvalidOperationException("服务器未登录。");
-        }
+            // 等待锁期间其他请求可能已经完成刷新，这里再检查一次最新状态。
+            if (!string.IsNullOrWhiteSpace(Config.AccessToken) &&
+                (!Config.AccessTokenExpiresAt.HasValue || Config.AccessTokenExpiresAt > DateTimeOffset.UtcNow.AddMinutes(1)))
+            {
+                return Config.AccessToken;
+            }
 
-        var response = await Client.RefreshAsync(Config.RefreshToken, cancellationToken);
-        Config.AccessToken = response.AccessToken;
-        Config.AccessTokenExpiresAt = response.AccessTokenExpiresAt;
-        Config.RefreshToken = response.RefreshToken;
-        Config.RefreshTokenExpiresAt = response.RefreshTokenExpiresAt;
-        Config.LastKnownUserName = response.User.Username;
-        LastPermissions = response.Permissions;
-        _persistAction();
-        return Config.AccessToken;
+            if (string.IsNullOrWhiteSpace(Config.RefreshToken))
+            {
+                throw new InvalidOperationException("服务器未登录。");
+            }
+
+            var response = await Client.RefreshAsync(Config.RefreshToken, cancellationToken);
+            Config.AccessToken = response.AccessToken;
+            Config.AccessTokenExpiresAt = response.AccessTokenExpiresAt;
+            Config.RefreshToken = response.RefreshToken;
+            Config.RefreshTokenExpiresAt = response.RefreshTokenExpiresAt;
+            Config.LastKnownUserName = response.User.Username;
+            LastPermissions = response.Permissions;
+            _persistAction();
+            return Config.AccessToken;
+        }
+        finally
+        {
+            _tokenRefreshLock.Release();
+        }
     }
 
     /// <summary>

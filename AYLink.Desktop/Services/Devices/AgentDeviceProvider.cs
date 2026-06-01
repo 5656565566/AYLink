@@ -189,13 +189,20 @@ public sealed class AgentDeviceProvider(AgentServerRuntime runtime) : IDevicePro
     private DeviceDescriptor Map(AgentDeviceDto dto)
     {
         var capabilities = DeviceCapability.None;
-        if (HasPermission("devices.control"))
+        var canControl = HasPermission("devices.control");
+        var canManage = HasPermission("devices.manage");
+
+        if (canControl)
         {
             capabilities |= DeviceCapability.Connect | DeviceCapability.Mirror | DeviceCapability.AppManager | DeviceCapability.ListEncoders | DeviceCapability.NewDisplay;
         }
-        if (HasPermission("devices.manage"))
+        if (canManage)
         {
             capabilities |= DeviceCapability.Rename | DeviceCapability.Disconnect;
+        }
+        if (canControl && canManage)
+        {
+            capabilities |= DeviceCapability.DeviceSettings;
         }
         if (HasPermission("files.access"))
         {

@@ -121,7 +121,9 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
                 newDisplayDpi),
             _screenSessionFactory,
             null,
-            title);
+            title,
+            remoteDevice,
+            server);
         ConfigureTab(newTab);
         RegisterTab(newTab);
     }

@@ -4,6 +4,7 @@ using AYLink.Core.Scrcpy.Control;
 using AYLink.Desktop.Models;
 using AYLink.Desktop.Services.Audio;
 using AYLink.Desktop.Services.Input;
+using Avalonia;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -14,18 +15,22 @@ namespace AYLink.Desktop.Services.ScreenSessions.Agent;
 /// <summary>
 /// 面向页面层的 Agent 远程投屏会话门面
 /// </summary>
-internal sealed class AgentScreenSession : IScreenSession
+internal sealed class AgentScreenSession : IScreenSession, IResizableScreenSession
 {
+    private readonly AgentServerRuntime _remoteServer;
     private readonly AgentWebRtcSession _session;
     private readonly AgentWebRtcSessionOptions _options;
     private readonly AudioPlayer _audioPlayer;
     private readonly Action<int, int, IntPtr, int> _videoFrameForwarder;
     private readonly Action<byte[]> _audioFrameForwarder;
+    private readonly bool _newDisplayRequested;
     private int _audioStreamId = -1;
     private bool _disposed;
+    private bool _isFlexDisplayEnabled;
     private Task? _shutdownTask;
 
     public ScreenSessionState State { get; private set; } = ScreenSessionState.Idle;
+    public bool IsFlexDisplayEnabled => _newDisplayRequested && _isFlexDisplayEnabled;
 
     public event Action<ScreenSessionState>? StateChanged;
     public event Action<int, int, IntPtr, int>? VideoFrameDecoded;
@@ -46,8 +51,10 @@ internal sealed class AgentScreenSession : IScreenSession
         ArgumentNullException.ThrowIfNull(remoteServer);
 
         _audioPlayer = audioPlayer ?? throw new ArgumentNullException(nameof(audioPlayer));
+        _remoteServer = remoteServer;
         _session = new AgentWebRtcSession(remoteServer.Client, remoteServer.EnsureAccessTokenAsync);
         _options = CreateSessionOptions(remoteDevice, remoteServer.Config, appPackageName, appDisplayName, newDisplay, newDisplayWidth, newDisplayHeight, newDisplayDpi);
+        _newDisplayRequested = newDisplay;
         _videoFrameForwarder = HandleVideoFrameDecoded;
         _audioFrameForwarder = HandleAudioFrameDecoded;
 
@@ -62,6 +69,7 @@ internal sealed class AgentScreenSession : IScreenSession
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(inputProcessor);
 
+        await LoadSessionContextAsync(cancellationToken);
         EnsureAudioStream();
         inputProcessor.SetSender(new AgentSessionCommandSender(_session));
 
@@ -91,6 +99,38 @@ internal sealed class AgentScreenSession : IScreenSession
     public void SendPointerMove(byte[] payload)
     {
         _session.SendPointerMove(payload);
+    }
+
+    public bool SendResizeDisplayIfNeeded(Size newSize, bool hasReceivedFirstVideoFrame, Size? lastResizeRequestSize)
+    {
+        if (!IsFlexDisplayEnabled || newSize.Width <= 0 || newSize.Height <= 0)
+        {
+            return false;
+        }
+
+        if (!hasReceivedFirstVideoFrame)
+        {
+            return false;
+        }
+
+        if (lastResizeRequestSize is Size lastSize &&
+            Math.Abs(lastSize.Width - newSize.Width) < 0.5 &&
+            Math.Abs(lastSize.Height - newSize.Height) < 0.5)
+        {
+            return false;
+        }
+
+        _session.SendControl(new ControlMsgModel.ControlMsg
+        {
+            Type = ControlMsgModel.ControlMsgType.ResizeDisplay,
+            Data = new ControlMsgModel.ResizeDisplayData
+            {
+                Width = (ushort)Math.Max(1, newSize.Width),
+                Height = (ushort)Math.Max(1, newSize.Height)
+            }
+        }.Serialize());
+
+        return true;
     }
 
     public void Dispose()
@@ -229,6 +269,27 @@ internal sealed class AgentScreenSession : IScreenSession
         {
             _audioPlayer.StopStream(_audioStreamId);
             _audioStreamId = -1;
+        }
+    }
+
+    private async Task LoadSessionContextAsync(CancellationToken cancellationToken)
+    {
+        _isFlexDisplayEnabled = false;
+        if (!_newDisplayRequested || !int.TryParse(_options.DeviceId, out var deviceId) || deviceId <= 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var accessToken = await _remoteServer.EnsureAccessTokenAsync(cancellationToken);
+            var settings = await _remoteServer.Client.GetDeviceSettingsAsync(accessToken, deviceId, cancellationToken);
+            _remoteServer.TouchSuccess();
+            _isFlexDisplayEnabled = settings.FlexDisplay;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[AgentScreenSession] LoadSessionContextAsync failed: {ex}");
         }
     }
 

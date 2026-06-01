@@ -1,6 +1,7 @@
 using AYLink.Core.Devices;
 using AYLink.Core.Models;
 using AYLink.Core.Scrcpy.Control;
+using AYLink.Core.Agent;
 using AYLink.Desktop.Services;
 using AYLink.Desktop.Services.Input;
 using AYLink.Desktop.Services.ScreenSessions;
@@ -60,12 +61,22 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable, IAs
     private Func<bool> _keyboardInputGate = static () => true;
 
     private readonly IScreenSessionFactory _screenSessionFactory;
+    private readonly DeviceDescriptor? _remoteDevice;
+    private readonly AgentServerRuntime? _remoteServer;
 
-    public ScreenTabViewModel(IScreenSession screenSession, IScreenSessionFactory screenSessionFactory, DeviceModel? device, string title)
+    public ScreenTabViewModel(
+        IScreenSession screenSession,
+        IScreenSessionFactory screenSessionFactory,
+        DeviceModel? device,
+        string title,
+        DeviceDescriptor? remoteDevice = null,
+        AgentServerRuntime? remoteServer = null)
     {
         Device = device;
         _screenSession = screenSession ?? throw new ArgumentNullException(nameof(screenSession));
         _screenSessionFactory = screenSessionFactory ?? throw new ArgumentNullException(nameof(screenSessionFactory));
+        _remoteDevice = remoteDevice;
+        _remoteServer = remoteServer;
         _resizableScreenSession = _screenSession as IResizableScreenSession;
         _resizeThrottleTimer = CreateResizeTimer();
         _inputCoordinator = CreateInputCoordinator();
@@ -135,7 +146,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable, IAs
 
         try
         {
-            RecreateInputProcessor();
+            await RecreateInputProcessorAsync();
             InputProcessor.CursorLockRequested += OnCursorLockRequested;
             InputProcessor.SetCursorLocked(IsMouseLocked);
             await _screenSession.StartAsync(InputProcessor);
@@ -532,7 +543,7 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable, IAs
         _screenSession.StateChanged += OnSessionStateChanged;
     }
 
-    private void RecreateInputProcessor()
+    private async Task RecreateInputProcessorAsync()
     {
         if (InputProcessor != null)
         {
@@ -540,7 +551,35 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable, IAs
             InputProcessor.Dispose();
         }
 
+        if (_remoteDevice != null && _remoteServer != null)
+        {
+            var settings = await LoadRemoteInputSettingsAsync();
+            InputProcessor = _screenSessionFactory.CreateRemoteInputProcessor(settings.HidKeyboard, settings.HidMouse);
+            return;
+        }
+
         InputProcessor = _screenSessionFactory.CreateInputProcessor(Device);
+    }
+
+    private async Task<RemoteInputSettings> LoadRemoteInputSettingsAsync()
+    {
+        if (_remoteDevice?.RemoteDeviceId is not int remoteDeviceId || remoteDeviceId <= 0 || _remoteServer == null)
+        {
+            return RemoteInputSettings.Disabled;
+        }
+
+        try
+        {
+            var accessToken = await _remoteServer.EnsureAccessTokenAsync();
+            var settings = await _remoteServer.Client.GetDeviceSettingsAsync(accessToken, remoteDeviceId);
+            _remoteServer.TouchSuccess();
+            return new RemoteInputSettings(settings.HidKeyboard, settings.HidMouse);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ScreenTab] LoadRemoteInputSettingsAsync failed: {ex}");
+            return RemoteInputSettings.Disabled;
+        }
     }
 
     private void OnSessionError(Exception ex)
@@ -552,5 +591,10 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable, IAs
     {
         IsConnected = state == ScreenSessionState.Connected;
         Debug.WriteLine($"[ScreenTab] session state: {state}");
+    }
+
+    private readonly record struct RemoteInputSettings(bool HidKeyboard, bool HidMouse)
+    {
+        public static RemoteInputSettings Disabled => new(false, false);
     }
 }

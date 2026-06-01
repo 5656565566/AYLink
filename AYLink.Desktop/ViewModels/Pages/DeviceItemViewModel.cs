@@ -32,18 +32,19 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     public string Name => Device.Name;
     public string Serial => Device.Serial;
     public string ConnectionType => Device.ConnectionType;
+    public string ConnectionTypeText => NormalizeConnectionType(Device.ConnectionType);
     public string SourceName => Device.ProviderName;
     public string StatusText => Device.Status;
     public bool IsConnected => Device.IsConnected;
     public bool IsLocal => Device.SourceKind == DeviceSourceKind.Local;
     public bool IsRemote => Device.SourceKind == DeviceSourceKind.Agent;
-    public bool CanMirror => HasCapability(DeviceCapability.Mirror);
-    public bool CanOpenFileManager => HasCapability(DeviceCapability.FileManager);
-    public bool CanOpenAppManager => HasCapability(DeviceCapability.AppManager);
-    public bool CanOpenShell => HasCapability(DeviceCapability.Shell);
-    public bool CanOpenDeviceSettings => IsLocal && HasCapability(DeviceCapability.DeviceSettings);
-    public bool CanListEncoders => HasCapability(DeviceCapability.ListEncoders);
-    public bool CanNewDisplay => HasCapability(DeviceCapability.NewDisplay);
+    public bool CanMirror => HasConnectedCapability(DeviceCapability.Mirror);
+    public bool CanOpenFileManager => HasConnectedCapability(DeviceCapability.FileManager);
+    public bool CanOpenAppManager => HasConnectedCapability(DeviceCapability.AppManager);
+    public bool CanOpenShell => HasConnectedCapability(DeviceCapability.Shell);
+    public bool CanOpenDeviceSettings => HasConnectedCapability(DeviceCapability.DeviceSettings);
+    public bool CanListEncoders => HasConnectedCapability(DeviceCapability.ListEncoders);
+    public bool CanNewDisplay => HasConnectedCapability(DeviceCapability.NewDisplay);
     public bool CanDelete => HasCapability(DeviceCapability.Disconnect);
     public bool CanRename => HasCapability(DeviceCapability.Rename);
     public bool HasRemoteActions => IsRemote && CanRename;
@@ -264,6 +265,17 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     [RelayCommand]
     private async Task OpenDeviceSettings()
     {
+        if (IsRemote)
+        {
+            Navigation.NavigateTo("DeviceSetting", new DeviceSettingNavigationArgs
+            {
+                DeviceName = Device.Name,
+                RemoteDevice = Device,
+                ServerId = Device.ProviderId
+            });
+            return;
+        }
+
         var localDevice = await GetLocalDeviceOrNotifyAsync();
         if (localDevice != null)
         {
@@ -402,6 +414,22 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     /// </summary>
     private bool HasCapability(DeviceCapability capability) => (Device.Capabilities & capability) == capability;
 
+    private bool HasConnectedCapability(DeviceCapability capability) => IsConnected && HasCapability(capability);
+
+    private static string NormalizeConnectionType(string? connectionType)
+    {
+        if (string.IsNullOrWhiteSpace(connectionType))
+        {
+            return string.Empty;
+        }
+
+        return connectionType.Trim() switch
+        {
+            "WiFi" => "Wi-Fi",
+            _ => connectionType.Trim()
+        };
+    }
+
     private async Task<IReadOnlyList<string>> GetRemoteEncodersAsync()
     {
         var runtime = AgentSessionService.Instance.FindServer(Device.ProviderId)
@@ -473,8 +501,16 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Serial));
         OnPropertyChanged(nameof(ConnectionType));
+        OnPropertyChanged(nameof(ConnectionTypeText));
         OnPropertyChanged(nameof(SourceName));
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(IsConnected));
+        OnPropertyChanged(nameof(CanMirror));
+        OnPropertyChanged(nameof(CanOpenFileManager));
+        OnPropertyChanged(nameof(CanOpenAppManager));
+        OnPropertyChanged(nameof(CanOpenShell));
+        OnPropertyChanged(nameof(CanOpenDeviceSettings));
+        OnPropertyChanged(nameof(CanListEncoders));
+        OnPropertyChanged(nameof(CanNewDisplay));
     }
 }
