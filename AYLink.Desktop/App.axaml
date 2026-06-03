@@ -128,6 +128,9 @@
         <DataTemplate DataType="vm:DeviceSettingViewModel">
             <views:DeviceSettingView />
         </DataTemplate>
+        <DataTemplate DataType="vm:DeviceGroupsPageViewModel">
+            <views:DeviceGroupsPage />
+        </DataTemplate>
         <DataTemplate DataType="vm:ServerSettingViewModel">
             <views:ServerSettingView />
         </DataTemplate>

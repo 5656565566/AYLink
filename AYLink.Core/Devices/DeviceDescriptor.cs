@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace AYLink.Core.Devices;
 
 /// <summary>
@@ -56,6 +58,11 @@ public sealed class DeviceDescriptor : IDeviceDescriptor
     /// 当前设备开放的能力集合
     /// </summary>
     public DeviceCapability Capabilities { get; init; }
+
+    /// <summary>
+    /// 当前设备所属的分组集合
+    /// </summary>
+    public IReadOnlyList<DeviceGroupDescriptor> Groups { get; init; } = [];
 
     /// <summary>
     /// 远程设备在 Agent 服务端中的整数 ID

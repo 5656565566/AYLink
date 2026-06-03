@@ -335,6 +335,12 @@ public partial class SettingsPageViewModel : PageViewModelBase
             ShowError($"打开链接失败: {ex.Message}");
         }
     }
+
+    [RelayCommand]
+    private static void OpenDeviceGroups()
+    {
+        NavigationService.Instance.NavigateTo("DeviceGroups");
+    }
  
     [RelayCommand]
     private void ResetToDefaults()

@@ -1,0 +1,284 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="680"
+             x:Class="AYLink.Desktop.Views.Pages.DeviceGroupsPage"
+             x:DataType="vm:DeviceGroupsPageViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Border.group-card">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+        <Style Selector="Border.metric">
+            <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10,6"/>
+        </Style>
+        <Style Selector="Border.editor-panel">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="18"/>
+        </Style>
+        <Style Selector="Border.device-row">
+            <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*">
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="16,6">
+            <Grid ColumnDefinitions="Auto,*">
+                <Button Grid.Column="0"
+                        Command="{Binding BackToSettingsCommand}"
+                        Padding="8,6"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Back" FontSize="16"/>
+                        <TextBlock Text="{i18n:Tr DeviceGroupsPage.BackToSettings, DefaultText='返回'}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <TextBlock Grid.Column="1"
+                           Text="{i18n:Tr DeviceGroupsPage.Title, DefaultText='设备分组'}"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,60,0"/>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <ScrollViewer IsVisible="{Binding !IsEditorOpen}">
+                <StackPanel Margin="20" Spacing="12" MaxWidth="980">
+                    <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding SearchKeyword}"
+                                     Watermark="{i18n:Tr DeviceGroupsPage.GroupSearchPlaceholder, DefaultText='搜索分组名称或描述'}"
+                                     MinHeight="34"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <Button Command="{Binding RefreshCommand}" IsEnabled="{Binding !IsLoading}" Padding="10,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <ui:SymbolIcon Symbol="Refresh" FontSize="15"/>
+                                        <TextBlock Text="{i18n:Tr DeviceGroupsPage.Refresh, DefaultText='刷新'}"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Command="{Binding CreateGroupCommand}" Padding="10,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <ui:SymbolIcon Symbol="Add" FontSize="15"/>
+                                        <TextBlock Text="{i18n:Tr DeviceGroupsPage.CreateGroup, DefaultText='新建设备分组'}"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14">
+                        <StackPanel Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{i18n:Tr DeviceGroupsPage.GroupList, DefaultText='分组列表'}"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding FilteredGroupCount, StringFormat='共 {0} 个分组'}"
+                                           Opacity="0.65"/>
+                            </Grid>
+
+                            <ItemsControl ItemsSource="{Binding Groups}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:DeviceGroupItemViewModel">
+                                        <Border Classes="group-card" IsVisible="{Binding IsVisible}">
+                                            <StackPanel Spacing="12">
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                    <StackPanel Grid.Column="0" Spacing="5">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"/>
+                                                            <Border IsVisible="{Binding IsSystem}"
+                                                                    Background="{DynamicResource AccentFillColorSecondaryBrush}"
+                                                                    CornerRadius="4"
+                                                                    Padding="6,2">
+                                                                <TextBlock Text="{i18n:Tr DeviceGroupsPage.SystemGroup, DefaultText='系统内置'}"
+                                                                           FontSize="11"
+                                                                           Foreground="White"/>
+                                                            </Border>
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding Description}"
+                                                                   Opacity="0.72"
+                                                                   TextWrapping="Wrap"/>
+                                                        <TextBlock IsVisible="{Binding IsSystem}"
+                                                                   Text="{i18n:Tr DeviceGroupsPage.SystemGroupHint, DefaultText='默认分组用于承载未分配到业务分组的本地设备，不可改名或删除。'}"
+                                                                   Opacity="0.65"
+                                                                   FontSize="12"
+                                                                   TextWrapping="Wrap"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                                                        <Button Command="{Binding ManageCommand}" Padding="10,6">
+                                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                                <ui:SymbolIcon Symbol="Edit" FontSize="14"/>
+                                                                <TextBlock Text="{i18n:Tr DeviceGroupsPage.Manage, DefaultText='管理'}"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <Button Command="{Binding DeleteCommand}"
+                                                                IsEnabled="{Binding CanDelete}"
+                                                                Padding="10,6">
+                                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                                <ui:SymbolIcon Symbol="Delete" FontSize="14"/>
+                                                                <TextBlock Text="{i18n:Tr DeviceGroupsPage.DeleteGroup, DefaultText='删除'}"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <Border Classes="metric">
+                                                        <StackPanel Spacing="2">
+                                                            <TextBlock Text="{i18n:Tr DeviceGroupsPage.Devices, DefaultText='设备'}" FontSize="12" Opacity="0.65"/>
+                                                            <TextBlock Text="{Binding DeviceCount}" FontSize="16" FontWeight="SemiBold"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer IsVisible="{Binding IsEditorOpen}">
+                <StackPanel Margin="20" Spacing="12" MaxWidth="980">
+                    <Border Classes="editor-panel">
+                        <Grid RowDefinitions="Auto,Auto,* ,Auto"
+                              RowSpacing="14">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+                                <Button Grid.Column="0"
+                                        Command="{Binding BackToListCommand}"
+                                        Padding="8,6"
+                                        VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <ui:SymbolIcon Symbol="Back" FontSize="16"/>
+                                        <TextBlock Text="{i18n:Tr DeviceGroupsPage.BackToList, DefaultText='返回分组列表'}"/>
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Grid.Column="1"
+                                           Text="{i18n:Tr DeviceGroupsPage.EditGroup, DefaultText='编辑设备分组'}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,120,0"/>
+                            </Grid>
+
+                            <StackPanel Grid.Row="1" Spacing="14">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{i18n:Tr DeviceGroupsPage.GroupName, DefaultText='分组名称'}" Opacity="0.75"/>
+                                    <TextBox Text="{Binding EditingName}"
+                                             IsEnabled="{Binding CanEditGroupForm}"
+                                             Watermark="{i18n:Tr DeviceGroupsPage.GroupNameWatermark, DefaultText='分组名称'}"/>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{i18n:Tr DeviceGroupsPage.Description, DefaultText='描述'}" Opacity="0.75"/>
+                                    <TextBox Text="{Binding EditingDescription}"
+                                             IsEnabled="{Binding CanEditGroupForm}"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             MinHeight="74"
+                                             Watermark="{i18n:Tr DeviceGroupsPage.GroupDescriptionPlaceholder, DefaultText='可以写这个分组的用途或归属范围'}"/>
+                                </StackPanel>
+
+                                <Border IsVisible="{Binding IsEditingSystemGroup}"
+                                        Background="{DynamicResource SystemFillColorCautionBackgroundBrush}"
+                                        CornerRadius="4"
+                                        Padding="10">
+                                    <TextBlock Text="{i18n:Tr DeviceGroupsPage.SystemGroupEditHint, DefaultText='系统内置分组的名称和描述已锁定，设备会自动归入默认范围。'}"
+                                               TextWrapping="Wrap"/>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Spacing="12">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{i18n:Tr DeviceGroupsPage.Devices, DefaultText='设备'}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding SelectedDeviceCount, StringFormat='已选择 {0} 项'}" Opacity="0.65" FontSize="12"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <ItemsControl ItemsSource="{Binding Devices}" IsEnabled="{Binding CanEditGroupForm}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:DeviceGroupDeviceItemViewModel">
+                                            <Border Classes="device-row">
+                                                <CheckBox IsChecked="{Binding IsSelected}">
+                                                    <StackPanel Spacing="2" Margin="6,0,0,0">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding Serial}" Opacity="0.65" FontSize="12"/>
+                                                    </StackPanel>
+                                                </CheckBox>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <Grid Grid.Row="3"
+                              RowDefinitions="Auto,Auto"
+                              RowSpacing="10">
+                            <TextBlock Grid.Row="0"
+                                       Text="{Binding StatusMessage}"
+                                       Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                       TextWrapping="Wrap"/>
+
+                            <StackPanel Grid.Row="1"
+                                        Orientation="Horizontal"
+                                        Spacing="10"
+                                        HorizontalAlignment="Right">
+                                <Button Command="{Binding SaveEditorCommand}"
+                                        IsEnabled="{Binding CanSaveEditor}"
+                                        MinWidth="92"
+                                        HorizontalContentAlignment="Center">
+                                    <TextBlock Text="{i18n:Tr DeviceGroupsPage.Save, DefaultText='保存'}"/>
+                                </Button>
+                                <Button Command="{Binding CloseEditorCommand}"
+                                        IsEnabled="{Binding !IsSaving}"
+                                        MinWidth="92"
+                                        HorizontalContentAlignment="Center">
+                                    <TextBlock Text="{i18n:Tr Dialog.Cancel, DefaultText='取消'}"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

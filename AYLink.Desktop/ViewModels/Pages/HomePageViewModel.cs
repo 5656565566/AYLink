@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AYLink.Core.Devices;
@@ -28,18 +29,35 @@ public partial class HomePageViewModel : PageViewModelBase
     /// </summary>
     public ObservableCollection<DeviceItemViewModel> DeviceItems { get; } = [];
 
+    private List<DeviceDescriptor> _allDevices = [];
+
+    /// <summary>
+    /// 首页分组筛选选项
+    /// </summary>
+    public ObservableCollection<HomeDeviceGroupOptionViewModel> GroupOptions { get; } = [];
+
+    /// <summary>
+    /// 根据搜索关键字过滤后的分组筛选选项
+    /// </summary>
+    public ObservableCollection<HomeDeviceGroupOptionViewModel> FilteredGroupOptions { get; } = [];
+
     /// <summary>
     /// 是否有设备连接（控制空状态提示的显示）
     /// </summary>
     [ObservableProperty]
     public partial bool HasDevices { get; set; }
 
-    /// <summary>
-    /// 当前选中的设备分组索引
-    /// 目前仍保留给首页原有 UI 结构使用
-    /// </summary>
     [ObservableProperty]
-    public partial int SelectedGroupIndex { get; set; }
+    public partial HomeDeviceGroupOptionViewModel? SelectedGroup { get; set; }
+
+    [ObservableProperty]
+    public partial string GroupSearchKeyword { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool HasFilteredGroupOptions { get; set; } = true;
+
+    public string SelectedGroupDisplayName => SelectedGroup?.DisplayName
+        ?? Services.Localization.LocalizationManager.Instance.GetString("HomePage.GroupAllDevices", "全部设备");
 
     public HomePageViewModel()
     {
@@ -50,6 +68,18 @@ public partial class HomePageViewModel : PageViewModelBase
                 _ = RefreshDevices();
             }
         };
+    }
+
+    partial void OnGroupSearchKeywordChanged(string value)
+    {
+        ApplyGroupSearchFilter();
+    }
+
+    partial void OnSelectedGroupChanged(HomeDeviceGroupOptionViewModel? value)
+    {
+        OnPropertyChanged(nameof(SelectedGroupDisplayName));
+        ApplyDeviceGroupFilter();
+        UpdateGroupSelectionState();
     }
 
     // 页面级命令
@@ -124,13 +154,123 @@ public partial class HomePageViewModel : PageViewModelBase
     private async Task RefreshDevices()
     {
         var devices = await _deviceCatalog.RefreshAllAsync();
+        _allDevices = devices.ToList();
+        RebuildGroupOptions(_allDevices);
+        ApplyDeviceGroupFilter();
+    }
+
+    private void ApplyDeviceGroupFilter()
+    {
         DeviceItems.Clear();
-        foreach (var device in devices)
+        var selected = SelectedGroup;
+        var visibleDevices = selected == null || selected.IsAllDevices
+            ? _allDevices
+            : _allDevices.Where(device => DeviceMatchesGroup(device, selected)).ToList();
+
+        foreach (var device in visibleDevices)
         {
             DeviceItems.Add(new DeviceItemViewModel(device, RefreshDevices));
         }
 
         HasDevices = DeviceItems.Count > 0;
+    }
+
+    private void RebuildGroupOptions(IReadOnlyList<DeviceDescriptor> devices)
+    {
+        var selectedKey = SelectedGroup?.Key;
+        var allDevices = CreateAllDevicesOption();
+        var options = new List<HomeDeviceGroupOptionViewModel> { allDevices };
+        var knownKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { allDevices.Key };
+
+        foreach (var group in _deviceCatalog.GetLocalDeviceGroups())
+        {
+            AddGroupOption(options, knownKeys, LocalDeviceProvider.LocalProviderId, "本地", group, SelectGroupOption);
+        }
+
+        foreach (var device in devices.Where(item => item.SourceKind != DeviceSourceKind.Local))
+        {
+            foreach (var group in device.Groups)
+            {
+                AddGroupOption(options, knownKeys, device.ProviderId, device.ProviderName, group, SelectGroupOption);
+            }
+        }
+
+        GroupOptions.Clear();
+        foreach (var option in options
+            .OrderBy(item => item.IsAllDevices ? 0 : 1)
+            .ThenBy(item => item.SourceName)
+            .ThenBy(item => item.Name))
+        {
+            GroupOptions.Add(option);
+        }
+
+        SelectedGroup = GroupOptions.FirstOrDefault(item => string.Equals(item.Key, selectedKey, StringComparison.OrdinalIgnoreCase))
+            ?? GroupOptions.FirstOrDefault();
+        ApplyGroupSearchFilter();
+    }
+
+    private static void AddGroupOption(
+        ICollection<HomeDeviceGroupOptionViewModel> options,
+        ISet<string> knownKeys,
+        string providerId,
+        string sourceName,
+        DeviceGroupDescriptor group,
+        Action<HomeDeviceGroupOptionViewModel> selectAction)
+    {
+        var key = HomeDeviceGroupOptionViewModel.BuildKey(providerId, group.Id);
+        if (!knownKeys.Add(key))
+        {
+            return;
+        }
+
+        options.Add(new HomeDeviceGroupOptionViewModel(providerId, sourceName, group, selectAction));
+    }
+
+    private HomeDeviceGroupOptionViewModel CreateAllDevicesOption()
+    {
+        return HomeDeviceGroupOptionViewModel.CreateAllDevices(
+            Services.Localization.LocalizationManager.Instance.GetString("HomePage.GroupAllDevices", "全部设备"),
+            SelectGroupOption);
+    }
+
+    private void ApplyGroupSearchFilter()
+    {
+        var keyword = GroupSearchKeyword.Trim();
+        FilteredGroupOptions.Clear();
+        foreach (var option in GroupOptions)
+        {
+            if (option.IsAllDevices ||
+                string.IsNullOrWhiteSpace(keyword) ||
+                option.Name.Contains(keyword, StringComparison.CurrentCultureIgnoreCase) ||
+                option.SourceName.Contains(keyword, StringComparison.CurrentCultureIgnoreCase) ||
+                option.DisplayName.Contains(keyword, StringComparison.CurrentCultureIgnoreCase))
+            {
+                FilteredGroupOptions.Add(option);
+            }
+        }
+
+        HasFilteredGroupOptions = FilteredGroupOptions.Count > 0;
+        UpdateGroupSelectionState();
+    }
+
+    private void UpdateGroupSelectionState()
+    {
+        foreach (var option in GroupOptions)
+        {
+            option.IsSelected = SelectedGroup != null && string.Equals(option.Key, SelectedGroup.Key, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public void SelectGroupOption(HomeDeviceGroupOptionViewModel option)
+    {
+        SelectedGroup = option;
+        GroupSearchKeyword = string.Empty;
+    }
+
+    private static bool DeviceMatchesGroup(DeviceDescriptor device, HomeDeviceGroupOptionViewModel option)
+    {
+        return string.Equals(device.ProviderId, option.ProviderId, StringComparison.OrdinalIgnoreCase) &&
+            device.Groups.Any(group => string.Equals(group.Id, option.GroupId, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -272,5 +412,68 @@ public partial class HomePageViewModel : PageViewModelBase
     public override void OnNavigatedFrom()
     {
         base.OnNavigatedFrom();
+    }
+}
+
+/// <summary>
+/// 首页设备分组筛选选项
+/// </summary>
+public partial class HomeDeviceGroupOptionViewModel : ViewModelBase
+{
+    private readonly Action<HomeDeviceGroupOptionViewModel>? _selectAction;
+
+    private HomeDeviceGroupOptionViewModel(
+        string providerId,
+        string groupId,
+        string sourceName,
+        string name,
+        bool isAllDevices,
+        Action<HomeDeviceGroupOptionViewModel>? selectAction)
+    {
+        ProviderId = providerId;
+        GroupId = groupId;
+        SourceName = sourceName;
+        Name = name;
+        IsAllDevices = isAllDevices;
+        _selectAction = selectAction;
+        Key = isAllDevices ? "all" : BuildKey(providerId, groupId);
+    }
+
+    public HomeDeviceGroupOptionViewModel(
+        string providerId,
+        string sourceName,
+        DeviceGroupDescriptor group,
+        Action<HomeDeviceGroupOptionViewModel> selectAction)
+        : this(providerId, group.Id, sourceName, group.Name, false, selectAction)
+    {
+    }
+
+    public string Key { get; }
+
+    public string ProviderId { get; }
+
+    public string GroupId { get; }
+
+    public string SourceName { get; }
+
+    public string Name { get; }
+
+    public bool IsAllDevices { get; }
+
+    public string DisplayName => IsAllDevices ? Name : $"{SourceName} - {Name}";
+
+    [ObservableProperty]
+    public partial bool IsSelected { get; set; }
+
+    public static string BuildKey(string providerId, string groupId)
+        => $"{providerId}:{groupId}";
+
+    public static HomeDeviceGroupOptionViewModel CreateAllDevices(string name, Action<HomeDeviceGroupOptionViewModel> selectAction)
+        => new(string.Empty, string.Empty, string.Empty, name, true, selectAction);
+
+    [RelayCommand]
+    private void Select()
+    {
+        _selectAction?.Invoke(this);
     }
 }

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace AYLink.Core.Devices;
 
 /// <summary>
@@ -57,4 +59,9 @@ public interface IDeviceDescriptor
     /// 当前设备在此 Provider 下开放的能力集合
     /// </summary>
     DeviceCapability Capabilities { get; }
+
+    /// <summary>
+    /// 当前设备所属的分组集合
+    /// </summary>
+    IReadOnlyList<DeviceGroupDescriptor> Groups { get; }
 }

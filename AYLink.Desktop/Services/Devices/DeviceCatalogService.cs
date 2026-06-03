@@ -20,6 +20,7 @@ public sealed class DeviceCatalogService
 
     private readonly LocalDeviceProvider _localProvider = new();
     private readonly LocalDeviceAliasService _localAliases = LocalDeviceAliasService.Instance;
+    private readonly LocalDeviceGroupService _localGroups = LocalDeviceGroupService.Instance;
     private readonly AgentSessionService _agentSessions = AgentSessionService.Instance;
 
     private DeviceCatalogService()
@@ -47,7 +48,7 @@ public sealed class DeviceCatalogService
     public async Task<IReadOnlyList<DeviceDescriptor>> RefreshAllAsync(CancellationToken cancellationToken = default)
     {
         var all = new List<DeviceDescriptor>();
-        all.AddRange((await _localProvider.RefreshDevicesAsync(cancellationToken)).Select(ApplyLocalAlias));
+        all.AddRange((await _localProvider.RefreshDevicesAsync(cancellationToken)).Select(ApplyLocalMetadata));
 
         foreach (var server in _agentSessions.Servers)
         {
@@ -81,6 +82,108 @@ public sealed class DeviceCatalogService
 
         ApplyLocalAlias(device);
         return true;
+    }
+
+    /// <summary>
+    /// 获取本地设备分组列表
+    /// </summary>
+    /// <returns>本地设备分组列表</returns>
+    public IReadOnlyList<DeviceGroupDescriptor> GetLocalDeviceGroups()
+        => _localGroups.GetGroups();
+
+    /// <summary>
+    /// 创建本地设备分组
+    /// </summary>
+    /// <param name="name">分组名称</param>
+    /// <returns>创建后的分组描述；失败时返回 null</returns>
+    public DeviceGroupDescriptor? CreateLocalDeviceGroup(string name)
+    {
+        var group = _localGroups.CreateGroup(name);
+        if (group != null)
+        {
+            DevicesChanged?.Invoke();
+        }
+
+        return group;
+    }
+
+    /// <summary>
+    /// 创建本地设备分组
+    /// </summary>
+    /// <param name="name">分组名称</param>
+    /// <param name="description">分组描述</param>
+    /// <returns>创建后的分组描述；失败时返回 null</returns>
+    public DeviceGroupDescriptor? CreateLocalDeviceGroup(string name, string description)
+    {
+        var group = _localGroups.CreateGroup(name, description);
+        if (group != null)
+        {
+            DevicesChanged?.Invoke();
+        }
+
+        return group;
+    }
+
+    /// <summary>
+    /// 重命名本地设备分组
+    /// </summary>
+    /// <param name="groupId">分组 ID</param>
+    /// <param name="name">新的分组名称</param>
+    /// <returns>更新后的分组描述；失败时返回 null</returns>
+    public DeviceGroupDescriptor? RenameLocalDeviceGroup(string groupId, string name)
+    {
+        var group = _localGroups.RenameGroup(groupId, name);
+        if (group != null)
+        {
+            DevicesChanged?.Invoke();
+        }
+
+        return group;
+    }
+
+    /// <summary>
+    /// 更新本地设备分组
+    /// </summary>
+    /// <param name="groupId">分组 ID</param>
+    /// <param name="name">新的分组名称</param>
+    /// <param name="description">新的分组描述</param>
+    /// <returns>更新后的分组描述；失败时返回 null</returns>
+    public DeviceGroupDescriptor? UpdateLocalDeviceGroup(string groupId, string name, string description)
+    {
+        var group = _localGroups.UpdateGroup(groupId, name, description);
+        if (group != null)
+        {
+            DevicesChanged?.Invoke();
+        }
+
+        return group;
+    }
+
+    /// <summary>
+    /// 删除本地设备分组
+    /// </summary>
+    /// <param name="groupId">分组 ID</param>
+    /// <returns>是否删除成功</returns>
+    public bool DeleteLocalDeviceGroup(string groupId)
+    {
+        var deleted = _localGroups.DeleteGroup(groupId);
+        if (deleted)
+        {
+            DevicesChanged?.Invoke();
+        }
+
+        return deleted;
+    }
+
+    /// <summary>
+    /// 设置本地设备所属的分组集合
+    /// </summary>
+    /// <param name="serial">本地设备序列号</param>
+    /// <param name="groupIds">目标分组 ID 集合</param>
+    public void SetLocalDeviceGroups(string serial, IEnumerable<string> groupIds)
+    {
+        _localGroups.SetGroupsForDevice(serial, groupIds);
+        DevicesChanged?.Invoke();
     }
 
     /// <summary>
@@ -208,7 +311,7 @@ public sealed class DeviceCatalogService
         if (!string.IsNullOrWhiteSpace(request.Name))
         {
             _localAliases.SetAlias(added.Serial, request.Name);
-            added = ApplyLocalAlias(added);
+            added = ApplyLocalMetadata(added);
         }
 
         DevicesChanged?.Invoke();
@@ -226,7 +329,12 @@ public sealed class DeviceCatalogService
         _localAliases.SetAlias(descriptor.Serial, trimmedName);
         var renamed = await _localProvider.RenameDeviceAsync(descriptor.Id, trimmedName, cancellationToken);
         DevicesChanged?.Invoke();
-        return renamed == null ? ApplyLocalAlias(descriptor) : ApplyLocalAlias(renamed);
+        return renamed == null ? ApplyLocalMetadata(descriptor) : ApplyLocalMetadata(renamed);
+    }
+
+    private DeviceDescriptor ApplyLocalMetadata(DeviceDescriptor descriptor)
+    {
+        return ApplyLocalGroups(ApplyLocalAlias(descriptor));
     }
 
     private DeviceDescriptor ApplyLocalAlias(DeviceDescriptor descriptor)
@@ -251,8 +359,33 @@ public sealed class DeviceCatalogService
                 Status = descriptor.Status,
                 IsConnected = descriptor.IsConnected,
                 Capabilities = descriptor.Capabilities,
+                Groups = descriptor.Groups,
                 RemoteDeviceId = descriptor.RemoteDeviceId
             };
+    }
+
+    private DeviceDescriptor ApplyLocalGroups(DeviceDescriptor descriptor)
+    {
+        if (descriptor.SourceKind != DeviceSourceKind.Local)
+        {
+            return descriptor;
+        }
+
+        return new DeviceDescriptor
+        {
+            Id = descriptor.Id,
+            ProviderId = descriptor.ProviderId,
+            ProviderName = descriptor.ProviderName,
+            SourceKind = descriptor.SourceKind,
+            Name = descriptor.Name,
+            Serial = descriptor.Serial,
+            ConnectionType = descriptor.ConnectionType,
+            Status = descriptor.Status,
+            IsConnected = descriptor.IsConnected,
+            Capabilities = descriptor.Capabilities,
+            Groups = _localGroups.GetGroupsForDevice(descriptor.Serial),
+            RemoteDeviceId = descriptor.RemoteDeviceId
+        };
     }
 
     private void ApplyLocalAlias(AYLink.Core.Models.DeviceModel device)

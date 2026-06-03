@@ -79,6 +79,7 @@ public partial class MainWindowViewModel : ViewModelBase
         RegisterPage(new TaskPageViewModel());
         RegisterPage(new SettingsPageViewModel());
         RegisterPage(new DeviceSettingViewModel());
+        RegisterPage(new DeviceGroupsPageViewModel());
         RegisterPage(new ServerSettingViewModel());
 
         // 订阅导航服务事件
