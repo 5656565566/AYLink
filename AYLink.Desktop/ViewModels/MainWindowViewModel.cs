@@ -81,6 +81,8 @@ public partial class MainWindowViewModel : ViewModelBase
         RegisterPage(new DeviceSettingViewModel());
         RegisterPage(new DeviceGroupsPageViewModel());
         RegisterPage(new ServerSettingViewModel());
+        RegisterPage(new ServerAccountManagementPageViewModel());
+        RegisterPage(new ServerRemoteDeviceGroupsPageViewModel());
 
         // 订阅导航服务事件
         _navigationService.NavigatedWithParameter += OnNavigated;

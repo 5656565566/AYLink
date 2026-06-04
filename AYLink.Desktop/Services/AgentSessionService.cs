@@ -284,6 +284,867 @@ public sealed class AgentSessionService
     }
 
     /// <summary>
+    /// 退出指定 Agent 服务器的当前登录会话
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>退出是否成功</returns>
+    public async Task<bool> LogoutAsync(string serverId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(runtime.Config.AccessToken) ||
+                !string.IsNullOrWhiteSpace(runtime.Config.RefreshToken))
+            {
+                await runtime.Client.LogoutAsync(runtime.Config.AccessToken, runtime.Config.RefreshToken, cancellationToken);
+            }
+        }
+        catch
+        {
+            // 本地退出不应被服务端会话清理失败阻断
+        }
+
+        runtime.ClearTokens();
+        runtime.State = AgentServerConnectionState.Unauthorized;
+        runtime.LastError = string.Empty;
+        Save();
+        NotifyChanged();
+        return true;
+    }
+
+    /// <summary>
+    /// 退出指定 Agent 服务器当前用户的全部登录会话
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>退出是否成功</returns>
+    public async Task<bool> LogoutAllAsync(string serverId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            await runtime.Client.LogoutAllAsync(accessToken, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return false;
+        }
+
+        runtime.ClearTokens();
+        runtime.State = AgentServerConnectionState.Unauthorized;
+        runtime.LastError = string.Empty;
+        Save();
+        NotifyChanged();
+        return true;
+    }
+
+    /// <summary>
+    /// 修改指定 Agent 服务器当前用户密码
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="currentPassword">当前密码</param>
+    /// <param name="newPassword">新密码</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>修改是否成功</returns>
+    public async Task<bool> ChangePasswordAsync(string serverId, string currentPassword, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            await runtime.Client.ChangePasswordAsync(accessToken, currentPassword, newPassword, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 获取指定 Agent 服务器版本信息
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>版本信息；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentAppVersionResponse?> GetAppVersionAsync(string serverId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var version = await runtime.Client.GetAppVersionAsync(runtime.Config.AccessToken, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return version;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 获取指定 Agent 服务器可用语言列表
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>可用语言列表；服务器不存在或请求失败时返回空列表</returns>
+    public async Task<IReadOnlyList<AgentLanguageOptionDto>> GetLanguagesAsync(string serverId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return [];
+        }
+
+        try
+        {
+            var languages = await runtime.Client.GetLanguagesAsync(cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return languages;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// 获取指定 Agent 服务器语言包内容
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="locale">语言区域代码</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>语言包键值集合；服务器不存在或请求失败时返回 null</returns>
+    public async Task<Dictionary<string, object>?> GetLocaleAsync(string serverId, string locale, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var data = await runtime.Client.GetLocaleAsync(locale, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return data;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 保存指定 Agent 服务器语言设置
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="locale">语言区域代码</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>保存是否成功</returns>
+    public async Task<bool> SaveServerLanguageAsync(string serverId, string locale, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var language = await runtime.Client.SaveServerLanguageAsync(accessToken, locale, cancellationToken);
+            runtime.Config.AgentLocale = language.Locale.Trim();
+            await SyncServerLocalizationAsync(runtime, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 获取指定 Agent 服务器全局 WebRTC 网络设置
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>WebRTC 网络设置；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentWebRtcNetworkSettingsDto?> GetWebRtcNetworkSettingsAsync(string serverId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var settings = await runtime.Client.GetWebRtcNetworkSettingsAsync(accessToken, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return settings;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 保存指定 Agent 服务器全局 WebRTC 网络设置
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="settings">WebRTC 网络设置</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>保存后的 WebRTC 网络设置；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentWebRtcNetworkSettingsDto?> SaveWebRtcNetworkSettingsAsync(string serverId, AgentWebRtcNetworkSettingsDto settings, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var savedSettings = await runtime.Client.SaveWebRtcNetworkSettingsAsync(accessToken, settings, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return savedSettings;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 获取指定 Agent 服务器投屏控制可用的 WebRTC 网络设置
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>投屏控制 WebRTC 网络设置；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentWebRtcNetworkSettingsDto?> GetControlWebRtcNetworkSettingsAsync(string serverId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var settings = await runtime.Client.GetControlWebRtcNetworkSettingsAsync(accessToken, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return settings;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 获取指定 Agent 服务器账户管理数据
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>账户管理数据；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentAccountDataResponse?> GetAccountDataAsync(string serverId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var data = await runtime.Client.GetAccountDataAsync(accessToken, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return data;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 创建指定 Agent 服务器用户
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="request">用户创建请求</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>创建后的用户；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentAccountUserDto?> CreateUserAsync(string serverId, AgentUserSaveRequest request, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var user = await runtime.Client.CreateUserAsync(accessToken, request, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return user;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 更新指定 Agent 服务器用户
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="userId">用户 ID</param>
+    /// <param name="request">用户更新请求</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新后的用户；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentAccountUserDto?> UpdateUserAsync(string serverId, int userId, AgentUserSaveRequest request, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var user = await runtime.Client.UpdateUserAsync(accessToken, userId, request, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return user;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 删除指定 Agent 服务器用户
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="userId">用户 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>删除是否成功</returns>
+    public async Task<bool> DeleteUserAsync(string serverId, int userId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            await runtime.Client.DeleteUserAsync(accessToken, userId, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 设置指定 Agent 服务器用户启用状态
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="userId">用户 ID</param>
+    /// <param name="isActive">是否启用</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作是否成功</returns>
+    public async Task<bool> SetUserActiveAsync(string serverId, int userId, bool isActive, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            await runtime.Client.SetUserActiveAsync(accessToken, userId, isActive, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 重置指定 Agent 服务器用户密码
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="userId">用户 ID</param>
+    /// <param name="newPassword">新密码</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>重置密码响应；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentResetPasswordResponse?> ResetUserPasswordAsync(string serverId, int userId, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var response = await runtime.Client.ResetUserPasswordAsync(accessToken, userId, newPassword, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return response;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 获取指定 Agent 服务器角色管理数据
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>角色与权限数据；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentRolesResponse?> GetRolesAsync(string serverId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var roles = await runtime.Client.GetRolesAsync(accessToken, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return roles;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 创建指定 Agent 服务器角色
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="request">角色创建请求</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>创建后的角色；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentRoleDto?> CreateRoleAsync(string serverId, AgentRoleSaveRequest request, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var role = await runtime.Client.CreateRoleAsync(accessToken, request, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return role;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 更新指定 Agent 服务器角色
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="roleId">角色 ID</param>
+    /// <param name="request">角色更新请求</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新后的角色；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentRoleDto?> UpdateRoleAsync(string serverId, int roleId, AgentRoleSaveRequest request, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var role = await runtime.Client.UpdateRoleAsync(accessToken, roleId, request, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return role;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 获取指定 Agent 服务器远程设备剪贴板文本
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>剪贴板响应；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentClipboardResponse?> GetClipboardAsync(string serverId, int deviceId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var response = await runtime.Client.GetClipboardAsync(accessToken, deviceId, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return response;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 设置指定 Agent 服务器远程设备剪贴板文本
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="text">剪贴板文本</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>剪贴板响应；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentClipboardResponse?> SetClipboardAsync(string serverId, int deviceId, string text, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var response = await runtime.Client.SetClipboardAsync(accessToken, deviceId, text, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return response;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 设置并粘贴指定 Agent 服务器远程设备剪贴板文本
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="text">剪贴板文本</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>剪贴板响应；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentClipboardResponse?> PasteClipboardAsync(string serverId, int deviceId, string text, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var response = await runtime.Client.PasteClipboardAsync(accessToken, deviceId, text, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return response;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 启动指定 Agent 服务器 ADB 服务
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作是否成功</returns>
+    public async Task<bool> StartAdbServerAsync(string serverId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            await runtime.Client.StartAdbServerAsync(accessToken, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 停止指定 Agent 服务器 ADB 服务
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作是否成功</returns>
+    public async Task<bool> KillAdbServerAsync(string serverId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            await runtime.Client.KillAdbServerAsync(accessToken, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 请求指定 Agent 服务器执行 ADB 无线配对
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="host">设备主机地址</param>
+    /// <param name="pairingPort">配对端口</param>
+    /// <param name="pairingCode">配对码</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>配对结果；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentAdbPairResponse?> PairAdbDeviceAsync(string serverId, string host, int pairingPort, string pairingCode, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var response = await runtime.Client.PairAdbDeviceAsync(accessToken, host, pairingPort, pairingCode, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return response;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 获取指定 Agent 服务器 ADB 状态
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>ADB 状态；服务器不存在或请求失败时返回 null</returns>
+    public async Task<AgentAdbStatusResponse?> GetAdbStatusAsync(string serverId, CancellationToken cancellationToken = default)
+    {
+        var runtime = FindServer(serverId);
+        if (runtime == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+            var status = await runtime.Client.GetAdbStatusAsync(accessToken, cancellationToken);
+            runtime.TouchSuccess();
+            Save();
+            NotifyChanged();
+            return status;
+        }
+        catch (Exception ex)
+        {
+            runtime.State = AgentServerConnectionState.Error;
+            runtime.LastError = runtime.ResolveExceptionMessage(ex);
+            NotifyChanged();
+            return null;
+        }
+    }
+
+    /// <summary>
     /// 从本地配置中加载所有已保存的服务器
     /// </summary>
     private void Load()

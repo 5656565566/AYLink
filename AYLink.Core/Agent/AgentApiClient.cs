@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,6 +47,59 @@ public sealed class AgentApiClient
         => SendAsync<AgentStatusResponse>(HttpMethod.Get, "/api/status", null, null, cancellationToken);
 
     /// <summary>
+    /// 获取 Agent 应用版本信息
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>Agent 应用版本信息</returns>
+    public Task<AgentAppVersionResponse> GetAppVersionAsync(string? accessToken = null, CancellationToken cancellationToken = default)
+        => SendAsync<AgentAppVersionResponse>(HttpMethod.Get, "/api/app/version", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 获取 Agent 端 ADB 服务状态
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>ADB 服务状态</returns>
+    public Task<AgentAdbStatusResponse> GetAdbStatusAsync(string accessToken, CancellationToken cancellationToken = default)
+        => SendAsync<AgentAdbStatusResponse>(HttpMethod.Get, "/api/adb/status", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 启动 Agent 端 ADB 服务
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作结果</returns>
+    public Task<AgentSuccessResponse> StartAdbServerAsync(string accessToken, CancellationToken cancellationToken = default)
+        => SendAsync<AgentSuccessResponse>(HttpMethod.Post, "/api/adb/server/start", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 停止 Agent 端 ADB 服务
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作结果</returns>
+    public Task<AgentSuccessResponse> KillAdbServerAsync(string accessToken, CancellationToken cancellationToken = default)
+        => SendAsync<AgentSuccessResponse>(HttpMethod.Post, "/api/adb/server/kill", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 请求 Agent 端执行 ADB 无线配对
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="host">设备主机地址</param>
+    /// <param name="pairingPort">配对端口</param>
+    /// <param name="pairingCode">配对码</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>配对结果</returns>
+    public Task<AgentAdbPairResponse> PairAdbDeviceAsync(string accessToken, string host, int pairingPort, string pairingCode, CancellationToken cancellationToken = default)
+        => SendAsync<AgentAdbPairResponse>(
+            HttpMethod.Post,
+            "/api/adb/pair",
+            new { host, pairingPort, pairingCode },
+            accessToken,
+            cancellationToken);
+
+    /// <summary>
     /// 使用用户名和密码登录 Agent 服务端
     /// </summary>
     /// <param name="username">登录用户名</param>
@@ -82,6 +136,158 @@ public sealed class AgentApiClient
     /// <returns>当前用户信息响应</returns>
     public Task<AgentMeResponse> GetCurrentUserAsync(string accessToken, CancellationToken cancellationToken = default)
         => SendAsync<AgentMeResponse>(HttpMethod.Get, "/api/auth/me", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 退出当前 Agent 登录会话
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="refreshToken">可选的刷新令牌</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作结果</returns>
+    public Task<AgentSuccessResponse> LogoutAsync(string accessToken, string? refreshToken = null, CancellationToken cancellationToken = default)
+        => SendAsync<AgentSuccessResponse>(HttpMethod.Post, "/api/logout", new { refreshToken }, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 退出当前用户在 Agent 服务端上的全部登录会话
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作结果</returns>
+    public Task<AgentSuccessResponse> LogoutAllAsync(string accessToken, CancellationToken cancellationToken = default)
+        => SendAsync<AgentSuccessResponse>(HttpMethod.Post, "/api/logout-all", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 修改当前 Agent 登录用户密码
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="currentPassword">当前密码</param>
+    /// <param name="newPassword">新密码</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作结果</returns>
+    public Task<AgentSuccessResponse> ChangePasswordAsync(string accessToken, string currentPassword, string newPassword, CancellationToken cancellationToken = default)
+        => SendAsync<AgentSuccessResponse>(
+            HttpMethod.Post,
+            "/api/auth/change-password",
+            new { currentPassword, newPassword },
+            accessToken,
+            cancellationToken);
+
+    /// <summary>
+    /// 获取 Agent 账户管理数据
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>账户、角色与可用权限列表</returns>
+    public Task<AgentAccountDataResponse> GetAccountDataAsync(string accessToken, CancellationToken cancellationToken = default)
+        => SendAsync<AgentAccountDataResponse>(HttpMethod.Get, "/api/accounts/users", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 创建 Agent 用户
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="request">用户创建请求</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>创建后的用户</returns>
+    public async Task<AgentAccountUserDto> CreateUserAsync(string accessToken, AgentUserSaveRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await SendAsync<AgentUserSaveResponse>(HttpMethod.Post, "/api/accounts/users", request, accessToken, cancellationToken);
+        return response.User;
+    }
+
+    /// <summary>
+    /// 更新 Agent 用户
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="userId">用户 ID</param>
+    /// <param name="request">用户更新请求</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新后的用户</returns>
+    public async Task<AgentAccountUserDto> UpdateUserAsync(string accessToken, int userId, AgentUserSaveRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await SendAsync<AgentUserSaveResponse>(HttpMethod.Put, $"/api/accounts/users/{userId}", request, accessToken, cancellationToken);
+        return response.User;
+    }
+
+    /// <summary>
+    /// 删除 Agent 用户
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="userId">用户 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>删除是否成功</returns>
+    public async Task<bool> DeleteUserAsync(string accessToken, int userId, CancellationToken cancellationToken = default)
+    {
+        await SendAsync<object>(HttpMethod.Delete, $"/api/accounts/users/{userId}", null, accessToken, cancellationToken);
+        return true;
+    }
+
+    /// <summary>
+    /// 设置 Agent 用户启用状态
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="userId">用户 ID</param>
+    /// <param name="isActive">是否启用</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作结果</returns>
+    public Task<AgentSuccessResponse> SetUserActiveAsync(string accessToken, int userId, bool isActive, CancellationToken cancellationToken = default)
+        => SendAsync<AgentSuccessResponse>(
+            HttpMethod.Post,
+            $"/api/accounts/users/{userId}/{(isActive ? "activate" : "deactivate")}",
+            null,
+            accessToken,
+            cancellationToken);
+
+    /// <summary>
+    /// 重置 Agent 用户密码
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="userId">用户 ID</param>
+    /// <param name="newPassword">新密码</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>重置后的密码响应</returns>
+    public Task<AgentResetPasswordResponse> ResetUserPasswordAsync(string accessToken, int userId, string newPassword, CancellationToken cancellationToken = default)
+        => SendAsync<AgentResetPasswordResponse>(
+            HttpMethod.Post,
+            $"/api/accounts/users/{userId}/reset-password",
+            new { newPassword },
+            accessToken,
+            cancellationToken);
+
+    /// <summary>
+    /// 获取 Agent 角色与可用权限列表
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>角色与可用权限列表</returns>
+    public Task<AgentRolesResponse> GetRolesAsync(string accessToken, CancellationToken cancellationToken = default)
+        => SendAsync<AgentRolesResponse>(HttpMethod.Get, "/api/accounts/roles", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 创建 Agent 角色
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="request">角色创建请求</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>创建后的角色</returns>
+    public async Task<AgentRoleDto> CreateRoleAsync(string accessToken, AgentRoleSaveRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await SendAsync<AgentRoleSaveResponse>(HttpMethod.Post, "/api/accounts/roles", request, accessToken, cancellationToken);
+        return response.Role;
+    }
+
+    /// <summary>
+    /// 更新 Agent 角色
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="roleId">角色 ID</param>
+    /// <param name="request">角色更新请求</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新后的角色</returns>
+    public async Task<AgentRoleDto> UpdateRoleAsync(string accessToken, int roleId, AgentRoleSaveRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await SendAsync<AgentRoleSaveResponse>(HttpMethod.Put, $"/api/accounts/roles/{roleId}", request, accessToken, cancellationToken);
+        return response.Role;
+    }
 
     /// <summary>
     /// 获取 Agent 服务端可见的设备列表
@@ -122,6 +328,147 @@ public sealed class AgentApiClient
     /// <returns>更新后的远程设备信息</returns>
     public Task<AgentDeviceDto> RenameDeviceAsync(string accessToken, int deviceId, string name, CancellationToken cancellationToken = default)
         => SendAsync<AgentDeviceDto>(HttpMethod.Put, $"/api/devices/{deviceId}/rename", new { Name = name }, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 获取远程设备预览图片
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="width">预览图片目标宽度</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>预览图片下载响应</returns>
+    public Task<AgentDownloadResponse> DownloadDevicePreviewAsync(string accessToken, int deviceId, int? width = null, CancellationToken cancellationToken = default)
+    {
+        var path = $"/api/devices/{deviceId}/preview";
+        if (width.HasValue && width.Value > 0)
+        {
+            path += $"?width={width.Value}";
+        }
+
+        return SendDownloadAsync(HttpMethod.Get, path, null, accessToken, cancellationToken);
+    }
+
+    /// <summary>
+    /// 获取 Agent 服务端的设备分组列表
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="keyword">可选的分组名称筛选关键字</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>设备分组列表</returns>
+    public async Task<IReadOnlyList<AgentDeviceGroupDto>> GetDeviceGroupsAsync(string accessToken, string? keyword = null, CancellationToken cancellationToken = default)
+    {
+        var path = "/api/device-groups";
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            path += $"?keyword={Uri.EscapeDataString(keyword.Trim())}";
+        }
+
+        var response = await SendAsync<AgentDeviceGroupListResponse>(HttpMethod.Get, path, null, accessToken, cancellationToken);
+        return response.Items;
+    }
+
+    /// <summary>
+    /// 获取当前用户可选择的 Agent 设备分组选项
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="keyword">可选的分组名称筛选关键字</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>设备分组选项列表</returns>
+    public async Task<IReadOnlyList<AgentDeviceGroupDto>> GetDeviceGroupOptionsAsync(string accessToken, string? keyword = null, CancellationToken cancellationToken = default)
+    {
+        var path = "/api/device-groups/options";
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            path += $"?keyword={Uri.EscapeDataString(keyword.Trim())}";
+        }
+
+        var response = await SendAsync<AgentDeviceGroupListResponse>(HttpMethod.Get, path, null, accessToken, cancellationToken);
+        return response.Items;
+    }
+
+    /// <summary>
+    /// 创建 Agent 服务端设备分组
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="name">分组名称</param>
+    /// <param name="description">分组描述</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>创建后的设备分组</returns>
+    public async Task<AgentDeviceGroupDto> CreateDeviceGroupAsync(string accessToken, string name, string description, CancellationToken cancellationToken = default)
+    {
+        var response = await SendAsync<AgentDeviceGroupSaveResponse>(
+            HttpMethod.Post,
+            "/api/device-groups",
+            new { name, description },
+            accessToken,
+            cancellationToken);
+        return response.Group;
+    }
+
+    /// <summary>
+    /// 更新 Agent 服务端设备分组
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="groupId">服务端分组 ID</param>
+    /// <param name="name">分组名称</param>
+    /// <param name="description">分组描述</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新后的设备分组</returns>
+    public async Task<AgentDeviceGroupDto> UpdateDeviceGroupAsync(string accessToken, int groupId, string name, string description, CancellationToken cancellationToken = default)
+    {
+        var response = await SendAsync<AgentDeviceGroupSaveResponse>(
+            HttpMethod.Put,
+            $"/api/device-groups/{groupId}",
+            new { name, description },
+            accessToken,
+            cancellationToken);
+        return response.Group;
+    }
+
+    /// <summary>
+    /// 删除 Agent 服务端设备分组
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="groupId">服务端分组 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>删除是否成功</returns>
+    public async Task<bool> DeleteDeviceGroupAsync(string accessToken, int groupId, CancellationToken cancellationToken = default)
+    {
+        await SendAsync<object>(HttpMethod.Delete, $"/api/device-groups/{groupId}", null, accessToken, cancellationToken);
+        return true;
+    }
+
+    /// <summary>
+    /// 获取指定远程设备所属的 Agent 设备分组
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>设备所属分组列表</returns>
+    public async Task<IReadOnlyList<AgentDeviceGroupDto>> GetDeviceGroupsForDeviceAsync(string accessToken, int deviceId, CancellationToken cancellationToken = default)
+    {
+        var response = await SendAsync<AgentDeviceGroupsResponse>(HttpMethod.Get, $"/api/devices/{deviceId}/groups", null, accessToken, cancellationToken);
+        return response.Groups;
+    }
+
+    /// <summary>
+    /// 保存指定远程设备所属的 Agent 设备分组
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="groupIds">目标服务端分组 ID 集合</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>保存后的设备所属分组列表</returns>
+    public async Task<IReadOnlyList<AgentDeviceGroupDto>> SaveDeviceGroupsForDeviceAsync(string accessToken, int deviceId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default)
+    {
+        var response = await SendAsync<AgentDeviceGroupsResponse>(
+            HttpMethod.Put,
+            $"/api/devices/{deviceId}/groups",
+            new { groupIds = groupIds.Distinct().ToList() },
+            accessToken,
+            cancellationToken);
+        return response.Groups;
+    }
 
     /// <summary>
     /// 请求 Agent 服务端删除指定远程设备
@@ -262,6 +609,38 @@ public sealed class AgentApiClient
         => SendAsync<AgentBooleanResponse>(HttpMethod.Post, $"/api/devices/{deviceId}/files/delete", new { path }, accessToken, cancellationToken);
 
     /// <summary>
+    /// 读取远程设备剪贴板
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>剪贴板内容响应</returns>
+    public Task<AgentClipboardResponse> GetClipboardAsync(string accessToken, int deviceId, CancellationToken cancellationToken = default)
+        => SendAsync<AgentClipboardResponse>(HttpMethod.Get, $"/api/devices/{deviceId}/clipboard", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 同步写入远程设备剪贴板
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="text">剪贴板文本</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>剪贴板写入响应</returns>
+    public Task<AgentClipboardResponse> SetClipboardAsync(string accessToken, int deviceId, string text, CancellationToken cancellationToken = default)
+        => SendAsync<AgentClipboardResponse>(HttpMethod.Put, $"/api/devices/{deviceId}/clipboard", new { text }, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 请求远程设备粘贴给定文本
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="deviceId">服务端设备 ID</param>
+    /// <param name="text">待粘贴文本</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>剪贴板粘贴响应</returns>
+    public Task<AgentClipboardResponse> PasteClipboardAsync(string accessToken, int deviceId, string text, CancellationToken cancellationToken = default)
+        => SendAsync<AgentClipboardResponse>(HttpMethod.Post, $"/api/devices/{deviceId}/clipboard", new { text }, accessToken, cancellationToken);
+
+    /// <summary>
     /// 获取 Agent 服务端的全局 WebRTC 网络设置
     /// </summary>
     /// <param name="accessToken">访问令牌</param>
@@ -278,6 +657,24 @@ public sealed class AgentApiClient
     /// <returns>服务端当前语言</returns>
     public Task<AgentLanguageSettingResponse> GetServerLanguageAsync(string accessToken, CancellationToken cancellationToken = default)
         => SendAsync<AgentLanguageSettingResponse>(HttpMethod.Get, "/api/settings/language", null, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 保存 Agent 服务端当前语言设置
+    /// </summary>
+    /// <param name="accessToken">访问令牌</param>
+    /// <param name="locale">语言区域代码</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>服务端保存后的语言设置</returns>
+    public Task<AgentLanguageSettingResponse> SaveServerLanguageAsync(string accessToken, string locale, CancellationToken cancellationToken = default)
+        => SendAsync<AgentLanguageSettingResponse>(HttpMethod.Put, "/api/settings/language", new { locale }, accessToken, cancellationToken);
+
+    /// <summary>
+    /// 获取 Agent 服务端可用语言列表
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>可用语言列表</returns>
+    public Task<IReadOnlyList<AgentLanguageOptionDto>> GetLanguagesAsync(CancellationToken cancellationToken = default)
+        => SendAsync<IReadOnlyList<AgentLanguageOptionDto>>(HttpMethod.Get, "/api/i18n/languages", null, null, cancellationToken);
 
     /// <summary>
     /// 获取 Agent 服务端指定语言包
@@ -585,6 +982,198 @@ public sealed class AgentStatusResponse
     /// </summary>
     [JsonProperty("status")]
     public string Status { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 服务端运行模式
+    /// </summary>
+    [JsonProperty("Mode")]
+    public string Mode { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 服务端状态时间戳
+    /// </summary>
+    [JsonProperty("Timestamp")]
+    public DateTimeOffset? Timestamp { get; set; }
+
+    /// <summary>
+    /// Agent 端 ADB 状态摘要
+    /// </summary>
+    [JsonProperty("adb")]
+    public AgentAdbSummaryDto? Adb { get; set; }
+
+    /// <summary>
+    /// Agent 端当前 ADB 设备列表
+    /// </summary>
+    [JsonProperty("devices")]
+    public List<AgentAdbDeviceDto> Devices { get; set; } = [];
+}
+
+/// <summary>
+/// Agent 应用版本响应模型
+/// </summary>
+public sealed class AgentAppVersionResponse
+{
+    /// <summary>
+    /// Agent 后端版本
+    /// </summary>
+    [JsonProperty("agentVersion")]
+    public string AgentVersion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Agent Web 前端版本
+    /// </summary>
+    [JsonProperty("webVersion")]
+    public string WebVersion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 对外展示版本
+    /// </summary>
+    [JsonProperty("version")]
+    public string Version { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 发布标签
+    /// </summary>
+    [JsonProperty("releaseTag")]
+    public string ReleaseTag { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 仓库地址
+    /// </summary>
+    [JsonProperty("repositoryUrl")]
+    public string RepositoryUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 最新版本发布页
+    /// </summary>
+    [JsonProperty("latestReleaseUrl")]
+    public string LatestReleaseUrl { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Agent ADB 状态响应模型
+/// </summary>
+public sealed class AgentAdbStatusResponse
+{
+    /// <summary>
+    /// ADB 服务地址
+    /// </summary>
+    [JsonProperty("serverAddress")]
+    public string ServerAddress { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 已解析的 ADB 可执行文件
+    /// </summary>
+    [JsonProperty("binary")]
+    public AgentAdbBinaryDto? Binary { get; set; }
+
+    /// <summary>
+    /// 当前 ADB 设备列表
+    /// </summary>
+    [JsonProperty("devices")]
+    public List<AgentAdbDeviceDto> Devices { get; set; } = [];
+}
+
+/// <summary>
+/// Agent ADB 摘要模型
+/// </summary>
+public sealed class AgentAdbSummaryDto
+{
+    /// <summary>
+    /// ADB 服务地址
+    /// </summary>
+    [JsonProperty("serverAddress")]
+    public string ServerAddress { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ADB 可执行文件路径
+    /// </summary>
+    [JsonProperty("path")]
+    public string Path { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ADB 可执行文件来源
+    /// </summary>
+    [JsonProperty("source")]
+    public string Source { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Agent ADB 可执行文件模型
+/// </summary>
+public sealed class AgentAdbBinaryDto
+{
+    /// <summary>
+    /// ADB 可执行文件路径
+    /// </summary>
+    [JsonProperty("path")]
+    public string Path { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ADB 可执行文件来源
+    /// </summary>
+    [JsonProperty("source")]
+    public string Source { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Agent ADB 设备摘要模型
+/// </summary>
+public sealed class AgentAdbDeviceDto
+{
+    /// <summary>
+    /// 设备序列号
+    /// </summary>
+    [JsonProperty("serial")]
+    public string Serial { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 设备连接状态
+    /// </summary>
+    [JsonProperty("state")]
+    public string State { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Agent ADB 配对响应模型
+/// </summary>
+public sealed class AgentAdbPairResponse
+{
+    /// <summary>
+    /// 操作是否成功
+    /// </summary>
+    [JsonProperty("success")]
+    public bool Success { get; set; }
+
+    /// <summary>
+    /// 配对主机地址
+    /// </summary>
+    [JsonProperty("host")]
+    public string Host { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 配对端口
+    /// </summary>
+    [JsonProperty("pairingPort")]
+    public int PairingPort { get; set; }
+
+    /// <summary>
+    /// 失败错误信息
+    /// </summary>
+    [JsonProperty("error")]
+    public string Error { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Agent 通用成功响应模型
+/// </summary>
+public sealed class AgentSuccessResponse
+{
+    /// <summary>
+    /// 当前请求是否成功
+    /// </summary>
+    [JsonProperty("success")]
+    public bool Success { get; set; }
 }
 
 /// <summary>
@@ -595,8 +1184,18 @@ public sealed class AgentBooleanResponse
     /// <summary>
     /// 当前请求是否成功
     /// </summary>
-    [JsonProperty("ok")]
+    [JsonProperty("success")]
     public bool Success { get; set; }
+
+    /// <summary>
+    /// 兼容部分设备接口返回的 ok 字段
+    /// </summary>
+    [JsonProperty("ok")]
+    public bool Ok
+    {
+        get => Success;
+        set => Success = value;
+    }
 }
 
 /// <summary>
@@ -684,6 +1283,330 @@ public sealed class AgentUserDto
 }
 
 /// <summary>
+/// Agent 账户管理数据响应模型
+/// </summary>
+public sealed class AgentAccountDataResponse
+{
+    /// <summary>
+    /// 用户列表
+    /// </summary>
+    [JsonProperty("users")]
+    public List<AgentAccountUserDto> Users { get; set; } = [];
+
+    /// <summary>
+    /// 角色列表
+    /// </summary>
+    [JsonProperty("roles")]
+    public List<AgentRoleDto> Roles { get; set; } = [];
+
+    /// <summary>
+    /// 可用权限列表
+    /// </summary>
+    [JsonProperty("availablePermissions")]
+    public List<AgentPermissionDto> AvailablePermissions { get; set; } = [];
+}
+
+/// <summary>
+/// Agent 角色列表响应模型
+/// </summary>
+public sealed class AgentRolesResponse
+{
+    /// <summary>
+    /// 角色列表
+    /// </summary>
+    [JsonProperty("roles")]
+    public List<AgentRoleDto> Roles { get; set; } = [];
+
+    /// <summary>
+    /// 可用权限列表
+    /// </summary>
+    [JsonProperty("availablePermissions")]
+    public List<AgentPermissionDto> AvailablePermissions { get; set; } = [];
+}
+
+/// <summary>
+/// Agent 账户用户模型
+/// </summary>
+public sealed class AgentAccountUserDto
+{
+    /// <summary>
+    /// 用户 ID
+    /// </summary>
+    [JsonProperty(nameof(Id))]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// 用户名
+    /// </summary>
+    [JsonProperty(nameof(Username))]
+    public string Username { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 是否启用
+    /// </summary>
+    [JsonProperty(nameof(IsActive))]
+    public bool IsActive { get; set; }
+
+    /// <summary>
+    /// 创建时间
+    /// </summary>
+    [JsonProperty(nameof(CreatedAt))]
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// 更新时间
+    /// </summary>
+    [JsonProperty(nameof(UpdatedAt))]
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>
+    /// 最近登录时间
+    /// </summary>
+    [JsonProperty(nameof(LastLoginAt))]
+    public DateTimeOffset? LastLoginAt { get; set; }
+
+    /// <summary>
+    /// 直接分配角色
+    /// </summary>
+    [JsonProperty(nameof(Roles))]
+    public List<AgentRoleSummaryDto> Roles { get; set; } = [];
+
+    /// <summary>
+    /// 权限集合
+    /// </summary>
+    [JsonProperty(nameof(Permissions))]
+    public List<string> Permissions { get; set; } = [];
+
+    /// <summary>
+    /// 用户直接绑定的设备分组
+    /// </summary>
+    [JsonProperty(nameof(DirectDeviceGroups))]
+    public List<AgentDeviceGroupDto> DirectDeviceGroups { get; set; } = [];
+
+    /// <summary>
+    /// 用户最终可访问的设备分组
+    /// </summary>
+    [JsonProperty(nameof(EffectiveDeviceGroups))]
+    public List<AgentDeviceGroupDto> EffectiveDeviceGroups { get; set; } = [];
+
+    /// <summary>
+    /// 用户最终可访问设备数量
+    /// </summary>
+    [JsonProperty(nameof(EffectiveDeviceCount))]
+    public int EffectiveDeviceCount { get; set; }
+
+    /// <summary>
+    /// 用户最终可访问设备分组数量
+    /// </summary>
+    [JsonProperty(nameof(EffectiveDeviceGroupCount))]
+    public int EffectiveDeviceGroupCount { get; set; }
+}
+
+/// <summary>
+/// Agent 用户保存请求模型
+/// </summary>
+public sealed class AgentUserSaveRequest
+{
+    /// <summary>
+    /// 用户名
+    /// </summary>
+    [JsonProperty("username")]
+    public string Username { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 新建用户密码；更新用户时通常留空
+    /// </summary>
+    [JsonProperty("password")]
+    public string Password { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 是否启用
+    /// </summary>
+    [JsonProperty("isActive")]
+    public bool? IsActive { get; set; }
+
+    /// <summary>
+    /// 角色 ID 集合
+    /// </summary>
+    [JsonProperty("roleIds")]
+    public List<int> RoleIds { get; set; } = [];
+
+    /// <summary>
+    /// 直接绑定的设备分组 ID 集合
+    /// </summary>
+    [JsonProperty("deviceGroupIds")]
+    public List<int> DeviceGroupIds { get; set; } = [];
+}
+
+/// <summary>
+/// Agent 用户保存响应模型
+/// </summary>
+internal sealed class AgentUserSaveResponse
+{
+    /// <summary>
+    /// 保存是否成功
+    /// </summary>
+    [JsonProperty("success")]
+    public bool Success { get; set; }
+
+    /// <summary>
+    /// 保存后的用户
+    /// </summary>
+    [JsonProperty("user")]
+    public AgentAccountUserDto User { get; set; } = new();
+}
+
+/// <summary>
+/// Agent 重置密码响应模型
+/// </summary>
+public sealed class AgentResetPasswordResponse
+{
+    /// <summary>
+    /// 重置是否成功
+    /// </summary>
+    [JsonProperty("success")]
+    public bool Success { get; set; }
+
+    /// <summary>
+    /// 重置后的密码
+    /// </summary>
+    [JsonProperty("password")]
+    public string Password { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Agent 角色摘要模型
+/// </summary>
+public sealed class AgentRoleSummaryDto
+{
+    /// <summary>
+    /// 角色 ID
+    /// </summary>
+    [JsonProperty(nameof(Id))]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// 角色名称
+    /// </summary>
+    [JsonProperty(nameof(Name))]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 角色描述
+    /// </summary>
+    [JsonProperty(nameof(Description))]
+    public string Description { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Agent 角色模型
+/// </summary>
+public sealed class AgentRoleDto
+{
+    /// <summary>
+    /// 角色 ID
+    /// </summary>
+    [JsonProperty(nameof(Id))]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// 角色名称
+    /// </summary>
+    [JsonProperty(nameof(Name))]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 角色描述
+    /// </summary>
+    [JsonProperty(nameof(Description))]
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 是否为内置角色
+    /// </summary>
+    [JsonProperty(nameof(IsInternal))]
+    public bool IsInternal { get; set; }
+
+    /// <summary>
+    /// 权限集合
+    /// </summary>
+    [JsonProperty(nameof(Permissions))]
+    public List<string> Permissions { get; set; } = [];
+
+    /// <summary>
+    /// 角色绑定的设备分组
+    /// </summary>
+    [JsonProperty(nameof(DeviceGroups))]
+    public List<AgentDeviceGroupDto> DeviceGroups { get; set; } = [];
+}
+
+/// <summary>
+/// Agent 角色保存请求模型
+/// </summary>
+public sealed class AgentRoleSaveRequest
+{
+    /// <summary>
+    /// 角色名称
+    /// </summary>
+    [JsonProperty("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 角色描述
+    /// </summary>
+    [JsonProperty("description")]
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 权限集合
+    /// </summary>
+    [JsonProperty("permissions")]
+    public List<string> Permissions { get; set; } = [];
+
+    /// <summary>
+    /// 角色绑定的设备分组 ID 集合
+    /// </summary>
+    [JsonProperty("deviceGroupIds")]
+    public List<int> DeviceGroupIds { get; set; } = [];
+}
+
+/// <summary>
+/// Agent 角色保存响应模型
+/// </summary>
+internal sealed class AgentRoleSaveResponse
+{
+    /// <summary>
+    /// 保存是否成功
+    /// </summary>
+    [JsonProperty("success")]
+    public bool Success { get; set; }
+
+    /// <summary>
+    /// 保存后的角色
+    /// </summary>
+    [JsonProperty("role")]
+    public AgentRoleDto Role { get; set; } = new();
+}
+
+/// <summary>
+/// Agent 权限描述模型
+/// </summary>
+public sealed class AgentPermissionDto
+{
+    /// <summary>
+    /// 权限代码
+    /// </summary>
+    [JsonProperty(nameof(Code))]
+    public string Code { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 权限描述
+    /// </summary>
+    [JsonProperty(nameof(Description))]
+    public string Description { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// Agent 设备信息模型
 /// </summary>
 public sealed class AgentDeviceDto
@@ -723,6 +1646,108 @@ public sealed class AgentDeviceDto
     /// </summary>
     [JsonProperty(nameof(Status))]
     public string Status { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 当前设备所属的 Agent 设备分组
+    /// </summary>
+    [JsonProperty(nameof(Groups))]
+    public List<AgentDeviceGroupDto> Groups { get; set; } = [];
+}
+
+/// <summary>
+/// Agent 设备分组模型
+/// </summary>
+public sealed class AgentDeviceGroupDto
+{
+    /// <summary>
+    /// 服务端分组 ID
+    /// </summary>
+    [JsonProperty(nameof(Id))]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// 分组名称
+    /// </summary>
+    [JsonProperty(nameof(Name))]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 分组描述
+    /// </summary>
+    [JsonProperty(nameof(Description))]
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 当前分组下的设备数量
+    /// </summary>
+    [JsonProperty(nameof(DeviceCount))]
+    public int DeviceCount { get; set; }
+
+    /// <summary>
+    /// 当前分组关联的角色数量
+    /// </summary>
+    [JsonProperty(nameof(RoleCount))]
+    public int RoleCount { get; set; }
+
+    /// <summary>
+    /// 当前分组关联的用户数量
+    /// </summary>
+    [JsonProperty(nameof(UserCount))]
+    public int UserCount { get; set; }
+
+    /// <summary>
+    /// 是否为 Agent 内置分组
+    /// </summary>
+    [JsonProperty(nameof(IsInternal))]
+    public bool IsInternal { get; set; }
+}
+
+/// <summary>
+/// Agent 设备分组列表响应模型
+/// </summary>
+internal sealed class AgentDeviceGroupListResponse
+{
+    /// <summary>
+    /// 分组列表
+    /// </summary>
+    [JsonProperty("items")]
+    public List<AgentDeviceGroupDto> Items { get; set; } = [];
+}
+
+/// <summary>
+/// Agent 设备分组保存响应模型
+/// </summary>
+internal sealed class AgentDeviceGroupSaveResponse
+{
+    /// <summary>
+    /// 保存是否成功
+    /// </summary>
+    [JsonProperty("success")]
+    public bool Success { get; set; }
+
+    /// <summary>
+    /// 保存后的分组
+    /// </summary>
+    [JsonProperty("group")]
+    public AgentDeviceGroupDto Group { get; set; } = new();
+}
+
+/// <summary>
+/// Agent 设备所属分组响应模型
+/// </summary>
+internal sealed class AgentDeviceGroupsResponse
+{
+    /// <summary>
+    /// 保存是否成功
+    /// </summary>
+    [JsonProperty("success")]
+    public bool Success { get; set; }
+
+    /// <summary>
+    /// 设备所属分组列表
+    /// </summary>
+    [JsonProperty("groups")]
+    public List<AgentDeviceGroupDto> Groups { get; set; } = [];
 }
 
 /// <summary>
@@ -1020,6 +2045,54 @@ public sealed class AgentLanguageSettingResponse
     /// </summary>
     [JsonProperty("locale")]
     public string Locale { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Agent 可用语言选项模型
+/// </summary>
+public sealed class AgentLanguageOptionDto
+{
+    /// <summary>
+    /// 语言区域代码
+    /// </summary>
+    [JsonProperty("locale")]
+    public string Locale { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 语言显示名称
+    /// </summary>
+    [JsonProperty("name")]
+    public string Name { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Agent 设备剪贴板响应模型
+/// </summary>
+public sealed class AgentClipboardResponse
+{
+    /// <summary>
+    /// 操作是否成功
+    /// </summary>
+    [JsonProperty("success")]
+    public bool Success { get; set; }
+
+    /// <summary>
+    /// 剪贴板文本
+    /// </summary>
+    [JsonProperty("text")]
+    public string Text { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 当前文本是否来自服务端缓存
+    /// </summary>
+    [JsonProperty("cached")]
+    public bool Cached { get; set; }
+
+    /// <summary>
+    /// 是否执行了粘贴动作
+    /// </summary>
+    [JsonProperty("paste")]
+    public bool Paste { get; set; }
 }
 
 /// <summary>

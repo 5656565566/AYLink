@@ -19,7 +19,6 @@
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">
-        <!-- 固定顶部区域：返回按钮 + 服务器名称 -->
         <Border Grid.Row="0"
                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
@@ -40,11 +39,9 @@
                            FontSize="18"
                            FontWeight="SemiBold"
                            VerticalAlignment="Center"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,0"/>
-                
-                <Button Grid.Column="2" 
-                        Command="{Binding DeleteServerCommand}" 
+                           HorizontalAlignment="Center"/>
+                <Button Grid.Column="2"
+                        Command="{Binding DeleteServerCommand}"
                         IsVisible="{Binding HasMultipleServers}"
                         Theme="{StaticResource TransparentButton}"
                         ToolTip.Tip="{i18n:Tr ServersPage.DeleteServer, DefaultText='删除服务器'}"
@@ -57,17 +54,16 @@
         <ScrollViewer Grid.Row="1">
             <StackPanel Margin="20,20,20,40" Spacing="4">
 
-                <!-- 本地 WebRTC 网络偏好 -->
                 <TextBlock Text="{i18n:Tr ServerSettings.LocalWebRtcPref, DefaultText='本地 WebRTC 网络偏好'}" Classes="h2" Margin="0,0,0,10"/>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.EnableWebRtcOverride, DefaultText='使用本地 WebRTC 覆盖'}" 
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.EnableWebRtcOverride, DefaultText='使用本地 WebRTC 覆盖'}"
                                      Description="{i18n:Tr ServerSettings.EnableWebRtcOverride_Desc, DefaultText='仅对当前服务器和当前账号生效，投屏时优先于全局默认配置'}">
                     <ui:SettingsExpander.Footer>
                         <ToggleSwitch IsChecked="{Binding ServerConfig.EnableWebRtcOverride}" />
                     </ui:SettingsExpander.Footer>
                 </ui:SettingsExpander>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.IceTransportPolicy, DefaultText='ICE 传输策略'}" 
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.IceTransportPolicy, DefaultText='ICE 传输策略'}"
                                      Description="{i18n:Tr ServerSettings.IceTransportPolicy_Desc, DefaultText='当前服务器投屏时使用的本地优先策略'}">
                     <ui:SettingsExpander.Footer>
                         <ComboBox MinWidth="150" SelectedItem="{Binding ServerConfig.LocalIceTransportPolicy}">
@@ -91,12 +87,10 @@
                                         <Grid RowDefinitions="Auto, Auto">
                                             <Grid ColumnDefinitions="*, Auto" Margin="0,0,0,12">
                                                 <TextBlock Grid.Column="0" Text="{Binding DisplayTitle}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                <!-- 删除按钮 -->
                                                 <Button Grid.Column="1" Command="{Binding RemoveCommand}" IsVisible="{Binding CanRemove}" Theme="{StaticResource TransparentButton}" Foreground="{DynamicResource SystemFillColorCriticalBrush}">
                                                     <TextBlock Text="删除" />
                                                 </Button>
                                             </Grid>
-                                            
                                             <StackPanel Grid.Row="1" Spacing="8">
                                                 <TextBlock Text="服务器地址" Opacity="0.8"/>
                                                 <TextBox Text="{Binding Address}" />
@@ -108,10 +102,9 @@
                         </ItemsControl>
 
                         <Grid ColumnDefinitions="*,10,*" Margin="16,8,16,16">
-                            <!-- 替换为普通按钮 -->
-                            <Button Grid.Column="0" 
-                                    Command="{Binding AddLocalStunCommand}" 
-                                    HorizontalAlignment="Stretch" 
+                            <Button Grid.Column="0"
+                                    Command="{Binding AddLocalStunCommand}"
+                                    HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Center"
                                     Foreground="{DynamicResource SystemAccentColor}"
                                     Padding="0,8">
@@ -120,9 +113,9 @@
                                     <TextBlock Text="添加 STUN" />
                                 </StackPanel>
                             </Button>
-                            <Button Grid.Column="2" 
-                                    Command="{Binding AddLocalTurnCommand}" 
-                                    HorizontalAlignment="Stretch" 
+                            <Button Grid.Column="2"
+                                    Command="{Binding AddLocalTurnCommand}"
+                                    HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Center"
                                     Foreground="{DynamicResource SystemAccentColor}"
                                     Padding="0,8">
@@ -135,18 +128,16 @@
                     </ui:SettingsExpander.Items>
                 </ui:SettingsExpander>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.ResetDefault, DefaultText='恢复默认设置'}" 
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.ResetDefault, DefaultText='恢复默认设置'}"
                                      Description="{i18n:Tr ServerSettings.ResetDefault_Desc, DefaultText='将当前服务器的本地 WebRTC 偏好恢复为默认值'}">
                     <ui:SettingsExpander.Footer>
                         <Button Content="{i18n:Tr ServerSettings.ResetDefaultButton, DefaultText='恢复默认设置'}" Command="{Binding ResetToDefaultsCommand}"/>
                     </ui:SettingsExpander.Footer>
                 </ui:SettingsExpander>
 
-
-                <!-- WebRTC 网络 -->
                 <TextBlock Text="{i18n:Tr ServerSettings.WebRtcNetwork, DefaultText='WebRTC 网络'}" Classes="h2" Margin="0,30,0,10"/>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.GlobalIceTransportPolicy, DefaultText='ICE 传输策略'}" 
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.GlobalIceTransportPolicy, DefaultText='ICE 传输策略'}"
                                      Description="{i18n:Tr ServerSettings.GlobalIceTransportPolicy_Desc, DefaultText='all 为直连优先，relay 为强制通过 TURN 中继'}">
                     <ui:SettingsExpander.Footer>
                         <ComboBox MinWidth="150" SelectedItem="{Binding ServerConfig.IceTransportPolicy}">
@@ -156,35 +147,35 @@
                     </ui:SettingsExpander.Footer>
                 </ui:SettingsExpander>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.EnableHostCandidateOverride, DefaultText='启用直连 Host Candidate 覆写'}" 
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.EnableHostCandidateOverride, DefaultText='启用直连 Host Candidate 覆写'}"
                                      Description="{i18n:Tr ServerSettings.EnableHostCandidateOverride_Desc, DefaultText='为所有客户端发布指定的对外直连地址，适用于无 STUN/TURN 的传统部署'}">
                     <ui:SettingsExpander.Footer>
                         <ToggleSwitch IsChecked="{Binding ServerConfig.EnableHostCandidateOverride}" />
                     </ui:SettingsExpander.Footer>
                 </ui:SettingsExpander>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.DirectHostList, DefaultText='直连地址列表'}" 
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.DirectHostList, DefaultText='直连地址列表'}"
                                      Description="{i18n:Tr ServerSettings.DirectHostList_Desc, DefaultText='一行一个 IP 地址，投屏时将作为 host candidate 发布给对端'}">
                     <ui:SettingsExpander.Footer>
                         <TextBox MinWidth="200" MinHeight="60" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding ServerConfig.DirectHostList}" Watermark="vps.home56.top"/>
                     </ui:SettingsExpander.Footer>
                 </ui:SettingsExpander>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.EnablePortMapping, DefaultText='启用单端口映射模式'}" 
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.EnablePortMapping, DefaultText='启用单端口映射模式'}"
                                      Description="{i18n:Tr ServerSettings.EnablePortMapping_Desc, DefaultText='适用于 FRP 或端口映射场景，使用固定本地 UDP 端口并允许单独指定发布给 ICE 的端口'}">
                     <ui:SettingsExpander.Footer>
                         <ToggleSwitch IsChecked="{Binding ServerConfig.EnablePortMapping}" />
                     </ui:SettingsExpander.Footer>
                 </ui:SettingsExpander>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.LocalBindPort, DefaultText='本地绑定端口'}" 
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.LocalBindPort, DefaultText='本地绑定端口'}"
                                      Description="{i18n:Tr ServerSettings.LocalBindPort_Desc, DefaultText='服务端实际监听的固定 UDP 端口，FRP 内网侧应转发到这个端口'}">
                     <ui:SettingsExpander.Footer>
                         <TextBox MinWidth="100" Text="{Binding ServerConfig.LocalBindPort}" />
                     </ui:SettingsExpander.Footer>
                 </ui:SettingsExpander>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.ExternalPublishPort, DefaultText='对外发布端口'}" 
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.ExternalPublishPort, DefaultText='对外发布端口'}"
                                      Description="{i18n:Tr ServerSettings.ExternalPublishPort_Desc, DefaultText='留空则等于本地绑定端口；如经 FRP 映射，可填写外部访问端口'}">
                     <ui:SettingsExpander.Footer>
                         <TextBox MinWidth="100" Text="{Binding ServerConfig.ExternalPublishPort}" />
@@ -205,12 +196,10 @@
                                         <Grid RowDefinitions="Auto, Auto">
                                             <Grid ColumnDefinitions="*, Auto" Margin="0,0,0,12">
                                                 <TextBlock Grid.Column="0" Text="{Binding DisplayTitle}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                <!-- 删除按钮 -->
                                                 <Button Grid.Column="1" Command="{Binding RemoveCommand}" IsVisible="{Binding CanRemove}" Theme="{StaticResource TransparentButton}" Foreground="{DynamicResource SystemFillColorCriticalBrush}">
                                                     <TextBlock Text="删除" />
                                                 </Button>
                                             </Grid>
-                                            
                                             <StackPanel Grid.Row="1" Spacing="8">
                                                 <TextBlock Text="服务器地址" Opacity="0.8"/>
                                                 <TextBox Text="{Binding Address}" />
@@ -220,11 +209,11 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        
+
                         <Grid ColumnDefinitions="*,10,*" Margin="16,8,16,16">
-                            <Button Grid.Column="0" 
-                                    Command="{Binding AddGlobalStunCommand}" 
-                                    HorizontalAlignment="Stretch" 
+                            <Button Grid.Column="0"
+                                    Command="{Binding AddGlobalStunCommand}"
+                                    HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Center"
                                     Foreground="{DynamicResource SystemAccentColor}"
                                     Padding="0,8">
@@ -233,9 +222,9 @@
                                     <TextBlock Text="添加 STUN" />
                                 </StackPanel>
                             </Button>
-                            <Button Grid.Column="2" 
-                                    Command="{Binding AddGlobalTurnCommand}" 
-                                    HorizontalAlignment="Stretch" 
+                            <Button Grid.Column="2"
+                                    Command="{Binding AddGlobalTurnCommand}"
+                                    HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Center"
                                     Foreground="{DynamicResource SystemAccentColor}"
                                     Padding="0,8">
@@ -248,15 +237,65 @@
                     </ui:SettingsExpander.Items>
                 </ui:SettingsExpander>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.GlobalResetDefault, DefaultText='恢复默认设置'}" 
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.GlobalResetDefault, DefaultText='恢复默认设置'}"
                                      Description="{i18n:Tr ServerSettings.GlobalResetDefault_Desc, DefaultText='将全局 WebRTC 默认配置恢复为系统默认值'}">
                     <ui:SettingsExpander.Footer>
                         <Button Content="{i18n:Tr ServerSettings.ResetDefaultButton, DefaultText='恢复默认设置'}" Command="{Binding ResetToDefaultsCommand}"/>
                     </ui:SettingsExpander.Footer>
                 </ui:SettingsExpander>
 
+                <TextBlock Text="{i18n:Tr ServerSettings.AccountSection, DefaultText='账户'}" Classes="h2" Margin="0,30,0,10"/>
+
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.CurrentLoginTitle, DefaultText='当前登录'}">
+                    <ui:SettingsExpander.Footer>
+                        <TextBlock Text="{Binding CurrentLoginUserName}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </ui:SettingsExpander.Footer>
+                </ui:SettingsExpander>
+
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.ChangePasswordTitle, DefaultText='修改密码'}"
+                                     Description="{i18n:Tr ServerSettings.ChangePasswordDescription, DefaultText='修改当前登录账号的密码，修改后需要重新登录'}">
+                    <ui:SettingsExpander.Footer>
+                        <Button Command="{Binding ChangePasswordCommand}"
+                                IsEnabled="{Binding CanChangePassword}"
+                                Content="{i18n:Tr ServerSettings.ChangePasswordTitle, DefaultText='修改密码'}"/>
+                    </ui:SettingsExpander.Footer>
+                </ui:SettingsExpander>
+
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.AccountManagementTitle, DefaultText='账户管理'}"
+                                     Description="{i18n:Tr ServerSettings.AccountManagementDescription, DefaultText='管理本地用户、角色和权限'}">
+                    <ui:SettingsExpander.Footer>
+                        <Button Command="{Binding OpenAccountManagementCommand}"
+                                IsEnabled="{Binding CanManageAccounts}"
+                                Content="{i18n:Tr ServerSettings.OpenButton, DefaultText='打开'}"/>
+                    </ui:SettingsExpander.Footer>
+                </ui:SettingsExpander>
+
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.RemoteDeviceGroupsTitle, DefaultText='远程设备分组'}"
+                                     Description="{i18n:Tr ServerSettings.RemoteDeviceGroupsDescription, DefaultText='管理当前服务器下的远程设备分组和设备归属'}">
+                    <ui:SettingsExpander.Footer>
+                        <Button Command="{Binding OpenRemoteDeviceGroupsCommand}"
+                                IsEnabled="{Binding CanManageRemoteDeviceGroups}"
+                                Content="{i18n:Tr ServerSettings.OpenButton, DefaultText='打开'}"/>
+                    </ui:SettingsExpander.Footer>
+                </ui:SettingsExpander>
+
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.LogoutAllTitle, DefaultText='退出全部会话'}"
+                                     Description="{i18n:Tr ServerSettings.LogoutAllDescription, DefaultText='结束当前账号在该服务器上的全部登录会话'}">
+                    <ui:SettingsExpander.Footer>
+                        <Button Command="{Binding LogoutAllCommand}"
+                                Content="{i18n:Tr ServerSettings.LogoutAllTitle, DefaultText='退出全部会话'}"/>
+                    </ui:SettingsExpander.Footer>
+                </ui:SettingsExpander>
+
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.LogoutTitle, DefaultText='退出登录'}"
+                                     Description="{i18n:Tr ServerSettings.LogoutDescription, DefaultText='结束当前浏览器会话并返回登录页'}">
+                    <ui:SettingsExpander.Footer>
+                        <Button Command="{Binding LogoutCommand}"
+                                Content="{i18n:Tr ServerSettings.LogoutTitle, DefaultText='退出登录'}"/>
+                    </ui:SettingsExpander.Footer>
+                </ui:SettingsExpander>
+
             </StackPanel>
         </ScrollViewer>
-
     </Grid>
 </UserControl>

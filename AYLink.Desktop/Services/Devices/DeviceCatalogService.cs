@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AYLink.Core.Agent;
 using AYLink.Core.Devices;
 
 namespace AYLink.Desktop.Services.Devices;
@@ -92,6 +93,61 @@ public sealed class DeviceCatalogService
         => _localGroups.GetGroups();
 
     /// <summary>
+    /// 获取指定远程 Agent 服务器的设备分组列表
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="keyword">可选的筛选关键字</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>远程设备分组列表</returns>
+    public async Task<IReadOnlyList<DeviceGroupDescriptor>> GetRemoteDeviceGroupsAsync(string serverId, string? keyword = null, CancellationToken cancellationToken = default)
+    {
+        var provider = CreateRemoteProvider(serverId);
+        return provider == null ? [] : await provider.GetGroupsAsync(keyword, cancellationToken);
+    }
+
+    /// <summary>
+    /// 获取指定远程 Agent 服务器当前用户可选择的设备分组选项
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="keyword">可选的筛选关键字</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>远程设备分组选项列表</returns>
+    public async Task<IReadOnlyList<DeviceGroupDescriptor>> GetRemoteDeviceGroupOptionsAsync(string serverId, string? keyword = null, CancellationToken cancellationToken = default)
+    {
+        var runtime = _agentSessions.FindServer(serverId);
+        if (runtime == null)
+        {
+            return [];
+        }
+
+        var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+        var groups = await runtime.Client.GetDeviceGroupOptionsAsync(accessToken, keyword, cancellationToken);
+        runtime.TouchSuccess();
+        return MapRemoteGroups(groups);
+    }
+
+    /// <summary>
+    /// 获取指定远程设备当前所属的 Agent 设备分组
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="remoteDeviceId">服务端设备 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>远程设备当前分组列表</returns>
+    public async Task<IReadOnlyList<DeviceGroupDescriptor>> GetRemoteDeviceGroupsForDeviceAsync(string serverId, int remoteDeviceId, CancellationToken cancellationToken = default)
+    {
+        var runtime = _agentSessions.FindServer(serverId);
+        if (runtime == null || remoteDeviceId <= 0)
+        {
+            return [];
+        }
+
+        var accessToken = await runtime.EnsureAccessTokenAsync(cancellationToken);
+        var groups = await runtime.Client.GetDeviceGroupsForDeviceAsync(accessToken, remoteDeviceId, cancellationToken);
+        runtime.TouchSuccess();
+        return MapRemoteGroups(groups);
+    }
+
+    /// <summary>
     /// 创建本地设备分组
     /// </summary>
     /// <param name="name">分组名称</param>
@@ -176,6 +232,66 @@ public sealed class DeviceCatalogService
     }
 
     /// <summary>
+    /// 创建指定远程 Agent 服务器的设备分组
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="name">分组名称</param>
+    /// <param name="description">分组描述</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>创建后的分组描述；失败时返回 null</returns>
+    public async Task<DeviceGroupDescriptor?> CreateRemoteDeviceGroupAsync(string serverId, string name, string description, CancellationToken cancellationToken = default)
+    {
+        var provider = CreateRemoteProvider(serverId);
+        var group = provider == null ? null : await provider.CreateGroupAsync(name, description, cancellationToken);
+        if (group != null)
+        {
+            DevicesChanged?.Invoke();
+        }
+
+        return group;
+    }
+
+    /// <summary>
+    /// 更新指定远程 Agent 服务器的设备分组
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="groupId">远程分组 ID</param>
+    /// <param name="name">新的分组名称</param>
+    /// <param name="description">新的分组描述</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新后的分组描述；失败时返回 null</returns>
+    public async Task<DeviceGroupDescriptor?> UpdateRemoteDeviceGroupAsync(string serverId, string groupId, string name, string description, CancellationToken cancellationToken = default)
+    {
+        var provider = CreateRemoteProvider(serverId);
+        var group = provider == null ? null : await provider.UpdateGroupAsync(groupId, name, description, cancellationToken);
+        if (group != null)
+        {
+            DevicesChanged?.Invoke();
+        }
+
+        return group;
+    }
+
+    /// <summary>
+    /// 删除指定远程 Agent 服务器的设备分组
+    /// </summary>
+    /// <param name="serverId">服务器唯一标识</param>
+    /// <param name="groupId">远程分组 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>删除是否成功</returns>
+    public async Task<bool> DeleteRemoteDeviceGroupAsync(string serverId, string groupId, CancellationToken cancellationToken = default)
+    {
+        var provider = CreateRemoteProvider(serverId);
+        var deleted = provider != null && await provider.DeleteGroupAsync(groupId, cancellationToken);
+        if (deleted)
+        {
+            DevicesChanged?.Invoke();
+        }
+
+        return deleted;
+    }
+
+    /// <summary>
     /// 设置本地设备所属的分组集合
     /// </summary>
     /// <param name="serial">本地设备序列号</param>
@@ -184,6 +300,31 @@ public sealed class DeviceCatalogService
     {
         _localGroups.SetGroupsForDevice(serial, groupIds);
         DevicesChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// 保存远程设备所属的 Agent 设备分组
+    /// </summary>
+    /// <param name="descriptor">远程设备描述</param>
+    /// <param name="groupIds">目标远程分组 ID 集合</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>保存后的设备分组列表；失败时返回空列表</returns>
+    public async Task<IReadOnlyList<DeviceGroupDescriptor>> SetRemoteDeviceGroupsAsync(DeviceDescriptor descriptor, IEnumerable<string> groupIds, CancellationToken cancellationToken = default)
+    {
+        if (descriptor.SourceKind == DeviceSourceKind.Local)
+        {
+            return [];
+        }
+
+        var provider = CreateRemoteProvider(descriptor.ProviderId);
+        if (provider == null)
+        {
+            return [];
+        }
+
+        var groups = await provider.SaveDeviceGroupsAsync(descriptor.Id, groupIds, cancellationToken);
+        DevicesChanged?.Invoke();
+        return groups;
     }
 
     /// <summary>
@@ -298,6 +439,25 @@ public sealed class DeviceCatalogService
     {
         var server = _agentSessions.FindServer(providerId);
         return server == null ? null : new AgentDeviceProvider(server);
+    }
+
+    private static IReadOnlyList<DeviceGroupDescriptor> MapRemoteGroups(IEnumerable<AgentDeviceGroupDto> groups)
+    {
+        return groups
+            .Where(item => item.Id > 0 && !string.IsNullOrWhiteSpace(item.Name))
+            .OrderBy(item => item.Id)
+            .Select(item => new DeviceGroupDescriptor
+            {
+                Id = item.Id.ToString(),
+                Name = item.Name,
+                Description = item.Description,
+                SortOrder = item.Id,
+                DeviceCount = item.DeviceCount,
+                RoleCount = item.RoleCount,
+                UserCount = item.UserCount,
+                IsSystem = item.IsInternal
+            })
+            .ToList();
     }
 
     private async Task<DeviceDescriptor?> AddLocalDeviceCoreAsync(DeviceCreationRequest request, CancellationToken cancellationToken)

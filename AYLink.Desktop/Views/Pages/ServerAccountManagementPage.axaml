@@ -1,0 +1,228 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="800"
+             x:Class="AYLink.Desktop.Views.Pages.ServerAccountManagementPage"
+             x:DataType="vm:ServerAccountManagementPageViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.h2">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,20,0,10"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*">
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="16,6">
+            <Grid ColumnDefinitions="Auto,*">
+                <Button Grid.Column="0"
+                        Command="{Binding BackToServerSettingsCommand}"
+                        Padding="8,6"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Back" FontSize="16"/>
+                        <TextBlock Text="{i18n:Tr ServerSettings.BackToServerSettings, DefaultText='返回'}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Title}"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Margin="20,20,20,40" Spacing="4">
+                <TextBlock Text="{Binding AccountStatusMessage}"
+                           Opacity="0.85"
+                           TextWrapping="Wrap"/>
+
+                <TextBlock Text="{i18n:Tr ServerSettings.CreateUserTitle, DefaultText='创建账号'}" Classes="h2"/>
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.CreateUserTitle, DefaultText='创建账号'}"
+                                     Description="{i18n:Tr ServerSettings.CreateUserDescription, DefaultText='管理员创建本地登录账号，并绑定已有角色。'}"
+                                     IsExpanded="True">
+                    <ui:SettingsExpander.Items>
+                        <StackPanel Margin="16,8,16,16" Spacing="12">
+                            <TextBox Text="{Binding NewUserName}" Watermark="{i18n:Tr ServerSettings.Username, DefaultText='用户名'}"/>
+                            <TextBox Text="{Binding NewUserPassword}" PasswordChar="•" Watermark="{i18n:Tr ServerSettings.Password, DefaultText='初始密码'}"/>
+                            <TextBlock Text="{i18n:Tr ServerSettings.RoleSelection, DefaultText='选择角色'}" FontWeight="SemiBold"/>
+                            <ItemsControl ItemsSource="{Binding NewUserRoleOptions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:SelectableRoleOptionViewModel">
+                                        <Border Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                                CornerRadius="4"
+                                                Margin="0,0,0,8"
+                                                Padding="10">
+                                            <StackPanel Spacing="4">
+                                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"/>
+                                                <TextBlock Text="{Binding Description}" Opacity="0.75" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Button Command="{Binding CreateUserCommand}"
+                                    HorizontalAlignment="Left"
+                                    Content="{i18n:Tr ServerSettings.CreateUserTitle, DefaultText='创建账号'}"/>
+                        </StackPanel>
+                    </ui:SettingsExpander.Items>
+                </ui:SettingsExpander>
+
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.UserListTitle, DefaultText='账号列表'}"
+                                     Description="{i18n:Tr ServerSettings.UserListDescription, DefaultText='启用、禁用、重置密码并调整角色归属。'}"
+                                     IsExpanded="True"
+                                     IsVisible="{Binding HasManagedUsers}">
+                    <ui:SettingsExpander.Footer>
+                        <Button Command="{Binding RefreshAccountManagementCommand}"
+                                Content="{i18n:Tr Common.Refresh, DefaultText='刷新'}"/>
+                    </ui:SettingsExpander.Footer>
+                    <ui:SettingsExpander.Items>
+                        <TextBlock Text="{i18n:Tr ServerSettings.Loading, DefaultText='正在加载账户数据...'}"
+                                   Margin="16,8,16,8"
+                                   IsVisible="{Binding IsAccountDataLoading}"/>
+                        <ItemsControl ItemsSource="{Binding ManagedUsers}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:AgentAccountUserItemViewModel">
+                                    <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Margin="16,8,16,8"
+                                            Padding="16">
+                                        <StackPanel Spacing="12">
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                <StackPanel Spacing="4">
+                                                    <TextBox Text="{Binding Username}"/>
+                                                    <TextBlock Text="{Binding EffectiveScopeSummary}" Opacity="0.75"/>
+                                                </StackPanel>
+                                                <CheckBox Grid.Column="1"
+                                                          IsChecked="{Binding IsActive}"
+                                                          Content="{i18n:Tr ServerSettings.IsActive, DefaultText='已启用'}"
+                                                          VerticalAlignment="Top"/>
+                                            </Grid>
+
+                                            <TextBlock Text="{i18n:Tr ServerSettings.RoleSelection, DefaultText='角色归属'}" FontWeight="SemiBold"/>
+                                            <ItemsControl ItemsSource="{Binding RoleOptions}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:SelectableRoleOptionViewModel">
+                                                        <Border Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                                                CornerRadius="4"
+                                                                Margin="0,0,0,8"
+                                                                Padding="10">
+                                                            <StackPanel Spacing="4">
+                                                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"/>
+                                                                <TextBlock Text="{Binding Description}" Opacity="0.75" TextWrapping="Wrap"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <WrapPanel Orientation="Horizontal" ItemWidth="110">
+                                                <Button Command="{Binding SaveCommand}" Content="{i18n:Tr Common.Save, DefaultText='保存'}" Margin="0,0,8,8"/>
+                                                <Button Command="{Binding ToggleActiveCommand}" Content="{i18n:Tr ServerSettings.ApplyActiveState, DefaultText='应用启用状态'}" Margin="0,0,8,8"/>
+                                                <Button Command="{Binding ResetPasswordCommand}" Content="{i18n:Tr ServerSettings.ResetPasswordTitle, DefaultText='重置密码'}" Margin="0,0,8,8"/>
+                                                <Button Command="{Binding DeleteCommand}" Content="{i18n:Tr Common.Delete, DefaultText='删除'}" Margin="0,0,8,8"/>
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ui:SettingsExpander.Items>
+                </ui:SettingsExpander>
+
+                <TextBlock Text="{i18n:Tr ServerSettings.CreateRoleTitle, DefaultText='创建角色'}" Classes="h2"/>
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.CreateRoleTitle, DefaultText='创建角色'}"
+                                     Description="{i18n:Tr ServerSettings.CreateRoleDescription, DefaultText='角色负责组合一组权限，用户再绑定角色。'}">
+                    <ui:SettingsExpander.Items>
+                        <StackPanel Margin="16,8,16,16" Spacing="12">
+                            <TextBox Text="{Binding NewRoleName}" Watermark="{i18n:Tr ServerSettings.RoleName, DefaultText='角色名'}"/>
+                            <TextBox Text="{Binding NewRoleDescription}" Watermark="{i18n:Tr ServerSettings.RoleDescription, DefaultText='角色说明'}"/>
+                            <TextBlock Text="{i18n:Tr ServerSettings.PermissionSelection, DefaultText='权限选择'}" FontWeight="SemiBold"/>
+                            <ItemsControl ItemsSource="{Binding NewRolePermissionOptions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:SelectablePermissionOptionViewModel">
+                                        <Border Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                                CornerRadius="4"
+                                                Margin="0,0,0,8"
+                                                Padding="10">
+                                            <StackPanel Spacing="4">
+                                                <CheckBox Content="{Binding Code}" IsChecked="{Binding IsSelected}"/>
+                                                <TextBlock Text="{Binding Description}" Opacity="0.75" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Button Command="{Binding CreateRoleCommand}"
+                                    HorizontalAlignment="Left"
+                                    Content="{i18n:Tr ServerSettings.CreateRoleTitle, DefaultText='创建角色'}"/>
+                        </StackPanel>
+                    </ui:SettingsExpander.Items>
+                </ui:SettingsExpander>
+
+                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.RoleListTitle, DefaultText='角色列表'}"
+                                     Description="{i18n:Tr ServerSettings.RoleListDescription, DefaultText='编辑角色名称、说明和权限。保存后相关用户会被要求重新登录。'}"
+                                     IsExpanded="True"
+                                     IsVisible="{Binding HasManagedRoles}">
+                    <ui:SettingsExpander.Items>
+                        <ItemsControl ItemsSource="{Binding ManagedRoles}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:AgentRoleItemViewModel">
+                                    <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Margin="16,8,16,8"
+                                            Padding="16">
+                                        <StackPanel Spacing="12">
+                                            <TextBox Text="{Binding Name}"/>
+                                            <TextBox Text="{Binding Description}" Watermark="{i18n:Tr ServerSettings.RoleDescription, DefaultText='角色说明'}"/>
+                                            <TextBlock Text="{i18n:Tr ServerSettings.InternalRolePermissionsLocked, DefaultText='内置角色的权限内容已锁定，只允许修改名称和说明。'}"
+                                                       Opacity="0.75"
+                                                       TextWrapping="Wrap"
+                                                       IsVisible="{Binding IsInternal}"/>
+                                            <TextBlock Text="{i18n:Tr ServerSettings.PermissionSelection, DefaultText='权限选择'}" FontWeight="SemiBold"/>
+                                            <ItemsControl ItemsSource="{Binding PermissionOptions}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:SelectablePermissionOptionViewModel">
+                                                        <Border Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                                                CornerRadius="4"
+                                                                Margin="0,0,0,8"
+                                                                Padding="10">
+                                                            <StackPanel Spacing="4">
+                                                                <CheckBox Content="{Binding Code}"
+                                                                          IsChecked="{Binding IsSelected}"
+                                                                          IsEnabled="{Binding CanEdit}"/>
+                                                                <TextBlock Text="{Binding Description}" Opacity="0.75" TextWrapping="Wrap"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <Button Command="{Binding SaveCommand}"
+                                                    HorizontalAlignment="Left"
+                                                    Content="{i18n:Tr Common.Save, DefaultText='保存'}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ui:SettingsExpander.Items>
+                </ui:SettingsExpander>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

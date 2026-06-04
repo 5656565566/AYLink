@@ -388,6 +388,8 @@ public partial class DeviceGroupItemViewModel(
 /// </summary>
 public partial class DeviceGroupDeviceItemViewModel(DeviceDescriptor device, bool isSelected) : ViewModelBase
 {
+    public DeviceDescriptor Descriptor { get; } = device;
+
     public string Name { get; } = device.Name;
 
     public string Serial { get; } = device.Serial;

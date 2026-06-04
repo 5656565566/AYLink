@@ -108,6 +108,14 @@ public sealed class AgentWebRtcSessionOptions
 public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
 {
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan VideoHealthWatchdogInterval = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan VideoStallThreshold = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan VideoRecoveryObservation = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan VideoRecoveryCooldown = TimeSpan.FromSeconds(10);
+    private const int VideoStallConfirmationCount = 2;
+    private const byte LocalMetaControlPrefix = 0xFF;
+    private const byte LocalMetaMsgVideoRefresh = 0x01;
+    private const byte LocalMetaMsgVideoKeyFrame = 0x02;
 
     /// <summary>
     /// 当前 Agent WebRTC 音频输出采样率
@@ -125,6 +133,8 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
     private readonly AgentEncodedAudioDecoder _audioDecoder = new();
     private readonly SemaphoreSlim _signalWriteLock = new(1, 1);
     private readonly SemaphoreSlim _stopLock = new(1, 1);
+    private readonly SemaphoreSlim _renegotiationLock = new(1, 1);
+    private readonly object _videoHealthLock = new();
 
     private RTCPeerConnection? _peerConnection;
     private ClientWebSocket? _signalSocket;
@@ -134,6 +144,7 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
     private CancellationTokenSource? _sessionCts;
     private Task? _signalLoopTask;
     private Task? _heartbeatTask;
+    private Task? _videoHealthTask;
     private bool _disposed;
     private bool _isStopping;
     private bool _isStopped;
@@ -141,6 +152,12 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
     private int _videoRtpPacketCount;
     private int _videoFrameCount;
     private int _audioRtpPacketCount;
+    private DateTimeOffset? _connectedAt;
+    private DateTimeOffset? _lastVideoRtpPacketAt;
+    private DateTimeOffset? _lastEncodedVideoFrameAt;
+    private DateTimeOffset? _lastDecodedVideoFrameAt;
+    private DateTimeOffset? _lastVideoRecoveryAttemptAt;
+    private int _consecutiveVideoStallDetections;
 
     /// <summary>
     /// 当前会话状态
@@ -192,8 +209,7 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _accessTokenProvider = accessTokenProvider ?? throw new ArgumentNullException(nameof(accessTokenProvider));
 
-        _videoDecoder.FrameDecoded += (width, height, buffer, rowBytes) =>
-            VideoFrameDecoded?.Invoke(width, height, buffer, rowBytes);
+        _videoDecoder.FrameDecoded += HandleDecodedVideoFrame;
         _audioDecoder.PcmFrameDecoded += pcm => AudioFrameDecoded?.Invoke(pcm);
     }
 
@@ -220,6 +236,7 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
         _isStopping = false;
         _isStopped = false;
         _audioFormat = null;
+        ResetVideoHealthState(DateTimeOffset.UtcNow);
         UpdateState(AgentWebRtcSessionState.Connecting);
         Debug.WriteLine($"[AgentWebRTC] connect start: deviceId={DeviceId}, appPackage={options.AppPackage}, newDisplay={options.NewDisplay}");
 
@@ -270,6 +287,7 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
             UpdateState(AgentWebRtcSessionState.Negotiating);
             _signalLoopTask = RunSignalLoopAsync(sessionToken);
             _heartbeatTask = RunHeartbeatLoopAsync(sessionToken);
+            _videoHealthTask = RunVideoHealthLoopAsync(sessionToken);
         }
         catch (Exception ex)
         {
@@ -308,6 +326,20 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
 
         (_pointerMoveChannel ?? _controlChannel)?.send(payload);
     }
+
+    /// <summary>
+    /// 主动请求 Agent 重放最近缓存的视频关键帧
+    /// </summary>
+    /// <returns>请求是否已发送</returns>
+    public bool RequestVideoKeyFrameReplay()
+        => SendMetaControlMessage(LocalMetaMsgVideoKeyFrame, "key_frame_replay");
+
+    /// <summary>
+    /// 主动请求 Agent 刷新 scrcpy 视频源
+    /// </summary>
+    /// <returns>请求是否已发送</returns>
+    public bool RequestVideoRefresh()
+        => SendMetaControlMessage(LocalMetaMsgVideoRefresh, "video_refresh");
 
     /// <summary>
     /// 主动关闭当前会话
@@ -380,6 +412,7 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
         await CloseCoreAsync(false);
         _signalWriteLock.Dispose();
         _stopLock.Dispose();
+        _renegotiationLock.Dispose();
         _videoDecoder.Dispose();
         _audioDecoder.Dispose();
         GC.SuppressFinalize(this);
@@ -448,6 +481,7 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
             try
             {
                 _videoFrameCount++;
+                MarkEncodedVideoFrameReceived();
                 if (_videoFrameCount <= 3 || _videoFrameCount % 120 == 0)
                 {
                     Debug.WriteLine($"[AgentWebRTC] video frame event: count={_videoFrameCount}, codec={format.Codec}, bytes={frame.Length}");
@@ -481,6 +515,7 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
             if (mediaType == SDPMediaTypesEnum.video)
             {
                 _videoRtpPacketCount++;
+                MarkVideoRtpPacketReceived();
                 if (_videoRtpPacketCount <= 5 || _videoRtpPacketCount % 240 == 0)
                 {
                     Debug.WriteLine($"[AgentWebRTC] video rtp packet: count={_videoRtpPacketCount}, payload={packet.Payload.Length}, marker={packet.Header.MarkerBit}, pt={packet.Header.PayloadType}");
@@ -533,6 +568,7 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
 
             if (state == RTCPeerConnectionState.connected)
             {
+                MarkPeerConnected();
                 UpdateState(AgentWebRtcSessionState.Connected);
                 return;
             }
@@ -695,6 +731,317 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// 周期性检查远程视频流是否出现启动无帧或解码停滞
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌</param>
+    private async Task RunVideoHealthLoopAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(VideoHealthWatchdogInterval, cancellationToken);
+                await CheckVideoHealthAsync(cancellationToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            if (!IsStoppingOrStopped)
+            {
+                Debug.WriteLine($"[AgentWebRTC] video health loop failed: {ex}");
+                SessionError?.Invoke(ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 检查视频健康状态，并在连续确认异常后触发保守恢复
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌</param>
+    private async Task CheckVideoHealthAsync(CancellationToken cancellationToken)
+    {
+        if (State != AgentWebRtcSessionState.Connected || _peerConnection == null)
+        {
+            ResetVideoStallDetections();
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var snapshot = GetVideoHealthSnapshot();
+        var connectedAt = snapshot.ConnectedAt ?? now;
+        var hasDecodedFrame = snapshot.LastDecodedVideoFrameAt.HasValue;
+        var hasFreshDecodedFrame = IsFresh(snapshot.LastDecodedVideoFrameAt, now);
+        var hasFreshInboundVideo = IsFresh(snapshot.LastVideoRtpPacketAt, now) || IsFresh(snapshot.LastEncodedVideoFrameAt, now);
+
+        if (hasFreshDecodedFrame)
+        {
+            ResetVideoStallDetections();
+            return;
+        }
+
+        if (hasDecodedFrame && !hasFreshInboundVideo)
+        {
+            ResetVideoStallDetections();
+            return;
+        }
+
+        var reason = string.Empty;
+        if (!hasDecodedFrame && now - connectedAt >= VideoStallThreshold)
+        {
+            reason = "startup_video_missing";
+        }
+        else if (hasDecodedFrame && hasFreshInboundVideo && snapshot.LastDecodedVideoFrameAt.HasValue && now - snapshot.LastDecodedVideoFrameAt.Value >= VideoStallThreshold)
+        {
+            reason = "decoded_video_not_advancing";
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            ResetVideoStallDetections();
+            return;
+        }
+
+        var detections = IncrementVideoStallDetections();
+        if (detections < VideoStallConfirmationCount)
+        {
+            Debug.WriteLine($"[AgentWebRTC] video health suspected: reason={reason}, detections={detections}, threshold={VideoStallConfirmationCount}");
+            return;
+        }
+
+        if (!TryBeginVideoRecovery(now))
+        {
+            return;
+        }
+
+        ResetVideoStallDetections();
+        await RecoverVideoAsync(reason, now, cancellationToken);
+    }
+
+    /// <summary>
+    /// 分级恢复远程视频流，优先使用低破坏性的关键帧重放与源刷新
+    /// </summary>
+    /// <param name="reason">恢复原因</param>
+    /// <param name="startedAt">恢复开始时间</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    private async Task RecoverVideoAsync(string reason, DateTimeOffset startedAt, CancellationToken cancellationToken)
+    {
+        Debug.WriteLine($"[AgentWebRTC] video recovery started: reason={reason}, deviceId={DeviceId}, sessionId={SessionId}");
+
+        if (RequestVideoKeyFrameReplay())
+        {
+            await Task.Delay(VideoRecoveryObservation, cancellationToken);
+            if (HasDecodedVideoFrameAfter(startedAt))
+            {
+                Debug.WriteLine($"[AgentWebRTC] video recovery satisfied by key frame replay: reason={reason}");
+                return;
+            }
+        }
+
+        var refreshStartedAt = DateTimeOffset.UtcNow;
+        if (RequestVideoRefresh())
+        {
+            await Task.Delay(VideoRecoveryObservation, cancellationToken);
+            if (HasDecodedVideoFrameAfter(refreshStartedAt))
+            {
+                Debug.WriteLine($"[AgentWebRTC] video recovery satisfied by source refresh: reason={reason}");
+                return;
+            }
+        }
+
+        if (await TryVideoRenegotiationAsync(reason, cancellationToken))
+        {
+            Debug.WriteLine($"[AgentWebRTC] video recovery requested renegotiation: reason={reason}");
+        }
+    }
+
+    private bool SendMetaControlMessage(byte messageType, string reason)
+    {
+        if (_metaControlChannel?.readyState != RTCDataChannelState.open)
+        {
+            return false;
+        }
+
+        try
+        {
+            _metaControlChannel.send([LocalMetaControlPrefix, messageType]);
+            Debug.WriteLine($"[AgentWebRTC] meta control sent: reason={reason}, type={messageType}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (!IsStoppingOrStopped)
+            {
+                Debug.WriteLine($"[AgentWebRTC] meta control send failed: reason={reason}, err={ex}");
+                SessionError?.Invoke(ex);
+            }
+
+            return false;
+        }
+    }
+
+    private async Task<bool> TryVideoRenegotiationAsync(string reason, CancellationToken cancellationToken)
+    {
+        if (_peerConnection == null || _signalSocket?.State != WebSocketState.Open || State != AgentWebRtcSessionState.Connected)
+        {
+            return false;
+        }
+
+        if (!_renegotiationLock.Wait(0))
+        {
+            return false;
+        }
+
+        try
+        {
+            var peerConnection = _peerConnection;
+            if (peerConnection == null || _signalSocket?.State != WebSocketState.Open)
+            {
+                return false;
+            }
+
+            Debug.WriteLine($"[AgentWebRTC] video renegotiation start: reason={reason}, deviceId={DeviceId}, sessionId={SessionId}");
+            var offer = peerConnection.createOffer(null);
+            await peerConnection.setLocalDescription(offer);
+            var localDescription = peerConnection.localDescription;
+            var localSdp = localDescription?.sdp?.ToString();
+            if (string.IsNullOrWhiteSpace(localSdp) || _signalSocket?.State != WebSocketState.Open)
+            {
+                return false;
+            }
+
+            await SendSignalMessageAsync(new AgentWebRtcSignalEnvelope
+            {
+                Type = localDescription?.type.ToString(),
+                Sdp = localSdp
+            }, cancellationToken);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (!IsStoppingOrStopped)
+            {
+                Debug.WriteLine($"[AgentWebRTC] video renegotiation failed: reason={reason}, err={ex}");
+                SessionError?.Invoke(ex);
+            }
+
+            return false;
+        }
+        finally
+        {
+            _renegotiationLock.Release();
+        }
+    }
+
+    private void HandleDecodedVideoFrame(int width, int height, IntPtr buffer, int rowBytes)
+    {
+        MarkDecodedVideoFrameReceived();
+        VideoFrameDecoded?.Invoke(width, height, buffer, rowBytes);
+    }
+
+    private void MarkPeerConnected()
+    {
+        lock (_videoHealthLock)
+        {
+            _connectedAt = DateTimeOffset.UtcNow;
+            _consecutiveVideoStallDetections = 0;
+        }
+    }
+
+    private void MarkVideoRtpPacketReceived()
+    {
+        lock (_videoHealthLock)
+        {
+            _lastVideoRtpPacketAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    private void MarkEncodedVideoFrameReceived()
+    {
+        lock (_videoHealthLock)
+        {
+            _lastEncodedVideoFrameAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    private void MarkDecodedVideoFrameReceived()
+    {
+        lock (_videoHealthLock)
+        {
+            _lastDecodedVideoFrameAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    private void ResetVideoHealthState(DateTimeOffset now)
+    {
+        lock (_videoHealthLock)
+        {
+            _connectedAt = null;
+            _lastVideoRtpPacketAt = null;
+            _lastEncodedVideoFrameAt = null;
+            _lastDecodedVideoFrameAt = null;
+            _lastVideoRecoveryAttemptAt = now - VideoRecoveryCooldown;
+            _consecutiveVideoStallDetections = 0;
+        }
+    }
+
+    private void ResetVideoStallDetections()
+    {
+        lock (_videoHealthLock)
+        {
+            _consecutiveVideoStallDetections = 0;
+        }
+    }
+
+    private int IncrementVideoStallDetections()
+    {
+        lock (_videoHealthLock)
+        {
+            _consecutiveVideoStallDetections++;
+            return _consecutiveVideoStallDetections;
+        }
+    }
+
+    private bool TryBeginVideoRecovery(DateTimeOffset now)
+    {
+        lock (_videoHealthLock)
+        {
+            if (_lastVideoRecoveryAttemptAt.HasValue && now - _lastVideoRecoveryAttemptAt.Value < VideoRecoveryCooldown)
+            {
+                return false;
+            }
+
+            _lastVideoRecoveryAttemptAt = now;
+            return true;
+        }
+    }
+
+    private bool HasDecodedVideoFrameAfter(DateTimeOffset value)
+    {
+        lock (_videoHealthLock)
+        {
+            return _lastDecodedVideoFrameAt.HasValue && _lastDecodedVideoFrameAt.Value > value;
+        }
+    }
+
+    private VideoHealthSnapshot GetVideoHealthSnapshot()
+    {
+        lock (_videoHealthLock)
+        {
+            return new VideoHealthSnapshot(
+                _connectedAt,
+                _lastVideoRtpPacketAt,
+                _lastEncodedVideoFrameAt,
+                _lastDecodedVideoFrameAt);
+        }
+    }
+
+    private static bool IsFresh(DateTimeOffset? value, DateTimeOffset now)
+        => value.HasValue && now - value.Value <= VideoStallThreshold;
+
+    /// <summary>
     /// 发送一条信令消息
     /// </summary>
     /// <param name="payload">信令负载</param>
@@ -791,9 +1138,12 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
                     throw new InvalidOperationException($"Failed to apply remote answer: {result}.");
                 }
 
-                Debug.WriteLine("[AgentWebRTC] starting peer session");
-                await _peerConnection.Start();
-                Debug.WriteLine("[AgentWebRTC] peer session start completed");
+                if (State != AgentWebRtcSessionState.Connected)
+                {
+                    Debug.WriteLine("[AgentWebRTC] starting peer session");
+                    await _peerConnection.Start();
+                    Debug.WriteLine("[AgentWebRTC] peer session start completed");
+                }
             }
 
             return;
@@ -887,6 +1237,18 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
             _heartbeatTask = null;
         }
 
+        if (_videoHealthTask != null)
+        {
+            try
+            {
+                await _videoHealthTask;
+            }
+            catch
+            {
+            }
+            _videoHealthTask = null;
+        }
+
         _sessionCts?.Dispose();
         _sessionCts = null;
 
@@ -951,6 +1313,12 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
 
         return servers;
     }
+
+    private readonly record struct VideoHealthSnapshot(
+        DateTimeOffset? ConnectedAt,
+        DateTimeOffset? LastVideoRtpPacketAt,
+        DateTimeOffset? LastEncodedVideoFrameAt,
+        DateTimeOffset? LastDecodedVideoFrameAt);
 }
 
 /// <summary>

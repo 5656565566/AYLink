@@ -134,5 +134,11 @@
         <DataTemplate DataType="vm:ServerSettingViewModel">
             <views:ServerSettingView />
         </DataTemplate>
+        <DataTemplate DataType="vm:ServerAccountManagementPageViewModel">
+            <views:ServerAccountManagementPage />
+        </DataTemplate>
+        <DataTemplate DataType="vm:ServerRemoteDeviceGroupsPageViewModel">
+            <views:ServerRemoteDeviceGroupsPage />
+        </DataTemplate>
     </Application.DataTemplates>
 </Application>

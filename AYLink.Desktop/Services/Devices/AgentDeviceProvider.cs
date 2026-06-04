@@ -136,6 +136,105 @@ public sealed class AgentDeviceProvider(AgentServerRuntime runtime) : IDevicePro
     }
 
     /// <summary>
+    /// 获取远程 Agent 的设备分组列表
+    /// </summary>
+    /// <param name="keyword">可选的筛选关键字</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>远程设备分组列表</returns>
+    public async Task<IReadOnlyList<DeviceGroupDescriptor>> GetGroupsAsync(string? keyword = null, CancellationToken cancellationToken = default)
+    {
+        var accessToken = await _runtime.EnsureAccessTokenAsync(cancellationToken);
+        var groups = await _runtime.Client.GetDeviceGroupsAsync(accessToken, keyword, cancellationToken);
+        _runtime.TouchSuccess();
+        return MapGroups(groups);
+    }
+
+    /// <summary>
+    /// 创建远程 Agent 设备分组
+    /// </summary>
+    /// <param name="name">分组名称</param>
+    /// <param name="description">分组描述</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>创建后的分组描述；失败时返回 null</returns>
+    public async Task<DeviceGroupDescriptor?> CreateGroupAsync(string name, string description, CancellationToken cancellationToken = default)
+    {
+        var accessToken = await _runtime.EnsureAccessTokenAsync(cancellationToken);
+        var group = await _runtime.Client.CreateDeviceGroupAsync(accessToken, name.Trim(), description.Trim(), cancellationToken);
+        _runtime.TouchSuccess();
+        return MapGroup(group);
+    }
+
+    /// <summary>
+    /// 更新远程 Agent 设备分组
+    /// </summary>
+    /// <param name="groupId">统一分组 ID</param>
+    /// <param name="name">分组名称</param>
+    /// <param name="description">分组描述</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新后的分组描述；失败时返回 null</returns>
+    public async Task<DeviceGroupDescriptor?> UpdateGroupAsync(string groupId, string name, string description, CancellationToken cancellationToken = default)
+    {
+        if (!TryParseGroupId(groupId, out var remoteGroupId))
+        {
+            return null;
+        }
+
+        var accessToken = await _runtime.EnsureAccessTokenAsync(cancellationToken);
+        var group = await _runtime.Client.UpdateDeviceGroupAsync(accessToken, remoteGroupId, name.Trim(), description.Trim(), cancellationToken);
+        _runtime.TouchSuccess();
+        return MapGroup(group);
+    }
+
+    /// <summary>
+    /// 删除远程 Agent 设备分组
+    /// </summary>
+    /// <param name="groupId">统一分组 ID</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>删除是否成功</returns>
+    public async Task<bool> DeleteGroupAsync(string groupId, CancellationToken cancellationToken = default)
+    {
+        if (!TryParseGroupId(groupId, out var remoteGroupId))
+        {
+            return false;
+        }
+
+        var accessToken = await _runtime.EnsureAccessTokenAsync(cancellationToken);
+        var deleted = await _runtime.Client.DeleteDeviceGroupAsync(accessToken, remoteGroupId, cancellationToken);
+        if (deleted)
+        {
+            _runtime.TouchSuccess();
+        }
+
+        return deleted;
+    }
+
+    /// <summary>
+    /// 保存远程设备所属的 Agent 设备分组
+    /// </summary>
+    /// <param name="deviceId">统一远程设备标识</param>
+    /// <param name="groupIds">统一远程分组 ID 集合</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>保存后的设备分组列表；失败时返回空列表</returns>
+    public async Task<IReadOnlyList<DeviceGroupDescriptor>> SaveDeviceGroupsAsync(string deviceId, IEnumerable<string> groupIds, CancellationToken cancellationToken = default)
+    {
+        if (!TryParseRemoteId(deviceId, out var remoteId))
+        {
+            return [];
+        }
+
+        var remoteGroupIds = groupIds
+            .Select(id => TryParseGroupId(id, out var remoteGroupId) ? remoteGroupId : 0)
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        var accessToken = await _runtime.EnsureAccessTokenAsync(cancellationToken);
+        var groups = await _runtime.Client.SaveDeviceGroupsForDeviceAsync(accessToken, remoteId, remoteGroupIds, cancellationToken);
+        _runtime.TouchSuccess();
+        return MapGroups(groups);
+    }
+
+    /// <summary>
     /// 检查远程设备是否在线
     /// 基于最近一次刷新得到的设备缓存判断
     /// </summary>
@@ -225,7 +324,37 @@ public sealed class AgentDeviceProvider(AgentServerRuntime runtime) : IDevicePro
             Status = dto.Status,
             IsConnected = string.Equals(dto.Status, "online", StringComparison.OrdinalIgnoreCase),
             Capabilities = capabilities,
+            Groups = MapGroups(dto.Groups),
             RemoteDeviceId = dto.Id
+        };
+    }
+
+    /// <summary>
+    /// 将 Agent 设备分组 DTO 转换为统一分组描述
+    /// </summary>
+    /// <param name="groups">Agent 返回的设备分组列表</param>
+    /// <returns>统一分组描述列表</returns>
+    private static IReadOnlyList<DeviceGroupDescriptor> MapGroups(IEnumerable<AgentDeviceGroupDto> groups)
+    {
+        return groups
+            .Where(item => item.Id > 0 && !string.IsNullOrWhiteSpace(item.Name))
+            .OrderBy(item => item.Id)
+            .Select(MapGroup)
+            .ToList();
+    }
+
+    private static DeviceGroupDescriptor MapGroup(AgentDeviceGroupDto group)
+    {
+        return new DeviceGroupDescriptor
+        {
+            Id = group.Id.ToString(),
+            Name = group.Name,
+            Description = group.Description,
+            SortOrder = group.Id,
+            DeviceCount = group.DeviceCount,
+            RoleCount = group.RoleCount,
+            UserCount = group.UserCount,
+            IsSystem = group.IsInternal
         };
     }
 
@@ -272,6 +401,12 @@ public sealed class AgentDeviceProvider(AgentServerRuntime runtime) : IDevicePro
         }
 
         return int.TryParse(deviceId[(index + 1)..], out remoteId);
+    }
+
+    private static bool TryParseGroupId(string groupId, out int remoteGroupId)
+    {
+        remoteGroupId = 0;
+        return !string.IsNullOrWhiteSpace(groupId) && int.TryParse(groupId.Trim(), out remoteGroupId);
     }
 
     /// <summary>

@@ -27,6 +27,21 @@ public sealed class DeviceGroupDescriptor
     public int SortOrder { get; init; }
 
     /// <summary>
+    /// 当前分组下的设备数量
+    /// </summary>
+    public int DeviceCount { get; init; }
+
+    /// <summary>
+    /// 当前分组关联的角色数量
+    /// </summary>
+    public int RoleCount { get; init; }
+
+    /// <summary>
+    /// 当前分组关联的用户数量
+    /// </summary>
+    public int UserCount { get; init; }
+
+    /// <summary>
     /// 是否为系统内置分组
     /// </summary>
     public bool IsSystem { get; init; }
