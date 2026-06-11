@@ -24,7 +24,6 @@ using XT = global::XTerm;
 
 namespace AYLink.Controls.Terminal
 {
-
     public class TerminalView : Control
     {
         private XT.Terminal _terminal;
@@ -353,7 +352,6 @@ namespace AYLink.Controls.Terminal
         /// The handler should set the response properties on the event args.
         /// </summary>
         public event EventHandler<WindowInfoRequestedEventArgs>? WindowInfoRequested;
-
 
         static TerminalView()
         {
@@ -1257,7 +1255,6 @@ namespace AYLink.Controls.Terminal
         {
             Dispatcher.UIThread.Post(() =>
             {
-
                 var args = new TitleChangedEventArgs(e.Title)
                 {
                     RoutedEvent = TitleChangedEvent
@@ -1286,7 +1283,6 @@ namespace AYLink.Controls.Terminal
         {
             Dispatcher.UIThread.Post(() =>
             {
-
                 var args = new WindowResizedEventArgs(e.Width, e.Height)
                 {
                     RoutedEvent = WindowResizedEvent
@@ -1684,7 +1680,6 @@ namespace AYLink.Controls.Terminal
             return finalSize;
         }
 
-
         public override void Render(DrawingContext context)
         {
             var scale = VisualRoot?.RenderScaling ?? 1.0;
@@ -1698,7 +1693,6 @@ namespace AYLink.Controls.Terminal
             int endLine = Math.Min(_terminal.Buffer.Length, startLine + viewportLines);
             try
             {
-
                 for (int y = startLine; y < endLine; y++)
                 {
                     var line = _terminal.Buffer.GetLine(y);
