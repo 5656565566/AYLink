@@ -363,7 +363,7 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
             "重置",
             "取消");
 
-        if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary)
+        if (result != FluentAvalonia.UI.Controls.FAContentDialogResult.Primary)
         {
             return;
         }
@@ -396,7 +396,7 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
             "删除",
             "取消");
 
-        if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary)
+        if (result != FluentAvalonia.UI.Controls.FAContentDialogResult.Primary)
         {
             return;
         }

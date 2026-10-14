@@ -23,6 +23,12 @@ public sealed unsafe class AudioPlayer : IDisposable
     private const SDL_AudioFormat TARGET_AUDIO_FORMAT = SDL_AudioFormat.SDL_AUDIO_S16LE;
     private const int TARGET_CHANNELS = 2;
 
+    // 混音线程节流参数（专用后台线程 与 UI 无关）
+    // SDL3 绑定音频流不提供"数据消耗完"的回调 主流积压时只能用短轮询等待设备消耗
+    private const int MixerLoopIntervalMs = 2;        // 正常出勤: 每轮推送后休眠
+    private const int MixerBackpressureWaitMs = 5;    // 背压: 积压超 3 个缓冲时等待设备消耗
+    private const int MixerIdleWaitMs = 5;            // 无有效音源时休眠节省 CPU
+
     private readonly object _deviceLock = new();
 
     private SDL_AudioDeviceID _audioDevice = 0;
@@ -44,7 +50,7 @@ public sealed unsafe class AudioPlayer : IDisposable
     {
         if (!SDL_Init(SDL_InitFlags.SDL_INIT_AUDIO))
         {
-            throw new Exception($"SDL_Init failed: {SDL_GetError()}");
+            throw new InvalidOperationException($"SDL_Init failed: {SDL_GetError()}");
         }
 
         SDL_SetHint(SDL_HINT_AUDIO_DEVICE_STREAM_ROLE, "game"u8);
@@ -109,7 +115,7 @@ public sealed unsafe class AudioPlayer : IDisposable
                 SDL_CloseAudioDevice(_audioDevice);
                 _audioDevice = oldDevice; // 恢复旧设备ID
                 _masterAudioStream = oldMasterStream; // 恢复旧流
-                throw new Exception($"Failed to create master audio stream: {SDL_GetError()}");
+                throw new InvalidOperationException($"Failed to create master audio stream: {SDL_GetError()}");
             }
 
             if (!SDL_BindAudioStream(_audioDevice, _masterAudioStream))
@@ -118,7 +124,7 @@ public sealed unsafe class AudioPlayer : IDisposable
                 SDL_CloseAudioDevice(_audioDevice);
                 _audioDevice = oldDevice; // 恢复旧设备ID
                 _masterAudioStream = oldMasterStream; // 恢复旧流
-                throw new Exception($"Failed to bind master audio stream: {SDL_GetError()}");
+                throw new InvalidOperationException($"Failed to bind master audio stream: {SDL_GetError()}");
             }
 
             if (oldDevice != 0)
@@ -178,7 +184,7 @@ public sealed unsafe class AudioPlayer : IDisposable
 
             if (shouldWait)
             {
-                Thread.Sleep(5); // 等待一点时间让设备消耗数据
+                Thread.Sleep(MixerBackpressureWaitMs); // 等待设备消耗积压数据
                 continue;
             }
 
@@ -235,9 +241,9 @@ public sealed unsafe class AudioPlayer : IDisposable
             else
             {
                 // 无音频播放直接休眠节省 cpu 按理说驱动应该不会休眠吧 如果休了那就后面加空音频
-                Thread.Sleep(5);
+                Thread.Sleep(MixerIdleWaitMs);
             }
-            Thread.Sleep(2);
+            Thread.Sleep(MixerLoopIntervalMs);
         }
     }
 

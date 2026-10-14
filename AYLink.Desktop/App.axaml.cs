@@ -1,13 +1,11 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using AYLink.Desktop.Models;
 using AYLink.Desktop.Services;
 using AYLink.Desktop.Services.Localization;
 using AYLink.Desktop.ViewModels;
 using AYLink.Desktop.Views;
-using System.Linq;
 
 namespace AYLink.Desktop;
 
@@ -19,7 +17,7 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
 
         // 加载配置项
-        AppConfig appConfig = _configManager.LoadConfig<AppConfig>("appConfig");
+        AppConfig appConfig = _configManager.LoadConfig<AppConfig>(AppConfig.ConfigName);
 
         if (!string.IsNullOrWhiteSpace(appConfig.FFmpegBin))
         {
@@ -49,9 +47,6 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // 避免从 Avalonia 和 CommunityToolkit 同时进行重复验证
-            DisableAvaloniaDataAnnotationValidation();
-
             // 初始化主题
             InitializeTheme();
 
@@ -71,21 +66,10 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private static void DisableAvaloniaDataAnnotationValidation()
-    {
-        var dataValidationPluginsToRemove =
-            BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
-
-        foreach (var plugin in dataValidationPluginsToRemove)
-        {
-            BindingPlugins.DataValidators.Remove(plugin);
-        }
-    }
-
     private static void InitializeTheme()
         {
             var configManager = ConfigManager.Instance;
-            var appConfig = configManager.LoadConfig<AppConfig>("appConfig");
+            var appConfig = configManager.LoadConfig<AppConfig>(AppConfig.ConfigName);
     
             var themeMode = Themes.ThemeMode.Default;
             if (System.Enum.TryParse<Themes.ThemeMode>(appConfig.ThemeMode, out var parsedMode))

@@ -118,7 +118,6 @@ internal unsafe sealed class AgentEncodedVideoDecoder : IDisposable
         }
 
         _disposed = true;
-        GC.SuppressFinalize(this);
     }
 
     /// <summary>

@@ -38,7 +38,7 @@
                           StatusBarTemplate="{StaticResource ShellStatusBarTemplate}"
                           ShowStatusBar="True">
         <views:TabbedPageView.EmptyStateIcon>
-            <ui:SymbolIcon Symbol="Code" FontSize="64"/>
+            <ui:FASymbolIcon Symbol="Code" FontSize="64"/>
         </views:TabbedPageView.EmptyStateIcon>
     </views:TabbedPageView>
 </UserControl>

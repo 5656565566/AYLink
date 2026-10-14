@@ -57,16 +57,16 @@ jobs:
       - name: Download and extract FFmpeg (Windows x64)
         if: matrix.rid == 'win-x64'
         run: |
-          curl -L -o ffmpeg.zip https://iris-download.home56.top/ffmpeg-n8.1-latest-win64-lgpl-shared-8.1.zip
-          7z e ffmpeg.zip -o./publish_output -r swscale-9.dll swresample-6.dll avutil-60.dll avcodec-62.dll
+          curl -fL -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n9.0-latest-win64-lgpl-shared-9.0.zip
+          7z e ffmpeg.zip -o./publish_output -r swscale-10.dll swresample-7.dll avutil-61.dll avcodec-63.dll
           rm ffmpeg.zip
         shell: bash
 
       - name: Download and extract FFmpeg (Windows arm64)
         if: matrix.rid == 'win-arm64'
         run: |
-          curl -L -o ffmpeg.zip https://iris-download.home56.top/ffmpeg-n8.1-latest-winarm64-lgpl-shared-8.1.zip
-          7z e ffmpeg.zip -o./publish_output -r swscale-9.dll swresample-6.dll avutil-60.dll avcodec-62.dll
+          curl -fL -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n9.0-latest-winarm64-lgpl-shared-9.0.zip
+          7z e ffmpeg.zip -o./publish_output -r swscale-10.dll swresample-7.dll avutil-61.dll avcodec-63.dll
           rm ffmpeg.zip
         shell: bash
 

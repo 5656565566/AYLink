@@ -7,6 +7,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -501,9 +502,7 @@ namespace AYLink.Controls.Terminal
             if (clipboard == null)
                 return;
 
-#pragma warning disable CS0618 // Type or member is obsolete
-            var text = await clipboard.GetTextAsync();
-#pragma warning restore CS0618 // Type or member is obsolete
+            var text = await clipboard.TryGetTextAsync();
             if (!string.IsNullOrEmpty(text))
             {
                 // Wrap paste in bracketed paste sequences if mode is enabled
@@ -1167,7 +1166,7 @@ namespace AYLink.Controls.Terminal
             }
         }
 
-        protected override void OnGotFocus(GotFocusEventArgs e)
+        protected override void OnGotFocus(FocusChangedEventArgs e)
         {
             base.OnGotFocus(e);
 
@@ -1192,7 +1191,7 @@ namespace AYLink.Controls.Terminal
             this.InvalidateVisual();
         }
 
-        protected override void OnLostFocus(RoutedEventArgs e)
+        protected override void OnLostFocus(FocusChangedEventArgs e)
         {
             base.OnLostFocus(e);
 
@@ -1682,7 +1681,7 @@ namespace AYLink.Controls.Terminal
 
         public override void Render(DrawingContext context)
         {
-            var scale = VisualRoot?.RenderScaling ?? 1.0;
+            var scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
             //Debug.WriteLine("======");
             //Debug.WriteLine(_terminal.Buffer.PrintViewport());
             

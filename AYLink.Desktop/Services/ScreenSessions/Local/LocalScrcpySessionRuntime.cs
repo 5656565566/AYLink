@@ -5,6 +5,7 @@ using AYLink.Core.Utils;
 using AYLink.Desktop.Models;
 using AYLink.Desktop.Services.Input;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -94,7 +95,7 @@ internal sealed class LocalScrcpySessionRuntime : IDisposable
                 if (!_client.Connect(ports))
                 {
                     _device.ServerOptions = null;
-                    throw new Exception("Failed to connect to scrcpy server.");
+                    throw new IOException("Failed to connect to scrcpy server.");
                 }
 
                 if (inputProcessor is HidInputProcessor hidProcessor)

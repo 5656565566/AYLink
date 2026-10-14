@@ -65,7 +65,7 @@
                         Padding="8,6"
                         VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <ui:SymbolIcon Symbol="Back" FontSize="16"/>
+                        <ui:FASymbolIcon Symbol="Back" FontSize="16"/>
                         <TextBlock Text="{i18n:Tr ServerSettings.BackToServerSettings, DefaultText='返回'}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
@@ -86,18 +86,18 @@
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                             <TextBox Grid.Column="0"
                                      Text="{Binding SearchKeyword}"
-                                     Watermark="{i18n:Tr DeviceGroupsPage.GroupSearchPlaceholder, DefaultText='搜索分组名称或描述'}"
+                                     PlaceholderText="{i18n:Tr DeviceGroupsPage.GroupSearchPlaceholder, DefaultText='搜索分组名称或描述'}"
                                      MinHeight="34"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                                 <Button Command="{Binding RefreshCommand}" IsEnabled="{Binding !IsLoading}" Padding="10,6">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <ui:SymbolIcon Symbol="Refresh" FontSize="15"/>
+                                        <ui:FASymbolIcon Symbol="Refresh" FontSize="15"/>
                                         <TextBlock Text="{i18n:Tr DeviceGroupsPage.Refresh, DefaultText='刷新'}"/>
                                     </StackPanel>
                                 </Button>
                                 <Button Command="{Binding CreateGroupCommand}" Padding="10,6">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <ui:SymbolIcon Symbol="Add" FontSize="15"/>
+                                        <ui:FASymbolIcon Symbol="Add" FontSize="15"/>
                                         <TextBlock Text="{i18n:Tr DeviceGroupsPage.CreateGroup, DefaultText='新建设备分组'}"/>
                                     </StackPanel>
                                 </Button>
@@ -210,7 +210,7 @@
                                         Padding="8,6"
                                         VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <ui:SymbolIcon Symbol="Back" FontSize="16"/>
+                                        <ui:FASymbolIcon Symbol="Back" FontSize="16"/>
                                         <TextBlock Text="{i18n:Tr DeviceGroupsPage.BackToList, DefaultText='返回分组列表'}"/>
                                     </StackPanel>
                                 </Button>
@@ -228,7 +228,7 @@
                                     <TextBlock Text="{i18n:Tr DeviceGroupsPage.GroupName, DefaultText='分组名称'}" Opacity="0.75"/>
                                     <TextBox Text="{Binding EditingName}"
                                              IsEnabled="{Binding CanEditGroupForm}"
-                                             Watermark="{i18n:Tr DeviceGroupsPage.GroupNameWatermark, DefaultText='分组名称'}"/>
+                                             PlaceholderText="{i18n:Tr DeviceGroupsPage.GroupNameWatermark, DefaultText='分组名称'}"/>
                                 </StackPanel>
 
                                 <StackPanel Spacing="6">
@@ -238,7 +238,7 @@
                                              AcceptsReturn="True"
                                              TextWrapping="Wrap"
                                              MinHeight="74"
-                                             Watermark="{i18n:Tr DeviceGroupsPage.GroupDescriptionPlaceholder, DefaultText='可以写这个分组的用途或归属范围'}"/>
+                                             PlaceholderText="{i18n:Tr DeviceGroupsPage.GroupDescriptionPlaceholder, DefaultText='可以写这个分组的用途或归属范围'}"/>
                                 </StackPanel>
 
                                 <Border IsVisible="{Binding IsEditingSystemGroup}"
@@ -260,7 +260,7 @@
                                     </Grid>
 
                                     <TextBox Text="{Binding DeviceSearchKeyword}"
-                                             Watermark="{i18n:Tr ServerRemoteDeviceGroupsPage.DeviceSearchPlaceholder, DefaultText='搜索设备名称或序列号'}"
+                                             PlaceholderText="{i18n:Tr ServerRemoteDeviceGroupsPage.DeviceSearchPlaceholder, DefaultText='搜索设备名称或序列号'}"
                                              IsVisible="{Binding !IsEditingSystemGroup}"/>
 
                                     <TextBlock Text="{i18n:Tr ServerRemoteDeviceGroupsPage.SystemGroupDeviceHint, DefaultText='这个系统内置组会自动包含全部设备，不能在这里手动增删设备。'}"
@@ -295,7 +295,7 @@
                                     </Grid>
 
                                     <TextBox Text="{Binding RoleSearchKeyword}"
-                                             Watermark="{i18n:Tr ServerRemoteDeviceGroupsPage.RoleSearchPlaceholder, DefaultText='搜索角色名称或描述'}"/>
+                                             PlaceholderText="{i18n:Tr ServerRemoteDeviceGroupsPage.RoleSearchPlaceholder, DefaultText='搜索角色名称或描述'}"/>
 
                                     <ItemsControl ItemsSource="{Binding Roles}">
                                         <ItemsControl.ItemTemplate>
@@ -324,7 +324,7 @@
                                     </Grid>
 
                                     <TextBox Text="{Binding UserSearchKeyword}"
-                                             Watermark="{i18n:Tr ServerRemoteDeviceGroupsPage.UserSearchPlaceholder, DefaultText='搜索用户名或角色'}"/>
+                                             PlaceholderText="{i18n:Tr ServerRemoteDeviceGroupsPage.UserSearchPlaceholder, DefaultText='搜索用户名或角色'}"/>
 
                                     <ItemsControl ItemsSource="{Binding Users}">
                                         <ItemsControl.ItemTemplate>

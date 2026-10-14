@@ -13,21 +13,21 @@ public sealed class NotificationService : INotificationService
 
     public void ShowInfo(string title, string message)
     {
-        ToastManager.Instance.Show(title, message, InfoBarSeverity.Informational);
+        ToastManager.Instance.Show(title, message, FAInfoBarSeverity.Informational);
     }
 
     public void ShowSuccess(string title, string message)
     {
-        ToastManager.Instance.Show(title, message, InfoBarSeverity.Success);
+        ToastManager.Instance.Show(title, message, FAInfoBarSeverity.Success);
     }
 
     public void ShowWarning(string title, string message)
     {
-        ToastManager.Instance.Show(title, message, InfoBarSeverity.Warning);
+        ToastManager.Instance.Show(title, message, FAInfoBarSeverity.Warning);
     }
 
     public void ShowError(string title, string message)
     {
-        ToastManager.Instance.Show(title, message, InfoBarSeverity.Error);
+        ToastManager.Instance.Show(title, message, FAInfoBarSeverity.Error);
     }
 }

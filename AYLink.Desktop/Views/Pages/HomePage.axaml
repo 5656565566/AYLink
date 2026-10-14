@@ -18,60 +18,60 @@
     <Grid RowDefinitions="Auto,*">
         
         <!-- 顶部工具栏 -->
-        <ui:CommandBar Grid.Row="0" DefaultLabelPosition="Right" Background="Transparent">
+        <ui:FACommandBar Grid.Row="0" DefaultLabelPosition="Right" Background="Transparent">
             
             <!-- 主要操作 -->
-            <ui:CommandBar.PrimaryCommands>
-                <ui:CommandBarButton Label="{i18n:Tr HomePage.AddDevice, DefaultText='添加设备'}" Command="{Binding AddDeviceCommand}">
-                    <ui:CommandBarButton.IconSource>
-                        <ui:SymbolIconSource Symbol="Add"/>
-                    </ui:CommandBarButton.IconSource>
-                </ui:CommandBarButton>
+            <ui:FACommandBar.PrimaryCommands>
+                <ui:FACommandBarButton Label="{i18n:Tr HomePage.AddDevice, DefaultText='添加设备'}" Command="{Binding AddDeviceCommand}">
+                    <ui:FACommandBarButton.IconSource>
+                        <ui:FASymbolIconSource Symbol="Add"/>
+                    </ui:FACommandBarButton.IconSource>
+                </ui:FACommandBarButton>
 
-                <ui:CommandBarButton Label="{i18n:Tr HomePage.MoreActions, DefaultText='更多操作'}">
-                    <ui:CommandBarButton.IconSource>
-                        <ui:SymbolIconSource Symbol="More"/>
-                    </ui:CommandBarButton.IconSource>
-                    <ui:CommandBarButton.Flyout>
+                <ui:FACommandBarButton Label="{i18n:Tr HomePage.MoreActions, DefaultText='更多操作'}">
+                    <ui:FACommandBarButton.IconSource>
+                        <ui:FASymbolIconSource Symbol="More"/>
+                    </ui:FACommandBarButton.IconSource>
+                    <ui:FACommandBarButton.Flyout>
                         <MenuFlyout>
                             <MenuItem Header="{i18n:Tr HomePage.RefreshDevices, DefaultText='刷新设备'}" Command="{Binding RefreshDevicesCommand}">
                                 <MenuItem.Icon>
-                                    <ui:SymbolIcon Symbol="Refresh"/>
+                                    <ui:FASymbolIcon Symbol="Refresh"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="{i18n:Tr HomePage.DeleteDevice, DefaultText='删除设备'}" Command="{Binding DeleteDeviceCommand}" CommandParameter="{Binding #DeviceListBox.SelectedItems}">
                                 <MenuItem.Icon>
-                                    <ui:SymbolIcon Symbol="Delete"/>
+                                    <ui:FASymbolIcon Symbol="Delete"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="{i18n:Tr HomePage.RunScript, DefaultText='运行脚本'}" Command="{Binding RunScriptCommand}" IsEnabled="False">
                                 <MenuItem.Icon>
-                                    <ui:SymbolIcon Symbol="Code"/>
+                                    <ui:FASymbolIcon Symbol="Code"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="-" />
                             <MenuItem Header="{i18n:Tr HomePage.SyncControl, DefaultText='同步控制'}" Command="{Binding SyncControlCommand}" IsEnabled="False">
                                 <MenuItem.Icon>
-                                    <ui:SymbolIcon Symbol="Sync"/>
+                                    <ui:FASymbolIcon Symbol="Sync"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="{i18n:Tr HomePage.AddGroup, DefaultText='添加分组'}" Command="{Binding AddGroupCommand}" IsEnabled="False">
                                 <MenuItem.Icon>
-                                    <ui:SymbolIcon Symbol="Add"/>
+                                    <ui:FASymbolIcon Symbol="Add"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="{i18n:Tr HomePage.DeleteGroup, DefaultText='删除分组'}" Command="{Binding DeleteGroupCommand}" IsEnabled="False">
                                 <MenuItem.Icon>
-                                    <ui:SymbolIcon Symbol="Delete"/>
+                                    <ui:FASymbolIcon Symbol="Delete"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                         </MenuFlyout>
-                    </ui:CommandBarButton.Flyout>
-                </ui:CommandBarButton>
-            </ui:CommandBar.PrimaryCommands>
+                    </ui:FACommandBarButton.Flyout>
+                </ui:FACommandBarButton>
+            </ui:FACommandBar.PrimaryCommands>
 
             <!-- 分组选择器 -->
-            <ui:CommandBar.Content>
+            <ui:FACommandBar.Content>
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                     <TextBlock Text="{i18n:Tr HomePage.DeviceGroup, DefaultText='设备分组'}"
                                VerticalAlignment="Center"
@@ -87,7 +87,7 @@
                                        Text="{Binding SelectedGroupDisplayName}"
                                        TextTrimming="CharacterEllipsis"
                                        VerticalAlignment="Center"/>
-                            <ui:SymbolIcon Grid.Column="1"
+                            <ui:FASymbolIcon Grid.Column="1"
                                            Symbol="ChevronDown"
                                            FontSize="14"
                                            Margin="10,0,0,0"
@@ -102,7 +102,7 @@
                                         MaxWidth="420">
                                     <StackPanel Spacing="4">
                                         <TextBox Text="{Binding GroupSearchKeyword}"
-                                                 Watermark="{i18n:Tr HomePage.GroupSearchPlaceholder, DefaultText='搜索分组名称'}"
+                                                 PlaceholderText="{i18n:Tr HomePage.GroupSearchPlaceholder, DefaultText='搜索分组名称'}"
                                                  MinHeight="34"/>
                                         <ScrollViewer MaxHeight="210"
                                                       VerticalScrollBarVisibility="Auto">
@@ -121,7 +121,7 @@
                                                                         <TextBlock Text="{Binding DisplayName}"
                                                                                    TextTrimming="CharacterEllipsis"/>
                                                                     </StackPanel>
-                                                                    <ui:SymbolIcon Grid.Column="1"
+                                                                    <ui:FASymbolIcon Grid.Column="1"
                                                                                    Symbol="Accept"
                                                                                    IsVisible="{Binding IsSelected}"
                                                                                    FontSize="14"
@@ -144,8 +144,8 @@
                         </FlyoutBase.AttachedFlyout>
                     </Button>
                 </StackPanel>
-            </ui:CommandBar.Content>
-        </ui:CommandBar>
+            </ui:FACommandBar.Content>
+        </ui:FACommandBar>
 
         <!-- 空状态提示 无设备时显示 -->
         <Border Grid.Row="1"
@@ -223,23 +223,23 @@
                                             Spacing="8"
                                             VerticalAlignment="Center"
                                             HorizontalAlignment="Center">
-                                    <ui:SymbolIcon FontSize="18" Symbol="{Binding ConnectionType, Converter={StaticResource ConnectionTypeToIconConverter}}"/>
+                                    <ui:FASymbolIcon FontSize="18" Symbol="{Binding ConnectionType, Converter={StaticResource ConnectionTypeToIconConverter}}"/>
                                     <TextBlock Text="{Binding ConnectionTypeText}" VerticalAlignment="Center"/>
                                 </StackPanel>
 
                                 <!-- 操作按钮列 - 直接绑定 DeviceItemViewModel 的命令 -->
                                 <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
                                     <Button Command="{Binding MirrorCommand}" ToolTip.Tip="{i18n:Tr HomePage.MirrorToolTip, DefaultText='投屏'}" IsEnabled="{Binding CanMirror}">
-                                        <ui:SymbolIcon Symbol="Play"/>
+                                        <ui:FASymbolIcon Symbol="Play"/>
                                     </Button>
                                     <Button Command="{Binding OpenFileManagerCommand}" ToolTip.Tip="{i18n:Tr HomePage.ActionFileTransfer, DefaultText='文件管理'}" IsEnabled="{Binding CanOpenFileManager}">
-                                        <ui:SymbolIcon Symbol="Folder"/>
+                                        <ui:FASymbolIcon Symbol="Folder"/>
                                     </Button>
                                     <Button Command="{Binding OpenAppManagerCommand}" ToolTip.Tip="{i18n:Tr HomePage.ActionAppManagement, DefaultText='应用管理'}" IsEnabled="{Binding CanOpenAppManager}">
-                                        <ui:SymbolIcon Symbol="AllApps"/>
+                                        <ui:FASymbolIcon Symbol="AllApps"/>
                                     </Button>
                                     <Button ToolTip.Tip="{i18n:Tr HomePage.ActionMore, DefaultText='更多'}">
-                                        <ui:SymbolIcon Symbol="More"/>
+                                        <ui:FASymbolIcon Symbol="More"/>
                                         <Button.Flyout>
                                             <MenuFlyout>
                                                 <MenuItem Header="{i18n:Tr HomePage.ActionNewDisplay, DefaultText='新建显示'}" Command="{Binding NewDisplayCommand}" IsEnabled="{Binding CanNewDisplay}"/>
@@ -250,7 +250,7 @@
                                                 <MenuItem Header="-" />
                                                 <MenuItem Header="{i18n:Tr HomePage.DeleteDevice, DefaultText='删除设备'}" Command="{Binding DeleteDeviceCommand}" IsEnabled="{Binding CanDelete}">
                                                     <MenuItem.Icon>
-                                                        <ui:SymbolIcon Symbol="Delete"/>
+                                                        <ui:FASymbolIcon Symbol="Delete"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                             </MenuFlyout>

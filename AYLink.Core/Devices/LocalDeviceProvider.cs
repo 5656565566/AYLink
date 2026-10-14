@@ -43,7 +43,7 @@ public sealed class LocalDeviceProvider : IDeviceProvider
     {
         cancellationToken.ThrowIfCancellationRequested();
         AdbManager.Instance.TryStartAdbServer();
-        await AdbManager.Instance.RefreshConnectedDevices();
+        await AdbManager.Instance.RefreshConnectedDevicesAsync();
         return AdbManager.Instance.GetConnectedDevices()
             .Select(Map)
             .ToList();
@@ -68,14 +68,14 @@ public sealed class LocalDeviceProvider : IDeviceProvider
 
         if (request.PairingPort > 0 && !string.IsNullOrWhiteSpace(request.PairingCode))
         {
-            var paired = await AdbManager.PairWifiDevice(host, request.PairingPort, request.PairingCode.Trim());
+            var paired = await AdbManager.PairWifiDeviceAsync(host, request.PairingPort, request.PairingCode.Trim());
             if (!paired)
             {
                 return null;
             }
         }
 
-        var device = await AdbManager.Instance.ConnectDevice(host, request.Port <= 0 ? 5555 : request.Port);
+        var device = await AdbManager.Instance.ConnectDeviceAsync(host, request.Port <= 0 ? 5555 : request.Port);
         return device == null ? null : Map(device);
     }
 
@@ -97,7 +97,7 @@ public sealed class LocalDeviceProvider : IDeviceProvider
         var parts = deviceId.Split(':', 2);
         if (parts.Length == 2 && int.TryParse(parts[1], out var port))
         {
-            var device = await AdbManager.Instance.ConnectDevice(parts[0], port);
+            var device = await AdbManager.Instance.ConnectDeviceAsync(parts[0], port);
             return device == null ? null : Map(device);
         }
 
@@ -145,7 +145,7 @@ public sealed class LocalDeviceProvider : IDeviceProvider
             return Task.FromResult(false);
         }
 
-        AdbManager.Instance.DisconnectDevice(deviceId);
+        _ = AdbManager.Instance.DisconnectDeviceAsync(deviceId); // 设计即"进入断开流程"后返回 无需等待
         return Task.FromResult(true);
     }
 

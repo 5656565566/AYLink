@@ -53,7 +53,7 @@ internal unsafe class AudioSource : IDisposable
         _stream = SDL_CreateAudioStream(&inSpec, &outSpec);
         if (_stream == null)
         {
-            throw new Exception($"为音源 {id} 创建 SDL_CreateAudioStream 失败: {SDL_GetError()}");
+            throw new InvalidOperationException($"为音源 {id} 创建 SDL_CreateAudioStream 失败: {SDL_GetError()}");
         }
     }
 

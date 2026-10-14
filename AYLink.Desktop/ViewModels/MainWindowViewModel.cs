@@ -58,13 +58,13 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<NavigationItemViewModel> NavigationItems { get; } =
     [
-        new("Home",LocalizationManager.Instance.GetString("MainWindow.NavHome", "首页"), Symbol.Home),
-        new("Servers", LocalizationManager.Instance.GetString("MainWindow.NavServers", "服务器"), Symbol.Globe),
-        new("File",LocalizationManager.Instance.GetString("MainWindow.NavFile", "文件管理"), Symbol.Folder),
-        new("Screen",LocalizationManager.Instance.GetString("MainWindow.NavScreen", "投屏"), Symbol.Play),
-        new("App",LocalizationManager.Instance.GetString("MainWindow.NavApp", "应用管理"), Symbol.Repair),
-        new("Shell",LocalizationManager.Instance.GetString("MainWindow.NavShell", "终端"), Symbol.Code),
-        new("Task", LocalizationManager.Instance.GetString("MainWindow.NavTask", "任务管理"), Symbol.Clock),
+        new("Home",LocalizationManager.Instance.GetString("MainWindow.NavHome", "首页"), FASymbol.Home),
+        new("Servers", LocalizationManager.Instance.GetString("MainWindow.NavServers", "服务器"), FASymbol.Globe),
+        new("File",LocalizationManager.Instance.GetString("MainWindow.NavFile", "文件管理"), FASymbol.Folder),
+        new("Screen",LocalizationManager.Instance.GetString("MainWindow.NavScreen", "投屏"), FASymbol.Play),
+        new("App",LocalizationManager.Instance.GetString("MainWindow.NavApp", "应用管理"), FASymbol.Repair),
+        new("Shell",LocalizationManager.Instance.GetString("MainWindow.NavShell", "终端"), FASymbol.Code),
+        new("Task", LocalizationManager.Instance.GetString("MainWindow.NavTask", "任务管理"), FASymbol.Clock),
     ];
 
     public MainWindowViewModel()
@@ -94,7 +94,7 @@ public partial class MainWindowViewModel : ViewModelBase
         });
 
         // 加载配置项
-        AppConfig appConfig = _configManager.LoadConfig<AppConfig>("appConfig");
+        AppConfig appConfig = _configManager.LoadConfig<AppConfig>(AppConfig.ConfigName);
 
         // 初始化 Scrcpy 服务
         if (!string.IsNullOrWhiteSpace(appConfig.ScrcpyServer) &&

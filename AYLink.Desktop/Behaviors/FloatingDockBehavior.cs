@@ -298,7 +298,7 @@ public class FloatingDockBehavior : AvaloniaObject
             e.Pointer.Capture(null);
             if (control.Parent is Control parent)
             {
-                EndDrag(control, state, parent);
+                _ = EndDrag(control, state, parent);
             }
             e.Handled = true;
         }
@@ -314,12 +314,12 @@ public class FloatingDockBehavior : AvaloniaObject
         {
             if (control.Parent is Control parent)
             {
-                EndDrag(control, state, parent);
+                _ = EndDrag(control, state, parent);
             }
         }
     }
 
-    private static async void EndDrag(Control control, DragState state, Control parent)
+    private static async Task EndDrag(Control control, DragState state, Control parent)
     {
         state.IsDragging = false;
         int currentToken = ++state.DragToken;

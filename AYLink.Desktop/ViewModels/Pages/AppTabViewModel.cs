@@ -1,6 +1,7 @@
 using AdvancedSharpAdbClient;
 using AdvancedSharpAdbClient.Models;
 using AdvancedSharpAdbClient.Receivers;
+using Avalonia.Input.Platform;
 using AYLink.Core.Devices;
 using AYLink.Core.Models;
 using AYLink.Core.Scrcpy;
@@ -110,11 +111,11 @@ public partial class AppTabViewModel : TabItemViewModelBase
 
         try
         {
-            var appList = await Task.Run(() =>
+            var appList = await Task.Run(async () =>
             {
                 if (_remoteAppService != null)
                 {
-                    return _remoteAppService.ListAppsAsync().GetAwaiter().GetResult().ToList();
+                    return (await _remoteAppService.ListAppsAsync()).ToList();
                 }
 
                 ScrcpyTool tool = ScrcpyService.Instance.Tool;
@@ -335,7 +336,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
             localizer.GetString("AppTab.UninstallButton", "卸载"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary) return;
+        if (result != FluentAvalonia.UI.Controls.FAContentDialogResult.Primary) return;
 
         string title = localizer.GetString("AppTab.UninstallAppTitle", "卸载应用");
         string message = string.Format(localizer.GetString("AppTab.Uninstalling", "正在卸载 {0}..."), app.Name);

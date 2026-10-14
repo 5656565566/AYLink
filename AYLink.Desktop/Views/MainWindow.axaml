@@ -13,6 +13,7 @@
         Title="{i18n:Tr MainWindow.Title, DefaultText='安易连'}"
         TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"
+        WindowDecorationsTheme="{StaticResource AYLinkWindowDecorations}"
         ExtendClientAreaToDecorationsHint="True">
 
     <Grid Margin="{Binding $parent[Window].OffScreenMargin}">
@@ -26,54 +27,54 @@
         <!-- 半透明遮罩层 用于降低背景图亮度/提供默认底色 保证文字可读性 -->
         <Border x:Name="BackgroundMask" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.75" IsHitTestVisible="False" />
 
-        <ui:NavigationView x:Name="NavView"
+        <ui:FANavigationView x:Name="NavView"
                            PaneDisplayMode="Left"
                            SelectionChanged="NavView_OnSelectionChanged"
                            IsSettingsVisible="True"
                            Background="Transparent">
 
-            <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavHome, DefaultText='首页'}" Tag="Home" Margin="1.1">
-                    <ui:NavigationViewItem.IconSource>
-                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Home}"/>
-                    </ui:NavigationViewItem.IconSource>
-                </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavServers, DefaultText='服务器'}" Tag="Servers" Margin="1.1">
-                    <ui:NavigationViewItem.IconSource>
-                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Globe}"/>
-                    </ui:NavigationViewItem.IconSource>
-                </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavFile, DefaultText='文件管理'}" Tag="File" Margin="1.1">
-                    <ui:NavigationViewItem.IconSource>
-                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Folder}"/>
-                    </ui:NavigationViewItem.IconSource>
-                </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavScreen, DefaultText='投屏'}" Tag="Screen" Margin="1.1">
-                    <ui:NavigationViewItem.IconSource>
-                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Play}"/>
-                    </ui:NavigationViewItem.IconSource>
-                </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavApp, DefaultText='应用管理'}" Tag="App" Margin="1.1">
-                    <ui:NavigationViewItem.IconSource>
-                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.AllApps}"/>
-                    </ui:NavigationViewItem.IconSource>
-                </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavShell, DefaultText='终端'}" Tag="Shell" Margin="1.1">
-                    <ui:NavigationViewItem.IconSource>
-                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Code}"/>
-                    </ui:NavigationViewItem.IconSource>
-                </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="{i18n:Tr MainWindow.NavTask, DefaultText='任务管理'}" Tag="Task" Margin="1.1">
-                    <ui:NavigationViewItem.IconSource>
-                        <ui:SymbolIconSource Symbol="{x:Static ui:Symbol.Clock}"/>
-                    </ui:NavigationViewItem.IconSource>
-                </ui:NavigationViewItem>
-            </ui:NavigationView.MenuItems>
+            <ui:FANavigationView.MenuItems>
+                <ui:FANavigationViewItem Content="{i18n:Tr MainWindow.NavHome, DefaultText='首页'}" Tag="Home" Margin="1.1">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="{x:Static ui:FASymbol.Home}"/>
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+                <ui:FANavigationViewItem Content="{i18n:Tr MainWindow.NavServers, DefaultText='服务器'}" Tag="Servers" Margin="1.1">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="{x:Static ui:FASymbol.Globe}"/>
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+                <ui:FANavigationViewItem Content="{i18n:Tr MainWindow.NavFile, DefaultText='文件管理'}" Tag="File" Margin="1.1">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="{x:Static ui:FASymbol.Folder}"/>
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+                <ui:FANavigationViewItem Content="{i18n:Tr MainWindow.NavScreen, DefaultText='投屏'}" Tag="Screen" Margin="1.1">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="{x:Static ui:FASymbol.Play}"/>
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+                <ui:FANavigationViewItem Content="{i18n:Tr MainWindow.NavApp, DefaultText='应用管理'}" Tag="App" Margin="1.1">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="{x:Static ui:FASymbol.AllApps}"/>
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+                <ui:FANavigationViewItem Content="{i18n:Tr MainWindow.NavShell, DefaultText='终端'}" Tag="Shell" Margin="1.1">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="{x:Static ui:FASymbol.Code}"/>
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+                <ui:FANavigationViewItem Content="{i18n:Tr MainWindow.NavTask, DefaultText='任务管理'}" Tag="Task" Margin="1.1">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="{x:Static ui:FASymbol.Clock}"/>
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+            </ui:FANavigationView.MenuItems>
 
             <!-- 绑定 ViewModel 的 CurrentPage 通过 App.axaml 中的 DataTemplate 自动匹配 View -->
             <ContentControl Content="{Binding CurrentPage}"/>
 
-        </ui:NavigationView>
+        </ui:FANavigationView>
 
         <!-- 消息弹出层 覆盖在最上层 -->
         <views:ToastHost/>

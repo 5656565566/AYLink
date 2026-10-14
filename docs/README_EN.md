@@ -57,7 +57,7 @@ If you are a developer and wish to compile this project yourself, it supports lo
 
 > [!TIP]
 > **💡 Linux / macOS Environment Tip**:
-> On Linux and macOS systems, it is recommended to use the system's built-in package manager (such as `apt`, `brew`, etc.) to install and configure the environment variables for ADB and FFmpeg, ensuring the program can properly call these dependencies in the background.
+> On Linux and macOS, use the system package manager (e.g., `apt`, `brew`) to install ADB and FFmpeg 9 shared libraries, then configure their paths. The FFmpeg.AutoGen 9 bindings require FFmpeg 9 native libraries; FFmpeg 8.x libraries cannot be substituted. The Windows release workflow bundles matching shared libraries.
 
 ## 📦 Dependencies and Acknowledgements
 

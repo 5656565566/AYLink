@@ -6,7 +6,7 @@ namespace AYLink.Desktop.ViewModels;
 /// <summary>
 /// 导航菜单项模型 - 用于 NavigationView 的数据绑定
 /// </summary>
-public partial class NavigationItemViewModel(string pageKey, string localizationKey, Symbol icon) : ObservableObject
+public partial class NavigationItemViewModel(string pageKey, string localizationKey, FASymbol icon) : ObservableObject
 {
     /// <summary>
     /// 页面唯一标识 Key 如 "Home"、"File"、"Screen"
@@ -21,7 +21,7 @@ public partial class NavigationItemViewModel(string pageKey, string localization
     /// <summary>
     /// 图标
     /// </summary>
-    public Symbol Icon { get; } = icon;
+    public FASymbol Icon { get; } = icon;
 
     [ObservableProperty]
     public partial bool IsSelected { get; set; }

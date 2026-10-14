@@ -105,7 +105,7 @@ public sealed class AgentWebRtcSessionOptions
 /// 面向桌面端的 Agent WebRTC 会话
 /// 负责建立 PeerConnection、收发信令、解码媒体并转发控制指令
 /// </summary>
-public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
+public sealed class AgentWebRtcSession : IAsyncDisposable
 {
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan VideoHealthWatchdogInterval = TimeSpan.FromSeconds(1);
@@ -120,12 +120,12 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
     /// <summary>
     /// 当前 Agent WebRTC 音频输出采样率
     /// </summary>
-    public const int AudioSampleRate = AgentEncodedAudioDecoder.TargetSampleRate;
+    public const int AudioSampleRate = AgentEncodedAudioDecoder.TARGET_SAMPLE_RATE;
 
     /// <summary>
     /// 当前 Agent WebRTC 音频输出声道数
     /// </summary>
-    public const int AudioChannelCount = AgentEncodedAudioDecoder.TargetChannels;
+    public const int AudioChannelCount = AgentEncodedAudioDecoder.TARGET_CHANNELS;
 
     private readonly AgentApiClient _client;
     private readonly AgentAccessTokenProvider _accessTokenProvider;
@@ -391,14 +391,6 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
-    /// 释放当前会话的托管和非托管资源
-    /// </summary>
-    public void Dispose()
-    {
-        DisposeAsync().AsTask().GetAwaiter().GetResult();
-    }
-
-    /// <summary>
     /// 异步释放当前会话
     /// </summary>
     public async ValueTask DisposeAsync()
@@ -415,7 +407,6 @@ public sealed class AgentWebRtcSession : IDisposable, IAsyncDisposable
         _renegotiationLock.Dispose();
         _videoDecoder.Dispose();
         _audioDecoder.Dispose();
-        GC.SuppressFinalize(this);
     }
 
     /// <summary>

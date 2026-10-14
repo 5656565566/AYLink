@@ -16,14 +16,14 @@ internal unsafe sealed class AgentEncodedAudioDecoder : IDisposable
     /// <summary>
     /// 与桌面端 SDL 混音链路对齐的目标采样率
     /// </summary>
-    public const int TargetSampleRate = 48000;
+    public const int TARGET_SAMPLE_RATE = 48000;
 
     /// <summary>
     /// 与桌面端 SDL 混音链路对齐的目标声道数
     /// </summary>
-    public const int TargetChannels = 2;
+    public const int TARGET_CHANNELS = 2;
 
-    private const AVSampleFormat TargetSampleFormat = AVSampleFormat.AV_SAMPLE_FMT_S16;
+    private const AVSampleFormat TARGET_SAMPLE_FORMAT = AVSampleFormat.AV_SAMPLE_FMT_S16;
 
     private AVCodecContext* _codecContext;
     private SwrContext* _resamplerContext;
@@ -108,7 +108,6 @@ internal unsafe sealed class AgentEncodedAudioDecoder : IDisposable
         }
 
         _disposed = true;
-        GC.SuppressFinalize(this);
     }
 
     /// <summary>
@@ -143,10 +142,10 @@ internal unsafe sealed class AgentEncodedAudioDecoder : IDisposable
             throw new OutOfMemoryException("Failed to allocate audio codec context.");
         }
 
-        _codecContext->sample_rate = format.ClockRate > 0 ? format.ClockRate : TargetSampleRate;
+        _codecContext->sample_rate = format.ClockRate > 0 ? format.ClockRate : TARGET_SAMPLE_RATE;
         _codecContext->pkt_timebase = new AVRational { num = 1, den = _codecContext->sample_rate };
 
-        ffmpeg.av_channel_layout_default(&_codecContext->ch_layout, format.ChannelCount > 0 ? format.ChannelCount : TargetChannels);
+        ffmpeg.av_channel_layout_default(&_codecContext->ch_layout, format.ChannelCount > 0 ? format.ChannelCount : TARGET_CHANNELS);
 
         if (ffmpeg.avcodec_open2(_codecContext, codec, null) < 0)
         {
@@ -231,15 +230,15 @@ internal unsafe sealed class AgentEncodedAudioDecoder : IDisposable
         AVChannelLayout inputLayout = new();
         AVChannelLayout outputLayout = new();
         ffmpeg.av_channel_layout_copy(&inputLayout, &frame->ch_layout);
-        ffmpeg.av_channel_layout_default(&outputLayout, TargetChannels);
+        ffmpeg.av_channel_layout_default(&outputLayout, TARGET_CHANNELS);
 
         fixed (SwrContext** context = &_resamplerContext)
         {
             ffmpeg.swr_alloc_set_opts2(
                 context,
                 &outputLayout,
-                TargetSampleFormat,
-                TargetSampleRate,
+                TARGET_SAMPLE_FORMAT,
+                TARGET_SAMPLE_RATE,
                 &inputLayout,
                 (AVSampleFormat)frame->format,
                 frame->sample_rate,
@@ -263,7 +262,7 @@ internal unsafe sealed class AgentEncodedAudioDecoder : IDisposable
     private void EmitPcm(AVFrame* frame)
     {
         byte* resampledData;
-        if (ffmpeg.av_samples_alloc(&resampledData, null, TargetChannels, frame->nb_samples, TargetSampleFormat, 0) < 0)
+        if (ffmpeg.av_samples_alloc(&resampledData, null, TARGET_CHANNELS, frame->nb_samples, TARGET_SAMPLE_FORMAT, 0) < 0)
         {
             throw new OutOfMemoryException("Failed to allocate audio sample buffer.");
         }
@@ -282,7 +281,7 @@ internal unsafe sealed class AgentEncodedAudioDecoder : IDisposable
                 return;
             }
 
-            var bufferSize = ffmpeg.av_samples_get_buffer_size(null, TargetChannels, outputSamples, TargetSampleFormat, 1);
+            var bufferSize = ffmpeg.av_samples_get_buffer_size(null, TARGET_CHANNELS, outputSamples, TARGET_SAMPLE_FORMAT, 1);
             if (bufferSize <= 0)
             {
                 return;

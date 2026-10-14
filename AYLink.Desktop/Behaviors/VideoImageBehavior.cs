@@ -43,7 +43,7 @@ public static class VideoImageBehavior
             image.PropertyChanged += OnImagePropertyChanged;
 
             // 如果设置属性时控件已经在可视树上（例如模板重用）立即尝试 Attach
-            if (image.GetVisualRoot() != null)
+            if (image.IsAttachedToVisualTree())
             {
                 TryAttach(image);
             }
@@ -62,7 +62,7 @@ public static class VideoImageBehavior
     {
         if (e.Property == StyledElement.DataContextProperty)
         {
-            if (sender is Image image && image.GetVisualRoot() != null)
+            if (sender is Image image && image.IsAttachedToVisualTree())
             {
                 if (e.OldValue is ScreenTabViewModel oldVm)
                 {

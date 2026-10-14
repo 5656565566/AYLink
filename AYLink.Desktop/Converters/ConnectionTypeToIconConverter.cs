@@ -14,14 +14,14 @@ public class ConnectionTypeToIconConverter : IValueConverter
             if (connectionType.Equals("WiFi", StringComparison.OrdinalIgnoreCase) ||
                 connectionType.Equals("Wi-Fi", StringComparison.OrdinalIgnoreCase))
             {
-                return Symbol.Wifi4;
+                return FASymbol.Wifi4;
             }
             else if (connectionType.Equals("USB", StringComparison.OrdinalIgnoreCase))
             {
-                return Symbol.Link;
+                return FASymbol.Link;
             }
         }
-        return Symbol.Link; // Default
+        return FASymbol.Link; // Default
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

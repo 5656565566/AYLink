@@ -7,19 +7,19 @@ namespace AYLink.Desktop.Services.Notifications;
 
 public static class DialogService
 {
-    public static async Task<ContentDialogResult> ShowMessageAsync(
+    public static async Task<FAContentDialogResult> ShowMessageAsync(
         string title,
         string message,
         string? primaryButtonText = null,
         string? secondaryButtonText = null,
         string? closeButtonText = null)
     {
-        var dialog = new ContentDialog
+        var dialog = new FAContentDialog
         {
             Title = title,
             Content = message,
             PrimaryButtonText = primaryButtonText ?? "确定",
-            DefaultButton = ContentDialogButton.Primary
+            DefaultButton = FAContentDialogButton.Primary
         };
 
         if (!string.IsNullOrEmpty(secondaryButtonText))
@@ -35,7 +35,7 @@ public static class DialogService
         return await dialog.ShowAsync();
     }
 
-    public static async Task<(ContentDialogResult Result, Dictionary<string, string> Data)> ShowInputDialogAsync(
+    public static async Task<(FAContentDialogResult Result, Dictionary<string, string> Data)> ShowInputDialogAsync(
         string title,
         string description,
         List<Models.InputFieldModel> fields,
@@ -48,13 +48,13 @@ public static class DialogService
 
         var inputDialog = new Views.Dialogs.InputDialog(description, fields);
 
-        var dialog = new ContentDialog
+        var dialog = new FAContentDialog
         {
             Title = title,
             Content = inputDialog,
             PrimaryButtonText = primaryButtonText,
             SecondaryButtonText = secondaryButtonText,
-            DefaultButton = ContentDialogButton.Primary
+            DefaultButton = FAContentDialogButton.Primary
         };
 
         var result = await dialog.ShowAsync();

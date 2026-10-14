@@ -30,7 +30,7 @@ public sealed class ProgressDialogOptions
 public class ProgressDialog
 {
     private readonly object _syncRoot = new();
-    private ContentDialog? _dialog;
+    private FAContentDialog? _dialog;
     private TextBlock? _messageTextBlock;
     private ProgressBar? _progressBar;
     private ProgressDialogOptions? _options;
@@ -38,7 +38,7 @@ public class ProgressDialog
     private bool _isClosing;
     private bool _cancelRequested;
 
-    public Task<ContentDialogResult> ShowAsync(string title, string message, bool isIndeterminate = true)
+    public Task<FAContentDialogResult> ShowAsync(string title, string message, bool isIndeterminate = true)
     {
         return ShowAsync(new ProgressDialogOptions
         {
@@ -48,7 +48,7 @@ public class ProgressDialog
         });
     }
 
-    public async Task<ContentDialogResult> ShowAsync(ProgressDialogOptions options)
+    public async Task<FAContentDialogResult> ShowAsync(ProgressDialogOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
 
@@ -79,7 +79,7 @@ public class ProgressDialog
         panel.Children.Add(_messageTextBlock);
         panel.Children.Add(_progressBar);
 
-        _dialog = new ContentDialog
+        _dialog = new FAContentDialog
         {
             Title = options.Title,
             Content = panel,

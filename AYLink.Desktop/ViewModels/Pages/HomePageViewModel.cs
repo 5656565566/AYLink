@@ -108,7 +108,7 @@ public partial class HomePageViewModel : PageViewModelBase
             localizer.GetString("HomePage.AddDeviceConnect", "连接"),
             localizer.GetString("HomePage.AddDeviceCancel", "取消"));
 
-        if (result != ContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary)
         {
             return;
         }
@@ -324,7 +324,7 @@ public partial class HomePageViewModel : PageViewModelBase
             confirmText,
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != ContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary)
         {
             return;
         }

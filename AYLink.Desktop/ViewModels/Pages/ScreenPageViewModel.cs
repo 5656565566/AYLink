@@ -140,6 +140,5 @@ public partial class ScreenPageViewModel : TabbedPageViewModelBase<ScreenTabView
     public override void Dispose()
     {
         base.Dispose();
-        GC.SuppressFinalize(this);
     }
 }

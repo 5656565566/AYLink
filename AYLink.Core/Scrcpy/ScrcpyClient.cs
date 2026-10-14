@@ -314,6 +314,5 @@ public class ScrcpyClient : IDisposable
         _videoDecoder?.Dispose();
         _audioDecoder?.Dispose();
 
-        GC.SuppressFinalize(this);
     }
 }

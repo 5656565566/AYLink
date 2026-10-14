@@ -128,12 +128,12 @@ public partial class DeviceGroupsPageViewModel : PageViewModelBase
     [RelayCommand]
     private void CreateGroup()
     {
-        OpenEditor(null, true);
+        _ = OpenEditorAsync(null, true);
     }
 
     private void ManageGroup(DeviceGroupItemViewModel group)
     {
-        OpenEditor(group, false);
+        _ = OpenEditorAsync(group, false);
     }
 
     private async Task DeleteGroupAsync(DeviceGroupItemViewModel item)
@@ -145,7 +145,7 @@ public partial class DeviceGroupsPageViewModel : PageViewModelBase
             localizer.GetString("Dialog.OK", "确定"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != ContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary)
         {
             return;
         }
@@ -260,7 +260,7 @@ public partial class DeviceGroupsPageViewModel : PageViewModelBase
         }
     }
 
-    private async void OpenEditor(DeviceGroupItemViewModel? group, bool createMode)
+    private async Task OpenEditorAsync(DeviceGroupItemViewModel? group, bool createMode)
     {
         IsCreateMode = createMode;
         SelectedGroup = group;

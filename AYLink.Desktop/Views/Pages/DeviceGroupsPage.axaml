@@ -52,7 +52,7 @@
                         Padding="8,6"
                         VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <ui:SymbolIcon Symbol="Back" FontSize="16"/>
+                        <ui:FASymbolIcon Symbol="Back" FontSize="16"/>
                         <TextBlock Text="{i18n:Tr DeviceGroupsPage.BackToSettings, DefaultText='返回'}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
@@ -77,18 +77,18 @@
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                             <TextBox Grid.Column="0"
                                      Text="{Binding SearchKeyword}"
-                                     Watermark="{i18n:Tr DeviceGroupsPage.GroupSearchPlaceholder, DefaultText='搜索分组名称或描述'}"
+                                     PlaceholderText="{i18n:Tr DeviceGroupsPage.GroupSearchPlaceholder, DefaultText='搜索分组名称或描述'}"
                                      MinHeight="34"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                                 <Button Command="{Binding RefreshCommand}" IsEnabled="{Binding !IsLoading}" Padding="10,6">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <ui:SymbolIcon Symbol="Refresh" FontSize="15"/>
+                                        <ui:FASymbolIcon Symbol="Refresh" FontSize="15"/>
                                         <TextBlock Text="{i18n:Tr DeviceGroupsPage.Refresh, DefaultText='刷新'}"/>
                                     </StackPanel>
                                 </Button>
                                 <Button Command="{Binding CreateGroupCommand}" Padding="10,6">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <ui:SymbolIcon Symbol="Add" FontSize="15"/>
+                                        <ui:FASymbolIcon Symbol="Add" FontSize="15"/>
                                         <TextBlock Text="{i18n:Tr DeviceGroupsPage.CreateGroup, DefaultText='新建设备分组'}"/>
                                     </StackPanel>
                                 </Button>
@@ -141,7 +141,7 @@
                                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
                                                         <Button Command="{Binding ManageCommand}" Padding="10,6">
                                                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                <ui:SymbolIcon Symbol="Edit" FontSize="14"/>
+                                                                <ui:FASymbolIcon Symbol="Edit" FontSize="14"/>
                                                                 <TextBlock Text="{i18n:Tr DeviceGroupsPage.Manage, DefaultText='管理'}"/>
                                                             </StackPanel>
                                                         </Button>
@@ -149,7 +149,7 @@
                                                                 IsEnabled="{Binding CanDelete}"
                                                                 Padding="10,6">
                                                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                <ui:SymbolIcon Symbol="Delete" FontSize="14"/>
+                                                                <ui:FASymbolIcon Symbol="Delete" FontSize="14"/>
                                                                 <TextBlock Text="{i18n:Tr DeviceGroupsPage.DeleteGroup, DefaultText='删除'}"/>
                                                             </StackPanel>
                                                         </Button>
@@ -185,7 +185,7 @@
                                         Padding="8,6"
                                         VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <ui:SymbolIcon Symbol="Back" FontSize="16"/>
+                                        <ui:FASymbolIcon Symbol="Back" FontSize="16"/>
                                         <TextBlock Text="{i18n:Tr DeviceGroupsPage.BackToList, DefaultText='返回分组列表'}"/>
                                     </StackPanel>
                                 </Button>
@@ -203,7 +203,7 @@
                                     <TextBlock Text="{i18n:Tr DeviceGroupsPage.GroupName, DefaultText='分组名称'}" Opacity="0.75"/>
                                     <TextBox Text="{Binding EditingName}"
                                              IsEnabled="{Binding CanEditGroupForm}"
-                                             Watermark="{i18n:Tr DeviceGroupsPage.GroupNameWatermark, DefaultText='分组名称'}"/>
+                                             PlaceholderText="{i18n:Tr DeviceGroupsPage.GroupNameWatermark, DefaultText='分组名称'}"/>
                                 </StackPanel>
 
                                 <StackPanel Spacing="6">
@@ -213,7 +213,7 @@
                                              AcceptsReturn="True"
                                              TextWrapping="Wrap"
                                              MinHeight="74"
-                                             Watermark="{i18n:Tr DeviceGroupsPage.GroupDescriptionPlaceholder, DefaultText='可以写这个分组的用途或归属范围'}"/>
+                                             PlaceholderText="{i18n:Tr DeviceGroupsPage.GroupDescriptionPlaceholder, DefaultText='可以写这个分组的用途或归属范围'}"/>
                                 </StackPanel>
 
                                 <Border IsVisible="{Binding IsEditingSystemGroup}"

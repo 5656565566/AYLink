@@ -144,7 +144,6 @@ internal sealed class AgentScreenSession : IScreenSession, IResizableScreenSessi
         DetachSessionHandlers();
         CleanupAudio();
         _ = EnsureShutdownStarted(CancellationToken.None);
-        GC.SuppressFinalize(this);
     }
 
     public async ValueTask DisposeAsync()
@@ -163,7 +162,6 @@ internal sealed class AgentScreenSession : IScreenSession, IResizableScreenSessi
         DetachSessionHandlers();
         CleanupAudio();
         await EnsureShutdownStarted(CancellationToken.None);
-        GC.SuppressFinalize(this);
     }
 
     private static AgentWebRtcSessionOptions CreateSessionOptions(

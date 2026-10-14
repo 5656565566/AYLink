@@ -283,7 +283,7 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
             localizer.GetString("Dialog.OK", "确定"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary)
+        if (result != FluentAvalonia.UI.Controls.FAContentDialogResult.Primary)
         {
             return;
         }
@@ -323,7 +323,7 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
             localizer.GetString("ServerSettings.LogoutTitle", "退出登录"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary)
+        if (result != FluentAvalonia.UI.Controls.FAContentDialogResult.Primary)
         {
             return;
         }
@@ -349,7 +349,7 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
             localizer.GetString("ServerSettings.LogoutAllTitle", "退出全部会话"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary)
+        if (result != FluentAvalonia.UI.Controls.FAContentDialogResult.Primary)
         {
             return;
         }
@@ -414,7 +414,7 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
             localizer.GetString("Dialog.OK", "确定"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result == FluentAvalonia.UI.Controls.ContentDialogResult.Primary)
+        if (result == FluentAvalonia.UI.Controls.FAContentDialogResult.Primary)
         {
             _agentSessions.RemoveServer(_serverId);
             NavigationService.Instance.GoBack();

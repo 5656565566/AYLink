@@ -92,7 +92,7 @@ public partial class TabbedPageView : UserControl
     #region 拖拽脱离相关字段
 
     // 拖拽状态
-    private TabViewItem? _draggingTabItem;
+    private FATabViewItem? _draggingTabItem;
     private TabItemViewModelBase? _draggingTabVm;
     private Point _dragStartPoint;
     private bool _isDragTracking;
@@ -209,7 +209,7 @@ public partial class TabbedPageView : UserControl
     /// <summary>
     /// 统一的标签页关闭处理 - 调用 TabItemViewModelBase.CloseTabCommand
     /// </summary>
-    private static void TabView_TabDragStarting(TabView _, TabViewTabDragStartingEventArgs args)
+    private static void TabView_TabDragStarting(FATabView _, FATabViewTabDragStartingEventArgs args)
     {
         if (args.Item is TabItemViewModelBase tabVm && !tabVm.IsClosable)
         {
@@ -221,7 +221,7 @@ public partial class TabbedPageView : UserControl
         }
     }
 
-    private static void TabView_TabCloseRequested(TabView _, TabViewTabCloseRequestedEventArgs args)
+    private static void TabView_TabCloseRequested(FATabView _, FATabViewTabCloseRequestedEventArgs args)
     {
         // FluentAvalonia TabView 的 args.Item 可能是 ViewModel 或 TabViewItem
         if (args.Item is TabItemViewModelBase tabVm)
@@ -244,7 +244,7 @@ public partial class TabbedPageView : UserControl
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
 
         // 查找点击目标是否为 TabViewItem
-        var tabItem = FindAncestor<TabViewItem>(e.Source as Visual);
+        var tabItem = FindAncestor<FATabViewItem>(e.Source as Visual);
         if (tabItem == null) return;
 
         // 检查是否点击在关闭按钮上
@@ -556,7 +556,7 @@ public partial class TabbedPageView : UserControl
     {
         // 为 TabView 中的 TabViewItem 添加拖拽时的透明度修复样式
         var style = new Style(x =>
-            x.OfType<TabViewItem>().Class(":dragging"));
+            x.OfType<FATabViewItem>().Class(":dragging"));
         style.Setters.Add(new Setter(OpacityProperty, 0.7));
 
         // 拖拽时的缩放效果
@@ -585,7 +585,7 @@ public partial class TabbedPageView : UserControl
     /// <summary>
     /// 获取 TabViewItem 对应的 ViewModel
     /// </summary>
-    private static TabItemViewModelBase? GetTabViewModel(TabViewItem tabItem)
+    private static TabItemViewModelBase? GetTabViewModel(FATabViewItem tabItem)
     {
         if (tabItem.Content is TabItemViewModelBase vm) return vm;
         if (tabItem.DataContext is TabItemViewModelBase vm2) return vm2;
@@ -609,7 +609,7 @@ public partial class TabbedPageView : UserControl
     /// <summary>
     /// 检查点击是否在按钮元素上（关闭按钮等）
     /// </summary>
-    private static bool IsClickOnButton(Visual? source, TabViewItem tabItem)
+    private static bool IsClickOnButton(Visual? source, FATabViewItem tabItem)
     {
         var current = source as Control;
         while (current != null && current != tabItem)

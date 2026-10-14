@@ -17,26 +17,26 @@
         <DataTemplate x:Key="TaskTabContentTemplate" x:DataType="vm:TaskTabViewModel">
             <Grid RowDefinitions="Auto,*">
                 <!-- 顶部 CommandBar -->
-                <ui:CommandBar Grid.Row="0"
+                <ui:FACommandBar Grid.Row="0"
                                DefaultLabelPosition="Right"
                                Background="Transparent">
                     
                     <!-- 左侧：搜索与筛选条件 -->
-                    <ui:CommandBar.Content>
+                    <ui:FACommandBar.Content>
                         <StackPanel Orientation="Horizontal"
                                     VerticalAlignment="Center"
                                     Margin="8,0,0,0"
                                     Spacing="8">
-                            <ui:CommandBarButton Label="{i18n:Tr TaskPage.Search, DefaultText='搜索'}"
+                            <ui:FACommandBarButton Label="{i18n:Tr TaskPage.Search, DefaultText='搜索'}"
                                                  Command="{Binding SearchCommand}"
                                                  VerticalAlignment="Center">
-                                <ui:CommandBarButton.IconSource>
-                                    <ui:SymbolIconSource Symbol="Find"/>
-                                </ui:CommandBarButton.IconSource>
-                            </ui:CommandBarButton>
+                                <ui:FACommandBarButton.IconSource>
+                                    <ui:FASymbolIconSource Symbol="Find"/>
+                                </ui:FACommandBarButton.IconSource>
+                            </ui:FACommandBarButton>
 
                             <TextBox Text="{Binding SearchText}"
-                                     Watermark="{i18n:Tr TaskPage.SearchWatermark, DefaultText='搜索任务名称或任务来源...'}"
+                                     PlaceholderText="{i18n:Tr TaskPage.SearchWatermark, DefaultText='搜索任务名称或任务来源...'}"
                                      Width="260"
                                      VerticalAlignment="Center"
                                      KeyDown="SearchBox_KeyDown"/>
@@ -53,37 +53,37 @@
                                 </controls:SafeComboBox.ItemTemplate>
                             </controls:SafeComboBox>
                         </StackPanel>
-                    </ui:CommandBar.Content>
+                    </ui:FACommandBar.Content>
 
                     <!-- 右侧：全局动作按钮 -->
-                    <ui:CommandBar.PrimaryCommands>
-                        <ui:CommandBarButton Label="{i18n:Tr TaskPage.ClearFilter, DefaultText='清空条件'}"
+                    <ui:FACommandBar.PrimaryCommands>
+                        <ui:FACommandBarButton Label="{i18n:Tr TaskPage.ClearFilter, DefaultText='清空条件'}"
                                              Command="{Binding ClearFilterCommand}"
                                              VerticalAlignment="Center">
-                            <ui:CommandBarButton.IconSource>
-                                <ui:SymbolIconSource Symbol="Clear"/>
-                            </ui:CommandBarButton.IconSource>
-                        </ui:CommandBarButton>
+                            <ui:FACommandBarButton.IconSource>
+                                <ui:FASymbolIconSource Symbol="Clear"/>
+                            </ui:FACommandBarButton.IconSource>
+                        </ui:FACommandBarButton>
 
-                        <ui:CommandBarButton Label="{i18n:Tr TaskPage.CreateNewTab, DefaultText='新标签页'}"
+                        <ui:FACommandBarButton Label="{i18n:Tr TaskPage.CreateNewTab, DefaultText='新标签页'}"
                                              Command="{Binding CreateNewTabCommand}"
                                              VerticalAlignment="Center">
-                            <ui:CommandBarButton.IconSource>
-                                <ui:SymbolIconSource Symbol="Page"/>
-                            </ui:CommandBarButton.IconSource>
-                        </ui:CommandBarButton>
+                            <ui:FACommandBarButton.IconSource>
+                                <ui:FASymbolIconSource Symbol="Page"/>
+                            </ui:FACommandBarButton.IconSource>
+                        </ui:FACommandBarButton>
 
-                        <ui:CommandBarSeparator/>
+                        <ui:FACommandBarSeparator/>
 
-                        <ui:CommandBarButton Label="{i18n:Tr TaskPage.Refresh, DefaultText='刷新'}"
+                        <ui:FACommandBarButton Label="{i18n:Tr TaskPage.Refresh, DefaultText='刷新'}"
                                              Command="{Binding RefreshCommand}"
                                              VerticalAlignment="Center">
-                            <ui:CommandBarButton.IconSource>
-                                <ui:SymbolIconSource Symbol="Refresh"/>
-                            </ui:CommandBarButton.IconSource>
-                        </ui:CommandBarButton>
-                    </ui:CommandBar.PrimaryCommands>
-                </ui:CommandBar>
+                            <ui:FACommandBarButton.IconSource>
+                                <ui:FASymbolIconSource Symbol="Refresh"/>
+                            </ui:FACommandBarButton.IconSource>
+                        </ui:FACommandBarButton>
+                    </ui:FACommandBar.PrimaryCommands>
+                </ui:FACommandBar>
 
                 <!-- 主内容区域：始终显示表头 + DataGrid -->
                 <Border Grid.Row="1"
@@ -167,7 +167,7 @@
                                         VerticalAlignment="Center"
                                         Spacing="12"
                                         Opacity="0.55">
-                                <ui:SymbolIcon Symbol="Clock" FontSize="48"/>
+                                <ui:FASymbolIcon Symbol="Clock" FontSize="48"/>
                                 <TextBlock Text="{Binding EmptyMessage}"
                                            Theme="{StaticResource SubtitleTextBlockStyle}"
                                            HorizontalAlignment="Center"/>
@@ -197,7 +197,7 @@
                           StatusBarTemplate="{StaticResource TaskStatusBarTemplate}"
                           ShowStatusBar="True">
         <views:TabbedPageView.EmptyStateIcon>
-            <ui:SymbolIcon Symbol="Clock" FontSize="64"/>
+            <ui:FASymbolIcon Symbol="Clock" FontSize="64"/>
         </views:TabbedPageView.EmptyStateIcon>
     </views:TabbedPageView>
 </UserControl>

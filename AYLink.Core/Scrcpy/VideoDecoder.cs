@@ -128,7 +128,7 @@ public unsafe class VideoDecoder : IDisposable
         if (ffmpeg.avcodec_open2(_codecContext, codec, null) < 0)
             throw new InvalidOperationException("Failed to open codec");
 
-        _parserCtx = ffmpeg.av_parser_init((int)codecId);
+        _parserCtx = ffmpeg.av_parser_init(codecId);
         if (_parserCtx == null && _selectedCodec != VideoCodec.AV1)
             throw new InvalidOperationException("Failed to init parser");
     }
@@ -495,6 +495,5 @@ public unsafe class VideoDecoder : IDisposable
             _bgraBufferSize = 0;
         }
 
-        GC.SuppressFinalize(this);
     }
 }

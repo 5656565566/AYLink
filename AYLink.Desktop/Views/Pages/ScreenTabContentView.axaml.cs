@@ -42,7 +42,7 @@ public partial class ScreenTabContentView : UserControl
         {
             Title = viewModel.Title,
             WindowState = WindowState.FullScreen,
-            SystemDecorations = SystemDecorations.None,
+            WindowDecorations = WindowDecorations.None,
             Topmost = true,
             Background = Brushes.Black,
             DataContext = viewModel,
@@ -102,7 +102,7 @@ public partial class ScreenTabContentView : UserControl
 
     private static bool WindowIsFullScreenWindow(Window win)
     {
-        return win.SystemDecorations == SystemDecorations.None && win.WindowState == WindowState.FullScreen;
+        return win.WindowDecorations == WindowDecorations.None && win.WindowState == WindowState.FullScreen;
     }
 
     public void SetVideoStretch(Stretch stretch)

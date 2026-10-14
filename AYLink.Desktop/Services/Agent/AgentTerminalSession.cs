@@ -107,7 +107,6 @@ public sealed class AgentTerminalSession(AgentServerRuntime runtime, int remoteD
         await StopAsync();
         _cts?.Dispose();
         _socket.Dispose();
-        GC.SuppressFinalize(this);
     }
 
     private async Task ReceiveLoopAsync(CancellationToken cancellationToken)

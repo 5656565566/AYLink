@@ -394,7 +394,6 @@ public partial class ShellTabViewModel : TabItemViewModelBase, IDisposable
 
     public void Dispose()
     {
-        GC.SuppressFinalize(this);
         if (!_disposed)
         {
             _disposed = true;

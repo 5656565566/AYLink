@@ -20,7 +20,7 @@
     <views:TabbedPageView TabContentTemplate="{StaticResource ScreenTabContentTemplate}"
                           ShowStatusBar="False">
         <views:TabbedPageView.EmptyStateIcon>
-            <ui:SymbolIcon Symbol="Play" FontSize="64"/>
+            <ui:FASymbolIcon Symbol="Play" FontSize="64"/>
         </views:TabbedPageView.EmptyStateIcon>
     </views:TabbedPageView>
 </UserControl>

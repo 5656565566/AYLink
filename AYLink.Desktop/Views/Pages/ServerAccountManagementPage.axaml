@@ -29,7 +29,7 @@
                         Padding="8,6"
                         VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <ui:SymbolIcon Symbol="Back" FontSize="16"/>
+                        <ui:FASymbolIcon Symbol="Back" FontSize="16"/>
                         <TextBlock Text="{i18n:Tr ServerSettings.BackToServerSettings, DefaultText='返回'}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
@@ -49,13 +49,13 @@
                            TextWrapping="Wrap"/>
 
                 <TextBlock Text="{i18n:Tr ServerSettings.CreateUserTitle, DefaultText='创建账号'}" Classes="h2"/>
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.CreateUserTitle, DefaultText='创建账号'}"
+                <ui:FASettingsExpander Header="{i18n:Tr ServerSettings.CreateUserTitle, DefaultText='创建账号'}"
                                      Description="{i18n:Tr ServerSettings.CreateUserDescription, DefaultText='管理员创建本地登录账号，并绑定已有角色。'}"
                                      IsExpanded="True">
-                    <ui:SettingsExpander.Items>
+                    <ui:FASettingsExpander.Items>
                         <StackPanel Margin="16,8,16,16" Spacing="12">
-                            <TextBox Text="{Binding NewUserName}" Watermark="{i18n:Tr ServerSettings.Username, DefaultText='用户名'}"/>
-                            <TextBox Text="{Binding NewUserPassword}" PasswordChar="•" Watermark="{i18n:Tr ServerSettings.Password, DefaultText='初始密码'}"/>
+                            <TextBox Text="{Binding NewUserName}" PlaceholderText="{i18n:Tr ServerSettings.Username, DefaultText='用户名'}"/>
+                            <TextBox Text="{Binding NewUserPassword}" PasswordChar="•" PlaceholderText="{i18n:Tr ServerSettings.Password, DefaultText='初始密码'}"/>
                             <TextBlock Text="{i18n:Tr ServerSettings.RoleSelection, DefaultText='选择角色'}" FontWeight="SemiBold"/>
                             <ItemsControl ItemsSource="{Binding NewUserRoleOptions}">
                                 <ItemsControl.ItemTemplate>
@@ -76,18 +76,18 @@
                                     HorizontalAlignment="Left"
                                     Content="{i18n:Tr ServerSettings.CreateUserTitle, DefaultText='创建账号'}"/>
                         </StackPanel>
-                    </ui:SettingsExpander.Items>
-                </ui:SettingsExpander>
+                    </ui:FASettingsExpander.Items>
+                </ui:FASettingsExpander>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.UserListTitle, DefaultText='账号列表'}"
+                <ui:FASettingsExpander Header="{i18n:Tr ServerSettings.UserListTitle, DefaultText='账号列表'}"
                                      Description="{i18n:Tr ServerSettings.UserListDescription, DefaultText='启用、禁用、重置密码并调整角色归属。'}"
                                      IsExpanded="True"
                                      IsVisible="{Binding HasManagedUsers}">
-                    <ui:SettingsExpander.Footer>
+                    <ui:FASettingsExpander.Footer>
                         <Button Command="{Binding RefreshAccountManagementCommand}"
                                 Content="{i18n:Tr Common.Refresh, DefaultText='刷新'}"/>
-                    </ui:SettingsExpander.Footer>
-                    <ui:SettingsExpander.Items>
+                    </ui:FASettingsExpander.Footer>
+                    <ui:FASettingsExpander.Items>
                         <TextBlock Text="{i18n:Tr ServerSettings.Loading, DefaultText='正在加载账户数据...'}"
                                    Margin="16,8,16,8"
                                    IsVisible="{Binding IsAccountDataLoading}"/>
@@ -140,16 +140,16 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ui:SettingsExpander.Items>
-                </ui:SettingsExpander>
+                    </ui:FASettingsExpander.Items>
+                </ui:FASettingsExpander>
 
                 <TextBlock Text="{i18n:Tr ServerSettings.CreateRoleTitle, DefaultText='创建角色'}" Classes="h2"/>
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.CreateRoleTitle, DefaultText='创建角色'}"
+                <ui:FASettingsExpander Header="{i18n:Tr ServerSettings.CreateRoleTitle, DefaultText='创建角色'}"
                                      Description="{i18n:Tr ServerSettings.CreateRoleDescription, DefaultText='角色负责组合一组权限，用户再绑定角色。'}">
-                    <ui:SettingsExpander.Items>
+                    <ui:FASettingsExpander.Items>
                         <StackPanel Margin="16,8,16,16" Spacing="12">
-                            <TextBox Text="{Binding NewRoleName}" Watermark="{i18n:Tr ServerSettings.RoleName, DefaultText='角色名'}"/>
-                            <TextBox Text="{Binding NewRoleDescription}" Watermark="{i18n:Tr ServerSettings.RoleDescription, DefaultText='角色说明'}"/>
+                            <TextBox Text="{Binding NewRoleName}" PlaceholderText="{i18n:Tr ServerSettings.RoleName, DefaultText='角色名'}"/>
+                            <TextBox Text="{Binding NewRoleDescription}" PlaceholderText="{i18n:Tr ServerSettings.RoleDescription, DefaultText='角色说明'}"/>
                             <TextBlock Text="{i18n:Tr ServerSettings.PermissionSelection, DefaultText='权限选择'}" FontWeight="SemiBold"/>
                             <ItemsControl ItemsSource="{Binding NewRolePermissionOptions}">
                                 <ItemsControl.ItemTemplate>
@@ -170,14 +170,14 @@
                                     HorizontalAlignment="Left"
                                     Content="{i18n:Tr ServerSettings.CreateRoleTitle, DefaultText='创建角色'}"/>
                         </StackPanel>
-                    </ui:SettingsExpander.Items>
-                </ui:SettingsExpander>
+                    </ui:FASettingsExpander.Items>
+                </ui:FASettingsExpander>
 
-                <ui:SettingsExpander Header="{i18n:Tr ServerSettings.RoleListTitle, DefaultText='角色列表'}"
+                <ui:FASettingsExpander Header="{i18n:Tr ServerSettings.RoleListTitle, DefaultText='角色列表'}"
                                      Description="{i18n:Tr ServerSettings.RoleListDescription, DefaultText='编辑角色名称、说明和权限。保存后相关用户会被要求重新登录。'}"
                                      IsExpanded="True"
                                      IsVisible="{Binding HasManagedRoles}">
-                    <ui:SettingsExpander.Items>
+                    <ui:FASettingsExpander.Items>
                         <ItemsControl ItemsSource="{Binding ManagedRoles}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:AgentRoleItemViewModel">
@@ -189,7 +189,7 @@
                                             Padding="16">
                                         <StackPanel Spacing="12">
                                             <TextBox Text="{Binding Name}"/>
-                                            <TextBox Text="{Binding Description}" Watermark="{i18n:Tr ServerSettings.RoleDescription, DefaultText='角色说明'}"/>
+                                            <TextBox Text="{Binding Description}" PlaceholderText="{i18n:Tr ServerSettings.RoleDescription, DefaultText='角色说明'}"/>
                                             <TextBlock Text="{i18n:Tr ServerSettings.InternalRolePermissionsLocked, DefaultText='内置角色的权限内容已锁定，只允许修改名称和说明。'}"
                                                        Opacity="0.75"
                                                        TextWrapping="Wrap"
@@ -220,8 +220,8 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ui:SettingsExpander.Items>
-                </ui:SettingsExpander>
+                    </ui:FASettingsExpander.Items>
+                </ui:FASettingsExpander>
             </StackPanel>
         </ScrollViewer>
     </Grid>

@@ -164,7 +164,7 @@ public class TerminalControl : TemplatedControl
         _userInputBacking?.Invoke(this, e);
     }
 
-    protected override void OnGotFocus(GotFocusEventArgs e)
+    protected override void OnGotFocus(FocusChangedEventArgs e)
     {
         base.OnGotFocus(e);
 

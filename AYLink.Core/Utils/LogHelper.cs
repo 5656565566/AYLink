@@ -48,7 +48,8 @@ public sealed class LogHelper
         {
             FileName = "${basedir}/Logs/${shortdate}/${level}.log",
             Layout = "${longdate} [${threadid}] | ${message} ${onexception:${exception:format=tostring} ${newline} ${stacktrace} ${newline}",
-            Encoding = Encoding.Default,
+            // 日志统一 UTF-8，避免非中文 Windows 环境下 Encoding.Default(GBK) 写出的内容乱码
+            Encoding = Encoding.UTF8,
             WriteBom = false
         };
         config.AddTarget(fileTarget);

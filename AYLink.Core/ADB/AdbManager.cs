@@ -121,7 +121,7 @@ public sealed class AdbManager
     /// <param name="pairingPort">设备上显示的配对端口</param>
     /// <param name="pairingCode">设备上显示的配对码</param>
     /// <returns>如果配对成功返回 true 否则返回 false</returns>
-    public static async Task<bool> PairWifiDevice(string ipAddress, int pairingPort, string pairingCode)
+    public static async Task<bool> PairWifiDeviceAsync(string ipAddress, int pairingPort, string pairingCode)
     {
         try
         {
@@ -144,7 +144,7 @@ public sealed class AdbManager
     /// <param name="host">设备的主机名或 IP 地址</param>
     /// <param name="port">设备的端口号</param>
     /// <returns>成功连接则返回 DeviceModel 否则返回 null</returns>
-    public async Task<DeviceModel?> ConnectDevice(string host, int port)
+    public async Task<DeviceModel?> ConnectDeviceAsync(string host, int port)
     {
         string deviceSerial = $"{host}:{port}";
 
@@ -188,7 +188,7 @@ public sealed class AdbManager
     /// 刷新已连接的设备列表此方法会获取当前所有通过 ADB 连接的设备 
     /// 并将任何尚未在内部字典中的新设备添加进去
     /// </summary>
-    public async Task RefreshConnectedDevices()
+    public async Task RefreshConnectedDevicesAsync()
     {
 
         if (!AdbServer.Instance.GetStatus().IsRunning)
@@ -247,7 +247,7 @@ public sealed class AdbManager
     /// 断开与设备的连接
     /// </summary>
     /// <param name="serial">设备的序列号</param>
-    public async void DisconnectDevice(string serial)
+    public async Task DisconnectDeviceAsync(string serial)
     {
         if (_connectedDevices.TryGetValue(serial, out _))
         {

@@ -149,7 +149,7 @@ public partial class FilePaneViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public async Task DeleteFile(FileSystemModel? file)
+    public async Task DeleteFileAsync(FileSystemModel? file)
     {
         if (file == null || file.Name == "..") return;
 
@@ -159,7 +159,7 @@ public partial class FilePaneViewModel : ViewModelBase
             string.Format(localizer.GetString("FilePage.ConfirmDeleteMessage", "确定要删除 {0} 吗？"), file.Name),
             localizer.GetString("FilePage.DeleteButton", "删除"),
             localizer.GetString("Dialog.Cancel", "取消"));
-        if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary) return;
+        if (result != FluentAvalonia.UI.Controls.FAContentDialogResult.Primary) return;
         string targetPath = SelectedSource!.IsLocal
             ? Path.Combine(CurrentPath, file.Name)
             : (CurrentPath.EndsWith('/') ? $"{CurrentPath}{file.Name}" : $"{CurrentPath}/{file.Name}");
@@ -369,7 +369,7 @@ public partial class FilePaneViewModel : ViewModelBase
             string.Format(localizer.GetString("FilePage.ConfirmDeleteMessage", "确定要删除 {0} 吗？"), file.Name),
             localizer.GetString("FilePage.DeleteButton", "删除"),
             localizer.GetString("Dialog.Cancel", "取消"));
-        if (result != FluentAvalonia.UI.Controls.ContentDialogResult.Primary) return;
+        if (result != FluentAvalonia.UI.Controls.FAContentDialogResult.Primary) return;
         string targetPath = SelectedSource!.IsLocal
             ? Path.Combine(CurrentPath, file.Name)
             : (CurrentPath.EndsWith('/') ? $"{CurrentPath}{file.Name}" : $"{CurrentPath}/{file.Name}");

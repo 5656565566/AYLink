@@ -17,7 +17,7 @@ public partial class ToastModel : ObservableObject
     public partial string Content { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial InfoBarSeverity Severity { get; set; } = InfoBarSeverity.Informational;
+    public partial FAInfoBarSeverity Severity { get; set; } = FAInfoBarSeverity.Informational;
 
     [ObservableProperty]
     public partial TimeSpan Duration { get; set; } = TimeSpan.FromSeconds(3);
@@ -55,7 +55,7 @@ public sealed class ToastManager
     {
     }
 
-    public ToastModel Show(string title, string content, InfoBarSeverity severity = InfoBarSeverity.Informational, TimeSpan? duration = null)
+    public ToastModel Show(string title, string content, FAInfoBarSeverity severity = FAInfoBarSeverity.Informational, TimeSpan? duration = null)
     {
         var toast = new ToastModel
         {
@@ -102,7 +102,7 @@ public sealed class ToastManager
     /// <param name="cancelAction">取消回调 不为 null 则显示取消按钮</param>
     /// <returns>可用于更新进度的 ToastModel</returns>
     public ToastModel ShowProgress(string title, string content,
-        InfoBarSeverity severity = InfoBarSeverity.Informational,
+        FAInfoBarSeverity severity = FAInfoBarSeverity.Informational,
         bool isIndeterminate = true,
         Action? cancelAction = null)
     {

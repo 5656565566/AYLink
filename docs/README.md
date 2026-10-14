@@ -59,7 +59,7 @@
 
 > [!TIP]
 > **💡 Linux / macOS 环境提示**：
-> 在 Linux 和 macOS 系统下，推荐使用系统自带的包管理器（如 `apt`, `brew` 等）安装并配置 ADB 与 FFmpeg 的环境变量，以确保程序后台能够正常调用这些依赖。
+> 在 Linux 和 macOS 系统下，推荐使用系统自带的包管理器（如 `apt`, `brew` 等）安装 ADB 与 FFmpeg 9 共享库，并配置相应路径。当前 FFmpeg.AutoGen 9 绑定要求 FFmpeg 9 的原生库；FFmpeg 8.x 库无法替代。Windows 的发布流程会打包匹配的共享库。
 
 ## 📦 依赖与致谢
 

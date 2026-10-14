@@ -106,7 +106,6 @@ internal sealed class LocalScreenSession : IScreenSession, IResizableScreenSessi
         CleanupRuntime();
         _audioOutput.Dispose();
         _disposed = true;
-        GC.SuppressFinalize(this);
     }
 
     public ValueTask DisposeAsync()

@@ -37,7 +37,7 @@ public partial class MainWindow : Window
         BackgroundImageManager.Instance.RegisterImageComponent(GlobalBackgroundImage);
         
         // 初始化背景图和亚克力状态
-        var config = ConfigManager.Instance.LoadConfig<Models.AppConfig>("appConfig");
+        var config = ConfigManager.Instance.LoadConfig<Models.AppConfig>(Models.AppConfig.ConfigName);
         UpdateAcrylicAndBackgroundState(config);
 
         // 订阅导航服务 同步 NavigationView 的选中状态
@@ -160,7 +160,7 @@ public partial class MainWindow : Window
         var check = visual;
         while (check != null)
         {
-            if (check is SettingsExpander)
+            if (check is FASettingsExpander)
                 return false;
             check = check.GetVisualParent() as Visual;
         }
@@ -179,7 +179,7 @@ public partial class MainWindow : Window
                 current is CheckBox ||
                 current is RadioButton ||
                 current is NumericUpDown ||
-                current is TabViewListView ||
+                current is FATabViewListView ||
                 current is TabItem)
             {
                 return true;
@@ -194,7 +194,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// NavigationView 选中变化 -> 通知 ViewModel 导航
     /// </summary>
-    private void NavView_OnSelectionChanged(object? sender, NavigationViewSelectionChangedEventArgs e)
+    private void NavView_OnSelectionChanged(object? sender, FANavigationViewSelectionChangedEventArgs e)
     {
         if (_isSyncingSelection) return;
 
@@ -204,7 +204,7 @@ public partial class MainWindow : Window
             {
                 vm.OnNavItemSelected("Settings");
             }
-            else if (e.SelectedItem is NavigationViewItem selectedItem && selectedItem.Tag is string pageKey)
+            else if (e.SelectedItem is FANavigationViewItem selectedItem && selectedItem.Tag is string pageKey)
             {
                 vm.OnNavItemSelected(pageKey);
             }
@@ -234,7 +234,7 @@ public partial class MainWindow : Window
             else
             {
                 var targetItem = NavView.MenuItems
-                    .OfType<NavigationViewItem>()
+                    .OfType<FANavigationViewItem>()
                     .FirstOrDefault(item => item.Tag is string tag && tag == pageKey);
 
                 if (targetItem != null)

@@ -4,8 +4,6 @@ using System.IO;
 
 namespace AYLink.Core.Scrcpy.Control;
 
-#pragma warning disable CS0649
-
 /// <summary>
 /// 封装并序列化发送给scrcpy服务端的控制消息
 /// </summary>
@@ -610,7 +608,6 @@ public class ControlMsgModel
     }
 
     #endregion
-}
-#endregion
 
-#pragma warning restore CS0649
+    #endregion
+}

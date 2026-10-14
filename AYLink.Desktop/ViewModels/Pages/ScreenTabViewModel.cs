@@ -468,40 +468,31 @@ public partial class ScreenTabViewModel : TabItemViewModelBase, IDisposable, IAs
 
     public void Dispose()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposed)
+        if (_disposed)
         {
-            if (disposing)
-            {
-                _disposed = true;
-                DetachEventHandlers();
-                DetachVideoImage();
-                _screenSession.VideoFrameDecoded -= OnVideoFrameDecoded;
-                _screenSession.SessionError -= OnSessionError;
-                _screenSession.StateChanged -= OnSessionStateChanged;
-
-                if (InputProcessor != null)
-                {
-                    InputProcessor.CursorLockRequested -= OnCursorLockRequested;
-                    InputProcessor.Dispose();
-                }
-
-                _inputCoordinator.Dispose();
-                _mouseLockService.Dispose();
-                _screenSession.Dispose();
-                _resizeThrottleTimer.Stop();
-
-                VideoSource?.Dispose();
-                VideoSource = null;
-            }
-
-            _disposed = true;
+            return;
         }
+
+        _disposed = true;
+        DetachEventHandlers();
+        DetachVideoImage();
+        _screenSession.VideoFrameDecoded -= OnVideoFrameDecoded;
+        _screenSession.SessionError -= OnSessionError;
+        _screenSession.StateChanged -= OnSessionStateChanged;
+
+        if (InputProcessor != null)
+        {
+            InputProcessor.CursorLockRequested -= OnCursorLockRequested;
+            InputProcessor.Dispose();
+        }
+
+        _inputCoordinator.Dispose();
+        _mouseLockService.Dispose();
+        _screenSession.Dispose();
+        _resizeThrottleTimer.Stop();
+
+        VideoSource?.Dispose();
+        VideoSource = null;
     }
 
     private void SendControlCommand(byte[] payload)

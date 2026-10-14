@@ -12,6 +12,7 @@
         Icon="/Assets/logo.ico"
         Title="AYLink"
         Width="800" Height="600"
+        WindowDecorationsTheme="{StaticResource AYLinkWindowDecorations}"
         ExtendClientAreaToDecorationsHint="True">
     
     <Grid>
@@ -27,28 +28,28 @@
                 IsHitTestVisible="False" />
         
         <Grid RowDefinitions="*">
-            <ui:TabView x:Name="PART_TabView"
+            <ui:FATabView x:Name="PART_TabView"
                          TabCloseRequested="TabView_TabCloseRequested"
                          Background="Transparent"
                          VerticalAlignment="Stretch"
                          HorizontalAlignment="Stretch"
                          CanReorderTabs="True"
                          IsAddTabButtonVisible="False">
-                <ui:TabView.TabItemTemplate>
+                <ui:FATabView.TabItemTemplate>
                     <DataTemplate x:DataType="vm:TabItemViewModelBase">
-                        <ui:TabViewItem Header="{CompiledBinding Title}"
+                        <ui:FATabViewItem Header="{CompiledBinding Title}"
                                         Content="{CompiledBinding}"
                                         ContentTemplate="{CompiledBinding $parent[local:DetachedTabWindow].DefaultContentTemplate}"
                                         IsClosable="True"
                                         HorizontalContentAlignment="Stretch"
                                         VerticalContentAlignment="Stretch">
-                            <ui:TabViewItem.Background>
+                            <ui:FATabViewItem.Background>
                                 <SolidColorBrush Color="{DynamicResource SolidBackgroundFillColorBase}" Opacity="0.85"/>
-                            </ui:TabViewItem.Background>
-                        </ui:TabViewItem>
+                            </ui:FATabViewItem.Background>
+                        </ui:FATabViewItem>
                     </DataTemplate>
-                </ui:TabView.TabItemTemplate>
-            </ui:TabView>
+                </ui:FATabView.TabItemTemplate>
+            </ui:FATabView>
         </Grid>
     </Grid>
 </Window>

@@ -23,16 +23,16 @@
             <!-- 通用设置 -->
             <TextBlock Text="{i18n:Tr SettingsPage.General, DefaultText='通用'}" Classes="h2" Margin="0,0,0,10"/>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.AutoStart, DefaultText='开机自启'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.AutoStart, DefaultText='开机自启'}"
                                 Description="{i18n:Tr SettingsPage.AutoStartDescription, DefaultText='在系统启动时自动运行'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding IsAutoStartEnabled}" IsEnabled="False" />
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.Language, DefaultText='语言'}"
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.Language, DefaultText='语言'}"
                                 Description="{i18n:Tr SettingsPage.LanguageDescription, DefaultText='选择应用程序的显示语言'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <ComboBox MinWidth="150"
                               ItemsSource="{Binding Languages}"
                               SelectedItem="{Binding SelectedLanguage}">
@@ -53,21 +53,21 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.AudioOutputDevice, DefaultText='音频输出设备'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.AudioOutputDevice, DefaultText='音频输出设备'}"
                                 Description="{i18n:Tr SettingsPage.AudioOutputDeviceDescription, DefaultText='选择用于播放音频的设备'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <ComboBox MinWidth="230"
                               ItemsSource="{Binding AudioOutputDevices}"
                               SelectedItem="{Binding SelectedAudioOutputDevice}" />
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.OutputVolume, DefaultText='输出音量'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.OutputVolume, DefaultText='输出音量'}"
                                 Description="{i18n:Tr SettingsPage.OutputVolumeDescription, DefaultText='调整全局音频输出音量'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <Slider MinWidth="180"
                                 Minimum="0"
@@ -79,179 +79,179 @@
                                    VerticalAlignment="Center"
                                    TextAlignment="Right"/>
                     </StackPanel>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.MuteInBackground, DefaultText='后台静音'}"
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.MuteInBackground, DefaultText='后台静音'}"
                                 Description="{i18n:Tr SettingsPage.MuteInBackgroundDescription, DefaultText='当应用退到后台时自动静音，回到前台后恢复播放'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding MuteInBackground}" />
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.DeviceGroups, DefaultText='设备分组'}"
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.DeviceGroups, DefaultText='设备分组'}"
                                 Description="{i18n:Tr SettingsPage.DeviceGroupsDescription, DefaultText='管理本地设备分组'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <Button Command="{Binding OpenDeviceGroupsCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <ui:SymbolIcon Symbol="Folder" FontSize="16"/>
+                            <ui:FASymbolIcon Symbol="Folder" FontSize="16"/>
                             <TextBlock Text="{i18n:Tr SettingsPage.OpenDeviceGroups, DefaultText='进入管理'}"/>
                         </StackPanel>
                     </Button>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
             <!-- 外观设置 -->
             <TextBlock Text="{i18n:Tr SettingsPage.Appearance, DefaultText='外观'}" Classes="h2"/>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.ThemeMode, DefaultText='主题模式'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.ThemeMode, DefaultText='主题模式'}"
                                 Description="{i18n:Tr SettingsPage.ThemeModeDescription, DefaultText='选择应用程序的主题'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <ComboBox MinWidth="150"
                               ItemsSource="{Binding ThemeModes}"
                               SelectedItem="{Binding SelectedThemeMode}" />
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.AccentColor, DefaultText='强调色'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.AccentColor, DefaultText='强调色'}"
                                 Description="{i18n:Tr SettingsPage.AccentColorDescription, DefaultText='选择应用程序的强调色'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <ColorPicker Color="{Binding AccentColor}"
                                  IsHexInputVisible="True"
                                  IsHitTestVisible="True"
                                  IsColorSpectrumSliderVisible="True"
                                  IsAlphaEnabled="False"/>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.Acrylic, DefaultText='透明亚克力'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.Acrylic, DefaultText='透明亚克力'}"
                                 Description="{i18n:Tr SettingsPage.AcrylicDescription, DefaultText='开启窗口的亚克力透明效果'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding EnableAcrylic}" />
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.BackgroundImage, DefaultText='背景图'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.BackgroundImage, DefaultText='背景图'}"
                                 Description="{i18n:Tr SettingsPage.BackgroundImageDescription, DefaultText='在窗口底层显示背景图片'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding EnableBackgroundImage}" />
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.BackgroundImageMode, DefaultText='背景图模式'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.BackgroundImageMode, DefaultText='背景图模式'}"
                                 Description="{i18n:Tr SettingsPage.BackgroundImageModeDescription, DefaultText='选择随机图片或指定一张图片'}" 
                                 IsVisible="{Binding EnableBackgroundImage}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <RadioButton Content="{i18n:Tr SettingsPage.Random, DefaultText='随机'}" IsChecked="{Binding IsRandomBackground}" GroupName="BgMode" />
                         <RadioButton Content="{i18n:Tr SettingsPage.Specific, DefaultText='指定'}" IsChecked="{Binding !IsRandomBackground}" GroupName="BgMode" />
                     </StackPanel>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.SpecificBackgroundImage, DefaultText='指定背景图'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.SpecificBackgroundImage, DefaultText='指定背景图'}"
                                 Description="{i18n:Tr SettingsPage.SpecificBackgroundImageDescription, DefaultText='选择一张图片作为背景'}" 
                                 IsVisible="{Binding !IsRandomBackground}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="5">
-                        <TextBox Text="{Binding SpecificBackgroundImagePath}" MinWidth="250" Watermark="{i18n:Tr SettingsPage.NotSelected, DefaultText='未选择'}" IsReadOnly="True"/>
+                        <TextBox Text="{Binding SpecificBackgroundImagePath}" MinWidth="250" PlaceholderText="{i18n:Tr SettingsPage.NotSelected, DefaultText='未选择'}" IsReadOnly="True"/>
                         <Button Content="..." Click="SelectBackgroundImageBtn_Click"/>
                     </StackPanel>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
             <!-- 组件 -->
             <TextBlock Text="{i18n:Tr SettingsPage.Components, DefaultText='组件'}" Classes="h2"/>
             
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.ScrcpyVersion, DefaultText='Scrcpy 版本'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.ScrcpyVersion, DefaultText='Scrcpy 版本'}"
                                 Description="{i18n:Tr SettingsPage.ScrcpyVersionDescription, DefaultText='指定 Scrcpy 的版本'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <TextBox Text="{Binding ScrcpyVersion}" MinWidth="150" TextAlignment="Right"/>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.ScrcpyServerPath, DefaultText='Scrcpy Server 路径'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.ScrcpyServerPath, DefaultText='Scrcpy Server 路径'}"
                                 Description="{i18n:Tr SettingsPage.ScrcpyServerPathDescription, DefaultText='选择 Scrcpy Server 文件'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="5">
-                        <TextBox Text="{Binding ScrcpyServer}" MinWidth="250" Watermark="{i18n:Tr SettingsPage.NotSelected, DefaultText='未选择'}"/>
+                        <TextBox Text="{Binding ScrcpyServer}" MinWidth="250" PlaceholderText="{i18n:Tr SettingsPage.NotSelected, DefaultText='未选择'}"/>
                         <Button Content="..." Click="SelectScrcpyServerBtn_Click"/>
                     </StackPanel>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.AdbPath, DefaultText='ADB 路径'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.AdbPath, DefaultText='ADB 路径'}"
                                 Description="{i18n:Tr SettingsPage.AdbPathDescription, DefaultText='选择 ADB 执行文件'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="5">
-                        <TextBox Text="{Binding Adb}" MinWidth="250" Watermark="{i18n:Tr SettingsPage.NotSelected, DefaultText='未选择'}"/>
+                        <TextBox Text="{Binding Adb}" MinWidth="250" PlaceholderText="{i18n:Tr SettingsPage.NotSelected, DefaultText='未选择'}"/>
                         <Button Content="..." Click="SelectAdbBtn_Click"/>
                     </StackPanel>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.FFmpegDirectory, DefaultText='FFmpeg 目录'}" 
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.FFmpegDirectory, DefaultText='FFmpeg 目录'}"
                                 Description="{i18n:Tr SettingsPage.FFmpegDirectoryDescription, DefaultText='选择 FFmpeg 二进制文件目录'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="5">
-                        <TextBox Text="{Binding FFmpegBin}" MinWidth="250" Watermark="{i18n:Tr SettingsPage.NotSelected, DefaultText='未选择'}"/>
+                        <TextBox Text="{Binding FFmpegBin}" MinWidth="250" PlaceholderText="{i18n:Tr SettingsPage.NotSelected, DefaultText='未选择'}"/>
                         <Button Content="..." Click="SelectFFmpegBtn_Click"/>
                     </StackPanel>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
             <!-- 组件版本 -->
             <TextBlock Text="{i18n:Tr SettingsPage.ComponentVersions, DefaultText='组件版本'}" Classes="h2"/>
 
-            <ui:SettingsExpander Header="FFmpeg">
-                <ui:SettingsExpander.Footer>
+            <ui:FASettingsExpander Header="FFmpeg">
+                <ui:FASettingsExpander.Footer>
                     <TextBlock Text="8.0.0" Opacity="0.7" VerticalAlignment="Center"/>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="scrcpy-server">
-                <ui:SettingsExpander.Footer>
+            <ui:FASettingsExpander Header="scrcpy-server">
+                <ui:FASettingsExpander.Footer>
                     <TextBlock Text="3.3.4" Opacity="0.7" VerticalAlignment="Center"/>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="adb">
-                <ui:SettingsExpander.Footer>
+            <ui:FASettingsExpander Header="adb">
+                <ui:FASettingsExpander.Footer>
                     <TextBlock Text="{Binding AdbVersion}" Opacity="0.7" VerticalAlignment="Center"/>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
             <!-- 关于 -->
             <TextBlock Text="{i18n:Tr SettingsPage.About, DefaultText='关于'}" Classes="h2"/>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.AppVersion, DefaultText='应用版本'}">
-                <ui:SettingsExpander.Footer>
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.AppVersion, DefaultText='应用版本'}">
+                <ui:FASettingsExpander.Footer>
                     <TextBlock Text="{Binding AppVersion}" Opacity="0.7" VerticalAlignment="Center"/>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.CheckForUpdates, DefaultText='检查更新'}"
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.CheckForUpdates, DefaultText='检查更新'}"
                                 Description="{i18n:Tr SettingsPage.CheckForUpdatesDescription, DefaultText='获取最新版本的应用程序'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <Button Content="{i18n:Tr SettingsPage.CheckNow, DefaultText='立即检查'}" Command="{Binding CheckForUpdatesCommand}"/>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="GitHub"
+            <ui:FASettingsExpander Header="GitHub"
                                 Description="https://github.com/5656565566/AYLink">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <Button Content="{i18n:Tr SettingsPage.OpenGithubUrl, DefaultText='打开 GitHub 仓库'}"
                             Command="{Binding OpenUrlCommand}"
                             CommandParameter="https://github.com/5656565566/AYLink"/>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
  
-            <ui:SettingsExpander Header="{i18n:Tr SettingsPage.ResetToDefaults, DefaultText='恢复默认设置'}"
+            <ui:FASettingsExpander Header="{i18n:Tr SettingsPage.ResetToDefaults, DefaultText='恢复默认设置'}"
                                 Description="{i18n:Tr SettingsPage.ResetToDefaultsDescription, DefaultText='将所有设置恢复为初始状态'}">
-                <ui:SettingsExpander.Footer>
+                <ui:FASettingsExpander.Footer>
                     <Button Content="{i18n:Tr SettingsPage.Reset, DefaultText='恢复'}" Command="{Binding ResetToDefaultsCommand}"/>
-                </ui:SettingsExpander.Footer>
-            </ui:SettingsExpander>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
         </StackPanel>
     </ScrollViewer>

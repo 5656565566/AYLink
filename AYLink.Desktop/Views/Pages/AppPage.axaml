@@ -15,51 +15,51 @@
         <DataTemplate x:Key="AppTabContentTemplate" x:DataType="vm:AppTabViewModel">
             <Grid RowDefinitions="Auto,*">
                 <!-- 顶部 CommandBar -->
-                <ui:CommandBar Grid.Row="0"
+                <ui:FACommandBar Grid.Row="0"
                                DefaultLabelPosition="Right"
                                Background="Transparent">
 
                     <!-- 左侧：搜索 -->
-                    <ui:CommandBar.Content>
+                    <ui:FACommandBar.Content>
                         <StackPanel Orientation="Horizontal"
                                     VerticalAlignment="Center"
                                     Margin="8,0,0,0">
-                            <ui:CommandBarButton Label="{i18n:Tr AppPage.Search, DefaultText='搜索'}"
+                            <ui:FACommandBarButton Label="{i18n:Tr AppPage.Search, DefaultText='搜索'}"
                                                  Command="{Binding SearchCommand}">
-                                <ui:CommandBarButton.IconSource>
-                                    <ui:SymbolIconSource Symbol="Find"/>
-                                </ui:CommandBarButton.IconSource>
-                            </ui:CommandBarButton>
+                                <ui:FACommandBarButton.IconSource>
+                                    <ui:FASymbolIconSource Symbol="Find"/>
+                                </ui:FACommandBarButton.IconSource>
+                            </ui:FACommandBarButton>
 
                             <TextBox Text="{Binding SearchText}"
-                                     Watermark="{i18n:Tr AppPage.SearchWatermark, DefaultText='搜索应用名称或包名...'}"
+                                     PlaceholderText="{i18n:Tr AppPage.SearchWatermark, DefaultText='搜索应用名称或包名...'}"
                                      Width="250"
                                      VerticalAlignment="Center"
                                      Margin="8,0,0,0"
                                      KeyDown="SearchBox_KeyDown"/>
                         </StackPanel>
-                    </ui:CommandBar.Content>
+                    </ui:FACommandBar.Content>
 
                     <!-- 右侧：安装、刷新 -->
-                    <ui:CommandBar.PrimaryCommands>
-                        <ui:CommandBarButton Label="{i18n:Tr AppPage.InstallApp, DefaultText='安装 APK'}"
+                    <ui:FACommandBar.PrimaryCommands>
+                        <ui:FACommandBarButton Label="{i18n:Tr AppPage.InstallApp, DefaultText='安装 APK'}"
                                              Click="InstallAppBtn_Click"
                                              IsEnabled="{Binding IsInstalling, Converter={x:Static BoolConverters.Not}}">
-                            <ui:CommandBarButton.IconSource>
-                                <ui:SymbolIconSource Symbol="Add"/>
-                            </ui:CommandBarButton.IconSource>
-                        </ui:CommandBarButton>
+                            <ui:FACommandBarButton.IconSource>
+                                <ui:FASymbolIconSource Symbol="Add"/>
+                            </ui:FACommandBarButton.IconSource>
+                        </ui:FACommandBarButton>
 
-                        <ui:CommandBarSeparator/>
+                        <ui:FACommandBarSeparator/>
 
-                        <ui:CommandBarButton Label="{i18n:Tr AppPage.RefreshApps, DefaultText='刷新'}"
+                        <ui:FACommandBarButton Label="{i18n:Tr AppPage.RefreshApps, DefaultText='刷新'}"
                                              Command="{Binding LoadAppsCommand}">
-                            <ui:CommandBarButton.IconSource>
-                                <ui:SymbolIconSource Symbol="Refresh"/>
-                            </ui:CommandBarButton.IconSource>
-                        </ui:CommandBarButton>
-                    </ui:CommandBar.PrimaryCommands>
-                </ui:CommandBar>
+                            <ui:FACommandBarButton.IconSource>
+                                <ui:FASymbolIconSource Symbol="Refresh"/>
+                            </ui:FACommandBarButton.IconSource>
+                        </ui:FACommandBarButton>
+                    </ui:FACommandBar.PrimaryCommands>
+                </ui:FACommandBar>
 
                 <!-- 主内容区域：始终显示表头 + DataGrid -->
                 <Border Grid.Row="1"
@@ -149,7 +149,7 @@
                           StatusBarTemplate="{StaticResource AppStatusBarTemplate}"
                           ShowStatusBar="True">
         <views:TabbedPageView.EmptyStateIcon>
-            <ui:SymbolIcon Symbol="AllApps" FontSize="64"/>
+            <ui:FASymbolIcon Symbol="AllApps" FontSize="64"/>
         </views:TabbedPageView.EmptyStateIcon>
     </views:TabbedPageView>
 </UserControl>

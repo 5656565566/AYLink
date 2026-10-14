@@ -30,9 +30,9 @@
                         </ComboBox>
                         <TextBox Grid.Column="1"
                                  Text="{Binding LeftPane.CurrentPath}"
-                                 Watermark="/"/>
+                                 PlaceholderText="/"/>
                         <Button Grid.Column="2" Command="{Binding LeftPane.RefreshCommand}">
-                            <ui:SymbolIcon Symbol="Refresh" />
+                            <ui:FASymbolIcon Symbol="Refresh" />
                         </Button>
                     </Grid>
 
@@ -53,8 +53,8 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8" Background="Transparent"
                                                 DoubleTapped="LeftItem_DoubleTapped"
                                                 PointerPressed="LeftItem_PointerPressed">
-                                        <ui:SymbolIcon Symbol="Folder" IsVisible="{Binding IsDirectory}" />
-                                        <ui:SymbolIcon Symbol="Document" IsVisible="{Binding !IsDirectory}" />
+                                        <ui:FASymbolIcon Symbol="Folder" IsVisible="{Binding IsDirectory}" />
+                                        <ui:FASymbolIcon Symbol="Document" IsVisible="{Binding !IsDirectory}" />
                                         <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </DataTemplate>
@@ -78,9 +78,9 @@
                         </ComboBox>
                         <TextBox Grid.Column="1"
                                  Text="{Binding RightPane.CurrentPath}"
-                                 Watermark="/"/>
+                                 PlaceholderText="/"/>
                         <Button Grid.Column="2" Command="{Binding RightPane.RefreshCommand}">
-                            <ui:SymbolIcon Symbol="Refresh"/>
+                            <ui:FASymbolIcon Symbol="Refresh"/>
                         </Button>
                     </Grid>
 
@@ -101,8 +101,8 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8" Background="Transparent"
                                                 DoubleTapped="RightItem_DoubleTapped"
                                                 PointerPressed="RightItem_PointerPressed">
-                                        <ui:SymbolIcon Symbol="Folder" IsVisible="{Binding IsDirectory}"/>
-                                        <ui:SymbolIcon Symbol="Document" IsVisible="{Binding !IsDirectory}"/>
+                                        <ui:FASymbolIcon Symbol="Folder" IsVisible="{Binding IsDirectory}"/>
+                                        <ui:FASymbolIcon Symbol="Document" IsVisible="{Binding !IsDirectory}"/>
                                         <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </DataTemplate>
@@ -117,7 +117,7 @@
     <views:TabbedPageView TabContentTemplate="{StaticResource FileTabContentTemplate}"
                           ShowStatusBar="False">
         <views:TabbedPageView.EmptyStateIcon>
-            <ui:SymbolIcon Symbol="Document" FontSize="64"/>
+            <ui:FASymbolIcon Symbol="Document" FontSize="64"/>
         </views:TabbedPageView.EmptyStateIcon>
     </views:TabbedPageView>
 </UserControl>

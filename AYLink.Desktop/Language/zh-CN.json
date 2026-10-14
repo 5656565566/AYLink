@@ -174,6 +174,7 @@
     "GroupDescriptionPlaceholder": "可以写这个分组的用途或归属范围",
     "GroupCreateSuccess": "设备分组已创建",
     "GroupList": "分组列表",
+    "GroupName": "分组名称",
     "GroupSaveSuccess": "设备分组已更新",
     "GroupSearchPlaceholder": "搜索分组名称或描述",
     "LocalGroups": "本地分组",
@@ -327,6 +328,23 @@
     "CursorUnlockedMessage": "光标已恢复自由移动",
     "CursorUnlockedTitle": "光标已解锁"
   },
+  "ServerRemoteDeviceGroupsPage": {
+    "Title": "远程设备分组",
+    "Loading": "加载中...",
+    "Empty": "暂无设备分组",
+    "Roles": "角色",
+    "Users": "用户",
+    "SystemGroupEditHint": "内置分组的名称和描述已锁定，你仍然可以在下面调整角色和用户的授权范围。",
+    "DeviceSearchPlaceholder": "搜索设备名称或序列号",
+    "SystemGroupDeviceHint": "这个系统内置组会自动包含全部设备，不能在这里手动增删设备。",
+    "RoleSearchPlaceholder": "搜索角色名称或描述",
+    "UserSearchPlaceholder": "搜索用户名或角色",
+    "CreateGroup": "新建设备分组",
+    "ManageAuthorization": "管理授权",
+    "EditGroup": "编辑设备分组",
+    "EmptyDescription": "暂无描述",
+    "SystemHint": "系统全量范围组，不可改名、删除，也不会作为普通业务分组显示在首页。"
+  },
   "ServerSettingPage": {
     "SaveSuccess": "服务器设置已保存",
     "Title": "服务器设置"
@@ -356,7 +374,8 @@
     "ResetDefault": "恢复默认设置",
     "ResetDefaultButton": "恢复默认设置",
     "ResetDefault_Desc": "将当前服务器的本地 WebRTC 偏好恢复为默认值",
-    "WebRtcNetwork": "WebRTC 网络"
+    "WebRtcNetwork": "WebRTC 网络",
+    "BackToServerSettings": "返回"
   },
   "ServersPage": {
     "AddRemoteDevice": "添加设备",

@@ -15,14 +15,14 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="notifications:ToastModel">
-                <ui:InfoBar Title="{Binding Title}"
+                <ui:FAInfoBar Title="{Binding Title}"
                             Message="{Binding Content}"
                             Severity="{Binding Severity}"
                             IsOpen="True"
                             IsClosable="True"
                             Margin="0,0,0,10"
                             Width="350">
-                    <ui:InfoBar.Content>
+                    <ui:FAInfoBar.Content>
                         <StackPanel>
                             <!-- 进度条 -->
                             <ProgressBar IsVisible="{Binding ShowProgress}"
@@ -38,8 +38,8 @@
                                     Margin="0,8,0,0"
                                     Classes="accent" />
                         </StackPanel>
-                    </ui:InfoBar.Content>
-                </ui:InfoBar>
+                    </ui:FAInfoBar.Content>
+                </ui:FAInfoBar>
             </DataTemplate>
         </ItemsControl.ItemTemplate>
     </ItemsControl>

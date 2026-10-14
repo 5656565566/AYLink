@@ -22,7 +22,7 @@ public class ScrcpyService
     }
 
     // 获取工具实例
-    public ScrcpyTool Tool => _tool ?? throw new Exception("ScrcpyService not initialized");
+    public ScrcpyTool Tool => _tool ?? throw new InvalidOperationException("ScrcpyService not initialized");
 }
 
 public class ScrcpyTool(string scrcpyServerPath, string clientVersion)
@@ -30,7 +30,7 @@ public class ScrcpyTool(string scrcpyServerPath, string clientVersion)
     private readonly string _scrcpyServerPath = scrcpyServerPath;
     private readonly string _clientVersion = clientVersion;
 
-    public async void PushScrcpyServer(DeviceModel deviceModel)
+    public async Task PushScrcpyServerAsync(DeviceModel deviceModel)
     {
         DeviceData device = deviceModel.DeviceData;
         
@@ -89,7 +89,8 @@ public class ScrcpyTool(string scrcpyServerPath, string clientVersion)
 
         try
         {
-            PushScrcpyServer(deviceModel);
+            // 有意不等待: 保持与改动前一致的触发即继续流程; JAR 推送与后续命令执行的时序关系属既有行为
+            _ = PushScrcpyServerAsync(deviceModel);
 
             adbClient.ExecuteRemoteCommand(serverOptions.ToString(), device, receiver);
             string output = receiver.ToString();
@@ -126,7 +127,8 @@ public class ScrcpyTool(string scrcpyServerPath, string clientVersion)
 
         try
         {
-            PushScrcpyServer(deviceModel);
+            // 有意不等待: 保持与改动前一致的触发即继续流程; JAR 推送与后续命令执行的时序关系属既有行为
+            _ = PushScrcpyServerAsync(deviceModel);
             adbClient.ExecuteRemoteCommand(serverOptions.ToString(), device, receiver);
             string output = receiver.ToString();
 
@@ -170,7 +172,8 @@ public class ScrcpyTool(string scrcpyServerPath, string clientVersion)
 
         try
         {
-            PushScrcpyServer(deviceModel);
+            // 有意不等待: 保持与改动前一致的触发即继续流程; JAR 推送与后续命令执行的时序关系属既有行为
+            _ = PushScrcpyServerAsync(deviceModel);
             adbClient.ExecuteRemoteCommand(serverOptions.ToString(), device, receiver);
             var output = receiver.ToString();
             Trace.WriteLine(output);
@@ -232,7 +235,8 @@ public class ScrcpyTool(string scrcpyServerPath, string clientVersion)
     {
         DeviceData device = deviceModel.DeviceData;
 
-        PushScrcpyServer(deviceModel);
+        // 有意不等待: 保持与改动前一致的触发即继续流程; JAR 推送与后续命令执行的时序关系属既有行为
+        _ = PushScrcpyServerAsync(deviceModel);
 
         int[] ports = [0, 0, 0];
         int port;

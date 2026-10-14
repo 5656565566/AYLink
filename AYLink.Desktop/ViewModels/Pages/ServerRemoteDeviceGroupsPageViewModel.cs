@@ -199,7 +199,7 @@ public partial class ServerRemoteDeviceGroupsPageViewModel : PageViewModelBase<S
             localizer.GetString("Dialog.OK", "确定"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != ContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary)
         {
             return;
         }
@@ -319,18 +319,18 @@ public partial class ServerRemoteDeviceGroupsPageViewModel : PageViewModelBase<S
 
             await Task.WhenAll(groupsTask, devicesTask, accountsTask);
 
-            var groups = groupsTask.Result
+            var groups = (await groupsTask)
                 .OrderBy(item => item.SortOrder)
                 .ThenBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
                 .ToList();
 
-            _remoteDevices = devicesTask.Result
+            _remoteDevices = (await devicesTask)
                 .Where(item => item.SourceKind == DeviceSourceKind.Agent && string.Equals(item.ProviderId, _serverId, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(item => item.Name)
                 .ThenBy(item => item.Serial)
                 .ToList();
 
-            var accountData = accountsTask.Result;
+            var accountData = await accountsTask;
             _managedUsers = accountData?.Users?
                 .OrderBy(item => item.Username, StringComparer.CurrentCultureIgnoreCase)
                 .ToList() ?? [];
@@ -671,9 +671,11 @@ public partial class RemoteDeviceGroupCardViewModel(
     public int UserCount { get; } = group.UserCount;
     public bool CanDelete => !IsSystem;
     public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
-    public string ManageButtonText => IsSystem ? "管理授权" : "管理";
-    public string EmptyDescription => "暂无描述";
-    public string SystemHint => "系统全量范围组，不可改名、删除，也不会作为普通业务分组显示在首页。";
+    public string ManageButtonText => IsSystem
+        ? LocalizationManager.Instance.GetString("ServerRemoteDeviceGroupsPage.ManageAuthorization", "管理授权")
+        : LocalizationManager.Instance.GetString("DeviceGroupsPage.Manage", "管理");
+    public string EmptyDescription => LocalizationManager.Instance.GetString("ServerRemoteDeviceGroupsPage.EmptyDescription", "暂无描述");
+    public string SystemHint => LocalizationManager.Instance.GetString("ServerRemoteDeviceGroupsPage.SystemGroupHint", "系统全量范围组，不可改名、删除，也不会作为普通业务分组显示在首页。");
 
     [ObservableProperty]
     public partial bool IsVisible { get; set; } = true;

@@ -58,7 +58,7 @@ public partial class ServersPageViewModel : PageViewModelBase
             localizer.GetString("Dialog.OK", "确定"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != ContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary)
         {
             return;
         }
@@ -117,7 +117,7 @@ public partial class ServersPageViewModel : PageViewModelBase
             localizer.GetString("Dialog.OK", "确定"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != ContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary)
         {
             return;
         }
@@ -156,7 +156,7 @@ public partial class ServersPageViewModel : PageViewModelBase
             localizer.GetString("Dialog.OK", "确定"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != ContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary)
         {
             return;
         }
@@ -182,7 +182,7 @@ public partial class ServersPageViewModel : PageViewModelBase
             localizer.GetString("Dialog.OK", "确定"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != ContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary)
         {
             return;
         }
@@ -212,7 +212,7 @@ public partial class ServersPageViewModel : PageViewModelBase
             localizer.GetString("Dialog.OK", "确定"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != ContentDialogResult.Primary || !TryGetRequired(data, "serialOrIp", out var serialOrIp))
+        if (result != FAContentDialogResult.Primary || !TryGetRequired(data, "serialOrIp", out var serialOrIp))
         {
             return;
         }

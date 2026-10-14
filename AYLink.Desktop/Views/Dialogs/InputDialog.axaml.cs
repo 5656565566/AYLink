@@ -30,9 +30,9 @@ public partial class InputDialog : UserControl
         {
             var textBox = new TextBox
             {
-                Watermark = field.Watermark,
+                PlaceholderText = field.Watermark,
                 Text = field.Value,
-                UseFloatingWatermark = true,
+                UseFloatingPlaceholder = true,
                 Classes = { "clearButton" }
             };
 

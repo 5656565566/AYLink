@@ -75,7 +75,7 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
                 : localizer.GetString("DeviceItem.DisconnectButton", "断开"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != ContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary)
         {
             return;
         }
@@ -129,7 +129,7 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
             localizer.GetString("Dialog.OK", "确定"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
-        if (result != ContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary)
         {
             return;
         }
@@ -364,7 +364,7 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
             fields,
             localizer.GetString("DeviceItem.CreateButton", "创建"));
 
-        if (result != ContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary)
         {
             return;
         }

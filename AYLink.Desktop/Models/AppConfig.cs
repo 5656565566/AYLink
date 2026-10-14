@@ -4,6 +4,11 @@ namespace AYLink.Desktop.Models;
 
 public class AppConfig
 {
+    /// <summary>
+    /// 应用配置在 <see cref="Services.ConfigManager"/> 中的存储名称
+    /// </summary>
+    public const string ConfigName = "appConfig";
+
     public string Language { get; set; } = CultureInfo.CurrentUICulture.Name;
     public string? AudioOutputDevice { get; set; } = null;
     public int GlobalVolume { get; set; } = 100;

@@ -62,7 +62,7 @@ public partial class DetachedTabWindow : Window
 
     #region 拖拽回主窗口相关字段
 
-    private TabViewItem? _draggingTabItem;
+    private FATabViewItem? _draggingTabItem;
     private TabItemViewModelBase? _draggingTabVm;
     private Point _dragStartPoint;
     private bool _isDragTracking;
@@ -82,7 +82,7 @@ public partial class DetachedTabWindow : Window
         SyncWithMainWindowAppearance();
 
         // 绑定 TabView
-        PART_TabView.TabItems = Tabs;
+        PART_TabView.TabItemsSource = Tabs;
 
         // 窗口拖拽支持
         AddHandler(PointerPressedEvent, OnWindowPointerPressed, RoutingStrategies.Tunnel);
@@ -101,7 +101,7 @@ public partial class DetachedTabWindow : Window
     /// </summary>
     private void SyncWithMainWindowAppearance()
     {
-        var config = Services.ConfigManager.Instance.LoadConfig<Models.AppConfig>("appConfig");
+        var config = Services.ConfigManager.Instance.LoadConfig<Models.AppConfig>(Models.AppConfig.ConfigName);
 
         if (config.EnableAcrylic)
         {
@@ -190,7 +190,7 @@ public partial class DetachedTabWindow : Window
         return result;
     }
 
-    private void TabView_TabCloseRequested(TabView _, TabViewTabCloseRequestedEventArgs args)
+    private void TabView_TabCloseRequested(FATabView _, FATabViewTabCloseRequestedEventArgs args)
     {
         if (args.Item is TabItemViewModelBase tabVm)
         {
@@ -251,7 +251,7 @@ public partial class DetachedTabWindow : Window
     {
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
 
-        var tabItem = FindAncestor<TabViewItem>(e.Source as Visual);
+        var tabItem = FindAncestor<FATabViewItem>(e.Source as Visual);
         if (tabItem == null) return;
 
         if (IsClickOnButton(e.Source as Visual, tabItem)) return;
@@ -392,7 +392,7 @@ public partial class DetachedTabWindow : Window
         _isTearingOff = false;
     }
 
-    private static TabItemViewModelBase? GetTabViewModel(TabViewItem tabItem)
+    private static TabItemViewModelBase? GetTabViewModel(FATabViewItem tabItem)
     {
         if (tabItem.Content is TabItemViewModelBase vm) return vm;
         if (tabItem.DataContext is TabItemViewModelBase vm2) return vm2;
@@ -410,7 +410,7 @@ public partial class DetachedTabWindow : Window
         return null;
     }
 
-    private static bool IsClickOnButton(Visual? source, TabViewItem tabItem)
+    private static bool IsClickOnButton(Visual? source, FATabViewItem tabItem)
     {
         var current = source as Control;
         while (current != null && current != tabItem)
@@ -449,7 +449,7 @@ public partial class DetachedTabWindow : Window
             if (current is Button ||
                 current is TextBox ||
                 current is ComboBox ||
-                current is TabViewListView ||
+                current is FATabViewListView ||
                 current is TabItem)
             {
                 return true;

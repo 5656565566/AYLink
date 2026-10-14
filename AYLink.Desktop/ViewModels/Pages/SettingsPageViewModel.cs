@@ -38,8 +38,8 @@ public partial class SettingsPageViewModel : PageViewModelBase
 
     public SettingsPageViewModel()
     {
-        _appConfig = _configManager.LoadConfig<AppConfig>("appConfig");
-        LoadAdbVersionAsync();
+        _appConfig = _configManager.LoadConfig<AppConfig>(AppConfig.ConfigName);
+        _ = LoadAdbVersionAsync(); // 仅探测版本 失败置 Unknown 无需等待
         OutputVolume = _appConfig.GlobalVolume;
         ScrcpyServer = _appConfig.ScrcpyServer;
         Adb = _appConfig.Adb;
@@ -261,7 +261,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
 
     #region 触发指令
 
-    public async void LoadAdbVersionAsync()
+    public async Task LoadAdbVersionAsync()
     {
         try
         {
@@ -362,17 +362,17 @@ public partial class SettingsPageViewModel : PageViewModelBase
         }
     }
 
-    private void SaveConfig() => _configManager.SaveConfig("appConfig", _appConfig);
+    private void SaveConfig() => _configManager.SaveConfig(AppConfig.ConfigName, _appConfig);
 
-    private static void ShowInfo(string message) => ShowToast("Dialog.Tip", "提示", message, InfoBarSeverity.Informational);
+    private static void ShowInfo(string message) => ShowToast("Dialog.Tip", "提示", message, FAInfoBarSeverity.Informational);
 
-    private static void ShowSuccess(string message) => ShowToast("Dialog.Tip", "提示", message, InfoBarSeverity.Success);
+    private static void ShowSuccess(string message) => ShowToast("Dialog.Tip", "提示", message, FAInfoBarSeverity.Success);
 
-    private static void ShowWarning(string message) => ShowToast("Dialog.Tip", "提示", message, InfoBarSeverity.Warning);
+    private static void ShowWarning(string message) => ShowToast("Dialog.Tip", "提示", message, FAInfoBarSeverity.Warning);
 
-    private static void ShowError(string message) => ShowToast("Dialog.Error", "错误", message, InfoBarSeverity.Error);
+    private static void ShowError(string message) => ShowToast("Dialog.Error", "错误", message, FAInfoBarSeverity.Error);
 
-    private static void ShowToast(string titleKey, string defaultTitle, string message, InfoBarSeverity severity)
+    private static void ShowToast(string titleKey, string defaultTitle, string message, FAInfoBarSeverity severity)
     {
         Services.Notifications.ToastManager.Instance.Show(LocalizationManager.Instance.GetString(titleKey, defaultTitle), message, severity);
     }

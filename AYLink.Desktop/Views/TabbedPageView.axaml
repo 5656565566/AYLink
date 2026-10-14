@@ -11,8 +11,8 @@
 
     <Grid RowDefinitions="*,Auto">
         <Grid Grid.Row="0">
-            <ui:TabView x:Name="PART_TabView"
-                         TabItems="{CompiledBinding Tabs}"
+            <ui:FATabView x:Name="PART_TabView"
+                         TabItemsSource="{CompiledBinding Tabs}"
                          SelectedItem="{CompiledBinding SelectedTab}"
                          IsAddTabButtonVisible="False"
                          TabCloseRequested="TabView_TabCloseRequested"
@@ -20,43 +20,43 @@
                          Background="Transparent"
                          VerticalAlignment="Stretch"
                          HorizontalAlignment="Stretch">
-                <ui:TabView.TabItemTemplate>
+                <ui:FATabView.TabItemTemplate>
                     <DataTemplate x:DataType="vm:TabItemViewModelBase">
                         
-                        <ui:TabViewItem Header="{CompiledBinding Title}"
+                        <ui:FATabViewItem Header="{CompiledBinding Title}"
                                         Content="{CompiledBinding}"
                                         ContentTemplate="{CompiledBinding $parent[local:TabbedPageView].TabContentTemplate}"
                                         IsClosable="{CompiledBinding IsClosable}"
                                         HorizontalContentAlignment="Stretch"
                                         VerticalContentAlignment="Stretch">
                             
-                            <ui:TabViewItem.Background>
+                            <ui:FATabViewItem.Background>
                                 <SolidColorBrush Color="{DynamicResource SolidBackgroundFillColorBase}" Opacity="0.85"/>
-                            </ui:TabViewItem.Background>
+                            </ui:FATabViewItem.Background>
                             
-                        </ui:TabViewItem>
+                        </ui:FATabViewItem>
                         
                     </DataTemplate>
-                </ui:TabView.TabItemTemplate>
-            </ui:TabView>
+                </ui:FATabView.TabItemTemplate>
+            </ui:FATabView>
 
             <!-- 空标签页占位：作为独立的 TabView 覆盖在上方 仅当无功能标签页时显示 -->
-            <ui:TabView x:Name="PART_EmptyTabView"
+            <ui:FATabView x:Name="PART_EmptyTabView"
                          IsVisible="False"
                          Background="Transparent"
                          VerticalAlignment="Stretch"
                          HorizontalAlignment="Stretch"
                          IsAddTabButtonVisible="False"
                          CanReorderTabs="False">
-                <ui:TabViewItem x:Name="PART_EmptyTabItem"
+                <ui:FATabViewItem x:Name="PART_EmptyTabItem"
                                 Header="{CompiledBinding $parent[local:TabbedPageView].EmptyTabTitle}"
                                 IsClosable="False"
                                 HorizontalContentAlignment="Stretch"
                                 VerticalContentAlignment="Stretch">
-                    <ui:TabViewItem.Background>
+                    <ui:FATabViewItem.Background>
                         <SolidColorBrush Color="{DynamicResource SolidBackgroundFillColorBase}" Opacity="0.85"/>
-                    </ui:TabViewItem.Background>
-                    <ui:TabViewItem.Content>
+                    </ui:FATabViewItem.Background>
+                    <ui:FATabViewItem.Content>
                         <StackPanel HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     Spacing="12"
@@ -70,9 +70,9 @@
                                        HorizontalAlignment="Center"
                                        Theme="{StaticResource BodyTextBlockStyle}"/>
                         </StackPanel>
-                    </ui:TabViewItem.Content>
-                </ui:TabViewItem>
-            </ui:TabView>
+                    </ui:FATabViewItem.Content>
+                </ui:FATabViewItem>
+            </ui:FATabView>
         </Grid>
 
         <Grid Grid.Row="1" IsVisible="{CompiledBinding $parent[local:TabbedPageView].ShowStatusBar}">

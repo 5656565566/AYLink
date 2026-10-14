@@ -98,11 +98,11 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
 
             var codec = ffmpeg.avcodec_find_decoder(avCodecId);
             if (codec == null)
-                throw new Exception($"FFmpeg codec not found for: {avCodecId}");
+                throw new InvalidOperationException($"FFmpeg codec not found for: {avCodecId}");
 
             _codecContext = ffmpeg.avcodec_alloc_context3(codec);
             if (_codecContext == null)
-                throw new Exception("Failed to allocate codec context");
+                throw new InvalidOperationException("Failed to allocate codec context");
 
             if (_currentCodec == AudioCodec.AAC)
             {
@@ -110,7 +110,7 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
             }
 
             if (ffmpeg.avcodec_open2(_codecContext, codec, null) < 0)
-                throw new Exception("Failed to open codec");
+                throw new InvalidOperationException("Failed to open codec");
 
             Debug.WriteLine($"Audio codec: {_currentCodec}, ready to play.");
             PlaybackLoop();
@@ -132,14 +132,14 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
 
         if (firstPacketSize <= 0)
         {
-            throw new Exception("Invalid AAC packet size.");
+            throw new InvalidDataException("Invalid AAC packet size.");
         }
 
         byte[] firstPacketData = ReceiveExact(firstPacketSize);
 
         if (!IsConfigPacket(firstHeader))
         {
-            throw new Exception("Expected AAC config packet, but got a data packet.");
+            throw new InvalidDataException("Expected AAC config packet, but got a data packet.");
         }
 
         _codecContext->extradata_size = firstPacketSize;
@@ -175,7 +175,7 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
             ffmpeg.av_strerror(status, buffer, 256);
             string? errorMessage = Marshal.PtrToStringAnsi((nint)buffer);
             fixed (SwrContext** ptr = &_resamplerCtx) { ffmpeg.swr_free(ptr); }
-            throw new Exception($"Failed to initialize the resampling context: {errorMessage} (code {status})");
+            throw new InvalidOperationException($"Failed to initialize the resampling context: {errorMessage} (code {status})");
         }
 
         ffmpeg.av_channel_layout_uninit(&chLayoutIn);
@@ -376,6 +376,5 @@ public unsafe class AudioDecoder(Socket audioSocket, bool handshake) : IDisposab
         }
 
         _socket?.Dispose();
-        GC.SuppressFinalize(this);
     }
 }
