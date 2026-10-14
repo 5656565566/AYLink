@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AYLink.Core.Agent;
 using AYLink.Desktop.Models;
 using AYLink.Desktop.Services;
+using AYLink.Desktop.Services.Localization;
 using AYLink.Desktop.Services.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -89,19 +90,19 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
         var selectedRoleIds = NewUserRoleOptions.Where(option => option.IsSelected).Select(option => option.Id).ToList();
         if (string.IsNullOrWhiteSpace(username))
         {
-            AccountStatusMessage = "请先填写用户名";
+            AccountStatusMessage = localizer.GetString("ServerAccountManagement.UsernameRequired", "请先填写用户名");
             return;
         }
 
         if (string.IsNullOrWhiteSpace(password))
         {
-            AccountStatusMessage = "请先填写初始密码";
+            AccountStatusMessage = localizer.GetString("ServerAccountManagement.InitialPasswordRequired", "请先填写初始密码");
             return;
         }
 
         if (selectedRoleIds.Count == 0)
         {
-            AccountStatusMessage = "至少选择一个角色";
+            AccountStatusMessage = localizer.GetString("ServerAccountManagement.RoleRequired", "至少选择一个角色");
             return;
         }
 
@@ -121,7 +122,7 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
             var user = await _agentSessions.CreateUserAsync(_serverId, request);
             if (user == null)
             {
-                AccountStatusMessage = "创建账号失败";
+                AccountStatusMessage = localizer.GetString("ServerAccountManagement.CreateUserFailed", "创建账号失败");
                 return;
             }
 
@@ -134,7 +135,7 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
 
             NotificationService.Instance.ShowSuccess(
                 localizer.GetString("Dialog.Success", "成功"),
-                $"已创建账号 {user.Username}");
+                string.Format(localizer.GetString("ServerAccountManagement.UserCreated", "已创建账号 {0}"), user.Username));
 
             await LoadAccountDataAsync();
         }
@@ -152,13 +153,13 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
         var permissions = NewRolePermissionOptions.Where(option => option.IsSelected).Select(option => option.Code).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (string.IsNullOrWhiteSpace(roleName))
         {
-            AccountStatusMessage = "请先填写角色名称";
+            AccountStatusMessage = localizer.GetString("ServerAccountManagement.RoleNameRequired", "请先填写角色名称");
             return;
         }
 
         if (permissions.Count == 0)
         {
-            AccountStatusMessage = "至少选择一个权限";
+            AccountStatusMessage = localizer.GetString("ServerAccountManagement.PermissionRequired", "至少选择一个权限");
             return;
         }
 
@@ -178,7 +179,7 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
             var role = await _agentSessions.CreateRoleAsync(_serverId, request);
             if (role == null)
             {
-                AccountStatusMessage = "创建角色失败";
+                AccountStatusMessage = localizer.GetString("ServerAccountManagement.CreateRoleFailed", "创建角色失败");
                 return;
             }
 
@@ -191,7 +192,7 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
 
             NotificationService.Instance.ShowSuccess(
                 localizer.GetString("Dialog.Success", "成功"),
-                $"已创建角色 {role.Name}");
+                string.Format(localizer.GetString("ServerAccountManagement.RoleCreated", "已创建角色 {0}"), role.Name));
 
             await LoadAccountDataAsync();
         }
@@ -216,7 +217,7 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
             var data = await _agentSessions.GetAccountDataAsync(_serverId);
             if (data == null)
             {
-                AccountStatusMessage = "加载账户管理数据失败";
+                AccountStatusMessage = LocalizationManager.Instance.GetString("ServerAccountManagement.LoadFailed", "加载账户管理数据失败");
                 return;
             }
 
@@ -289,6 +290,7 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
 
     private async Task SaveUserAsync(AgentAccountUserItemViewModel item)
     {
+        var localizer = LocalizationManager.Instance;
         IsAccountSaving = true;
         AccountStatusMessage = string.Empty;
 
@@ -305,18 +307,20 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
 
             if (request.RoleIds.Count == 0)
             {
-                AccountStatusMessage = $"账号 {item.Username} 至少需要一个角色";
+                AccountStatusMessage = string.Format(localizer.GetString("ServerAccountManagement.UserRoleRequired", "账号 {0} 至少需要一个角色"), item.Username);
                 return;
             }
 
             var user = await _agentSessions.UpdateUserAsync(_serverId, item.Id, request);
             if (user == null)
             {
-                AccountStatusMessage = $"保存账号 {item.Username} 失败";
+                AccountStatusMessage = string.Format(localizer.GetString("ServerAccountManagement.UserSaveFailed", "保存账号 {0} 失败"), item.Username);
                 return;
             }
 
-            NotificationService.Instance.ShowSuccess("成功", $"已更新账号 {user.Username}");
+            NotificationService.Instance.ShowSuccess(
+                localizer.GetString("Dialog.Success", "成功"),
+                string.Format(localizer.GetString("ServerAccountManagement.UserUpdated", "已更新账号 {0}"), user.Username));
             await LoadAccountDataAsync();
         }
         finally
@@ -327,6 +331,7 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
 
     private async Task ToggleUserActiveAsync(AgentAccountUserItemViewModel item)
     {
+        var localizer = LocalizationManager.Instance;
         IsAccountSaving = true;
         AccountStatusMessage = string.Empty;
 
@@ -335,12 +340,14 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
             var success = await _agentSessions.SetUserActiveAsync(_serverId, item.Id, item.IsActive);
             if (!success)
             {
-                AccountStatusMessage = $"更新账号 {item.Username} 状态失败";
+                AccountStatusMessage = string.Format(localizer.GetString("ServerAccountManagement.UserStateUpdateFailed", "更新账号 {0} 状态失败"), item.Username);
                 item.IsActive = !item.IsActive;
                 return;
             }
 
-            NotificationService.Instance.ShowSuccess("成功", $"已更新账号 {item.Username} 状态");
+            NotificationService.Instance.ShowSuccess(
+                localizer.GetString("Dialog.Success", "成功"),
+                string.Format(localizer.GetString("ServerAccountManagement.UserStateUpdated", "已更新账号 {0} 状态"), item.Username));
             await LoadAccountDataAsync();
         }
         finally
@@ -351,17 +358,18 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
 
     private async Task ResetUserPasswordAsync(AgentAccountUserItemViewModel item)
     {
+        var localizer = LocalizationManager.Instance;
         var fields = new List<InputFieldModel>
         {
-            new() { Key = "newPassword", Watermark = "新密码（留空则自动生成）", IsPassword = true }
+            new() { Key = "newPassword", Watermark = localizer.GetString("ServerAccountManagement.NewPasswordPlaceholder", "新密码（留空则自动生成）"), IsPassword = true }
         };
 
         var (result, data) = await DialogService.ShowInputDialogAsync(
-            "重置密码",
-            $"为账号 {item.Username} 输入新密码，留空则自动生成随机密码。",
+            localizer.GetString("ServerSettings.ResetPasswordTitle", "重置密码"),
+            string.Format(localizer.GetString("ServerAccountManagement.ResetPasswordPrompt", "为账号 {0} 输入新密码，留空则自动生成随机密码。"), item.Username),
             fields,
-            "重置",
-            "取消");
+            localizer.GetString("ServerAccountManagement.ResetPasswordButton", "重置"),
+            localizer.GetString("Dialog.Cancel", "取消"));
 
         if (result != FluentAvalonia.UI.Controls.FAContentDialogResult.Primary)
         {
@@ -376,11 +384,14 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
             var response = await _agentSessions.ResetUserPasswordAsync(_serverId, item.Id, GetFieldValue(data, "newPassword"));
             if (response == null)
             {
-                AccountStatusMessage = $"重置账号 {item.Username} 密码失败";
+                AccountStatusMessage = string.Format(localizer.GetString("ServerAccountManagement.ResetPasswordFailed", "重置账号 {0} 密码失败"), item.Username);
                 return;
             }
 
-            await DialogService.ShowMessageAsync("密码已重置", $"账号 {item.Username} 的新密码：{response.Password}", "确定");
+            await DialogService.ShowMessageAsync(
+                localizer.GetString("ServerAccountManagement.PasswordResetTitle", "密码已重置"),
+                string.Format(localizer.GetString("ServerAccountManagement.PasswordResetMessage", "账号 {0} 的新密码：{1}"), item.Username, response.Password),
+                localizer.GetString("Dialog.OK", "确定"));
         }
         finally
         {
@@ -390,11 +401,12 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
 
     private async Task DeleteUserAsync(AgentAccountUserItemViewModel item)
     {
+        var localizer = LocalizationManager.Instance;
         var result = await DialogService.ShowMessageAsync(
-            "删除账号",
-            $"确定要删除账号 {item.Username} 吗？",
-            "删除",
-            "取消");
+            localizer.GetString("ServerAccountManagement.DeleteUserTitle", "删除账号"),
+            string.Format(localizer.GetString("ServerAccountManagement.DeleteUserConfirm", "确定要删除账号 {0} 吗？"), item.Username),
+            localizer.GetString("Common.Delete", "删除"),
+            localizer.GetString("Dialog.Cancel", "取消"));
 
         if (result != FluentAvalonia.UI.Controls.FAContentDialogResult.Primary)
         {
@@ -409,11 +421,13 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
             var success = await _agentSessions.DeleteUserAsync(_serverId, item.Id);
             if (!success)
             {
-                AccountStatusMessage = $"删除账号 {item.Username} 失败";
+                AccountStatusMessage = string.Format(localizer.GetString("ServerAccountManagement.DeleteUserFailed", "删除账号 {0} 失败"), item.Username);
                 return;
             }
 
-            NotificationService.Instance.ShowSuccess("成功", $"已删除账号 {item.Username}");
+            NotificationService.Instance.ShowSuccess(
+                localizer.GetString("Dialog.Success", "成功"),
+                string.Format(localizer.GetString("ServerAccountManagement.UserDeleted", "已删除账号 {0}"), item.Username));
             await LoadAccountDataAsync();
         }
         finally
@@ -424,6 +438,7 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
 
     private async Task SaveRoleAsync(AgentRoleItemViewModel item)
     {
+        var localizer = LocalizationManager.Instance;
         IsAccountSaving = true;
         AccountStatusMessage = string.Empty;
 
@@ -439,24 +454,26 @@ public partial class ServerAccountManagementPageViewModel : PageViewModelBase<Se
 
             if (string.IsNullOrWhiteSpace(request.Name))
             {
-                AccountStatusMessage = "角色名称不能为空";
+                AccountStatusMessage = localizer.GetString("ServerAccountManagement.RoleNameEmpty", "角色名称不能为空");
                 return;
             }
 
             if (request.Permissions.Count == 0)
             {
-                AccountStatusMessage = $"角色 {item.Name} 至少需要一个权限";
+                AccountStatusMessage = string.Format(localizer.GetString("ServerAccountManagement.RolePermissionRequired", "角色 {0} 至少需要一个权限"), item.Name);
                 return;
             }
 
             var role = await _agentSessions.UpdateRoleAsync(_serverId, item.Id, request);
             if (role == null)
             {
-                AccountStatusMessage = $"保存角色 {item.Name} 失败";
+                AccountStatusMessage = string.Format(localizer.GetString("ServerAccountManagement.RoleSaveFailed", "保存角色 {0} 失败"), item.Name);
                 return;
             }
 
-            NotificationService.Instance.ShowSuccess("成功", $"已更新角色 {role.Name}");
+            NotificationService.Instance.ShowSuccess(
+                localizer.GetString("Dialog.Success", "成功"),
+                string.Format(localizer.GetString("ServerAccountManagement.RoleUpdated", "已更新角色 {0}"), role.Name));
             await LoadAccountDataAsync();
         }
         finally
@@ -508,7 +525,9 @@ public partial class AgentAccountUserItemViewModel : ObservableObject
         Username = model.Username;
         IsActive = model.IsActive;
         DirectDeviceGroupIds = (model.DirectDeviceGroups ?? []).Select(group => group.Id).ToList();
-        EffectiveScopeSummary = $"最终生效 {model.EffectiveDeviceGroupCount} 个分组 / {model.EffectiveDeviceCount} 台设备";
+        EffectiveScopeSummary = string.Format(
+            LocalizationManager.Instance.GetString("ServerAccountManagement.EffectiveScopeSummary", "最终生效 {0} 个分组 / {1} 台设备"),
+            model.EffectiveDeviceGroupCount, model.EffectiveDeviceCount);
         _saveAction = saveAction;
         _toggleActiveAction = toggleActiveAction;
         _resetPasswordAction = resetPasswordAction;

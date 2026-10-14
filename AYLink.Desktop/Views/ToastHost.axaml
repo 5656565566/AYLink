@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:notifications="using:AYLink.Desktop.Services.Notifications"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AYLink.Desktop.Views.ToastHost">
 
@@ -31,7 +32,7 @@
                                          Minimum="0" Maximum="100"
                                          Margin="0,8,0,0" />
                             <!-- 取消按钮 -->
-                            <Button Content="取消"
+                            <Button Content="{i18n:Tr Dialog.Cancel, DefaultText='取消'}"
                                     Command="{Binding CancelCommand}"
                                     IsVisible="{Binding IsCancelable}"
                                     HorizontalAlignment="Right"

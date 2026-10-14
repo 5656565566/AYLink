@@ -88,11 +88,11 @@
                                             <Grid ColumnDefinitions="*, Auto" Margin="0,0,0,12">
                                                 <TextBlock Grid.Column="0" Text="{Binding DisplayTitle}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                                 <Button Grid.Column="1" Command="{Binding RemoveCommand}" IsVisible="{Binding CanRemove}" Theme="{StaticResource TransparentButton}" Foreground="{DynamicResource SystemFillColorCriticalBrush}">
-                                                    <TextBlock Text="删除" />
+                                                    <TextBlock Text="{i18n:Tr ServerSettings.Remove, DefaultText='删除'}" />
                                                 </Button>
                                             </Grid>
                                             <StackPanel Grid.Row="1" Spacing="8">
-                                                <TextBlock Text="服务器地址" Opacity="0.8"/>
+                                                <TextBlock Text="{i18n:Tr ServerSettings.ServerAddress, DefaultText='服务器地址'}" Opacity="0.8"/>
                                                 <TextBox Text="{Binding Address}" />
                                             </StackPanel>
                                         </Grid>
@@ -110,7 +110,7 @@
                                     Padding="0,8">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock Text="+" />
-                                    <TextBlock Text="添加 STUN" />
+                                    <TextBlock Text="{i18n:Tr ServerSettings.AddStun, DefaultText='添加 STUN'}" />
                                 </StackPanel>
                             </Button>
                             <Button Grid.Column="2"
@@ -121,7 +121,7 @@
                                     Padding="0,8">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock Text="+" />
-                                    <TextBlock Text="添加 TURN" />
+                                    <TextBlock Text="{i18n:Tr ServerSettings.AddTurn, DefaultText='添加 TURN'}" />
                                 </StackPanel>
                             </Button>
                         </Grid>
@@ -197,11 +197,11 @@
                                             <Grid ColumnDefinitions="*, Auto" Margin="0,0,0,12">
                                                 <TextBlock Grid.Column="0" Text="{Binding DisplayTitle}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                                 <Button Grid.Column="1" Command="{Binding RemoveCommand}" IsVisible="{Binding CanRemove}" Theme="{StaticResource TransparentButton}" Foreground="{DynamicResource SystemFillColorCriticalBrush}">
-                                                    <TextBlock Text="删除" />
+                                                    <TextBlock Text="{i18n:Tr ServerSettings.Remove, DefaultText='删除'}" />
                                                 </Button>
                                             </Grid>
                                             <StackPanel Grid.Row="1" Spacing="8">
-                                                <TextBlock Text="服务器地址" Opacity="0.8"/>
+                                                <TextBlock Text="{i18n:Tr ServerSettings.ServerAddress, DefaultText='服务器地址'}" Opacity="0.8"/>
                                                 <TextBox Text="{Binding Address}" />
                                             </StackPanel>
                                         </Grid>
@@ -219,7 +219,7 @@
                                     Padding="0,8">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock Text="+" />
-                                    <TextBlock Text="添加 STUN" />
+                                    <TextBlock Text="{i18n:Tr ServerSettings.AddStun, DefaultText='添加 STUN'}" />
                                 </StackPanel>
                             </Button>
                             <Button Grid.Column="2"
@@ -230,7 +230,7 @@
                                     Padding="0,8">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock Text="+" />
-                                    <TextBlock Text="添加 TURN" />
+                                    <TextBlock Text="{i18n:Tr ServerSettings.AddTurn, DefaultText='添加 TURN'}" />
                                 </StackPanel>
                             </Button>
                         </Grid>

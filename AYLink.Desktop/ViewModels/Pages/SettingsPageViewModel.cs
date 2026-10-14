@@ -332,7 +332,7 @@ public partial class SettingsPageViewModel : PageViewModelBase
         }
         catch (Exception ex)
         {
-            ShowError($"打开链接失败: {ex.Message}");
+            ShowError(string.Format(LocalizationManager.Instance.GetString("SettingsPage.OpenLinkFailed", "打开链接失败: {0}"), ex.Message));
         }
     }
 

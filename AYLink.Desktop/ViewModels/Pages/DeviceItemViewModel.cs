@@ -143,7 +143,9 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
         var updated = await _deviceCatalog.RenameDeviceAsync(Device, newName);
         if (updated == null)
         {
-            NotificationService.Instance.ShowError("重命名失败", $"无法更新设备 {Name}");
+            NotificationService.Instance.ShowError(
+                localizer.GetString("DeviceItem.RenameFailedTitle", "重命名失败"),
+                string.Format(localizer.GetString("DeviceItem.RenameFailedMessage", "无法更新设备 {0}"), Name));
             return;
         }
 
@@ -476,7 +478,10 @@ public partial class DeviceItemViewModel(DeviceDescriptor device, System.Func<Ta
     {
         if (!IsLocal || !_deviceCatalog.TryGetLocalDevice(Device.Id, out var localDevice) || localDevice == null)
         {
-            NotificationService.Instance.ShowWarning("暂不支持", "该操作将在后续支持远程设备。");
+            var localizer = Services.Localization.LocalizationManager.Instance;
+            NotificationService.Instance.ShowWarning(
+                localizer.GetString("DeviceItem.RemoteOperationUnsupportedTitle", "暂不支持"),
+                localizer.GetString("DeviceItem.RemoteOperationUnsupportedMessage", "该操作将在后续支持远程设备。"));
             return null;
         }
 

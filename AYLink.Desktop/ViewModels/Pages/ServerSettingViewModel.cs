@@ -260,25 +260,25 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
     [RelayCommand]
     private async System.Threading.Tasks.Task ChangePassword()
     {
+        var localizer = Services.Localization.LocalizationManager.Instance;
         if (!CanChangePassword)
         {
             Services.Notifications.NotificationService.Instance.ShowWarning(
                 Services.Localization.LocalizationManager.Instance.GetString("Dialog.Warning", "警告"),
-                "当前账号没有修改密码的权限");
+                localizer.GetString("ServerSettings.ChangePasswordDenied", "当前账号没有修改密码的权限"));
             return;
         }
 
-        var localizer = Services.Localization.LocalizationManager.Instance;
         var fields = new List<InputFieldModel>
         {
-            new() { Key = "currentPassword", Watermark = "当前密码", IsRequired = true, IsPassword = true },
-            new() { Key = "newPassword", Watermark = "新密码", IsRequired = true, IsPassword = true },
-            new() { Key = "confirmPassword", Watermark = "确认新密码", IsRequired = true, IsPassword = true }
+            new() { Key = "currentPassword", Watermark = localizer.GetString("ServerSettings.CurrentPassword", "当前密码"), IsRequired = true, IsPassword = true },
+            new() { Key = "newPassword", Watermark = localizer.GetString("ServerSettings.NewPassword", "新密码"), IsRequired = true, IsPassword = true },
+            new() { Key = "confirmPassword", Watermark = localizer.GetString("ServerSettings.ConfirmPassword", "确认新密码"), IsRequired = true, IsPassword = true }
         };
 
         var (result, data) = await Services.Notifications.DialogService.ShowInputDialogAsync(
             localizer.GetString("ServerSettings.ChangePasswordTitle", "修改密码"),
-            localizer.GetString("ServerSettings.ChangePasswordDescription", "修改当前登录账号的密码，修改后需要重新登录。"),
+            localizer.GetString("ServerSettings.ChangePasswordPrompt", "修改当前登录账号的密码，修改后需要重新登录。"),
             fields,
             localizer.GetString("Dialog.OK", "确定"),
             localizer.GetString("Dialog.Cancel", "取消"));
@@ -293,24 +293,24 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
         var confirmPassword = GetFieldValue(data, "confirmPassword");
         if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
         {
-            Services.Notifications.NotificationService.Instance.ShowWarning(localizer.GetString("Dialog.Warning", "警告"), "请填写完整的密码信息");
+            Services.Notifications.NotificationService.Instance.ShowWarning(localizer.GetString("Dialog.Warning", "警告"), localizer.GetString("ServerSettings.PasswordFieldsRequired", "请填写完整的密码信息"));
             return;
         }
 
         if (!string.Equals(newPassword, confirmPassword, StringComparison.Ordinal))
         {
-            Services.Notifications.NotificationService.Instance.ShowWarning(localizer.GetString("Dialog.Warning", "警告"), "两次输入的新密码不一致");
+            Services.Notifications.NotificationService.Instance.ShowWarning(localizer.GetString("Dialog.Warning", "警告"), localizer.GetString("ServerSettings.PasswordsMismatch", "两次输入的新密码不一致"));
             return;
         }
 
         var changed = await _agentSessions.ChangePasswordAsync(_serverId, currentPassword, newPassword);
         if (!changed)
         {
-            Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("Dialog.Error", "错误"), "修改密码失败");
+            Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("Dialog.Error", "错误"), localizer.GetString("ServerSettings.ChangePasswordFailed", "修改密码失败"));
             return;
         }
 
-        Services.Notifications.NotificationService.Instance.ShowSuccess(localizer.GetString("Dialog.Success", "成功"), "密码已修改，请重新登录");
+        Services.Notifications.NotificationService.Instance.ShowSuccess(localizer.GetString("Dialog.Success", "成功"), localizer.GetString("ServerSettings.ChangePasswordSuccess", "密码已修改，请重新登录"));
     }
 
     [RelayCommand]
@@ -319,7 +319,7 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
         var localizer = Services.Localization.LocalizationManager.Instance;
         var result = await Services.Notifications.DialogService.ShowMessageAsync(
             localizer.GetString("ServerSettings.LogoutTitle", "退出登录"),
-            localizer.GetString("ServerSettings.LogoutDescription", "结束当前服务器会话并返回上一页。"),
+            localizer.GetString("ServerSettings.LogoutConfirm", "结束当前服务器会话并返回上一页。"),
             localizer.GetString("ServerSettings.LogoutTitle", "退出登录"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
@@ -331,11 +331,11 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
         var success = await _agentSessions.LogoutAsync(_serverId);
         if (!success)
         {
-            Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("Dialog.Error", "错误"), "退出登录失败");
+            Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("Dialog.Error", "错误"), localizer.GetString("ServerSettings.LogoutFailed", "退出登录失败"));
             return;
         }
 
-        Services.Notifications.NotificationService.Instance.ShowSuccess(localizer.GetString("Dialog.Success", "成功"), "已退出当前服务器登录");
+        Services.Notifications.NotificationService.Instance.ShowSuccess(localizer.GetString("Dialog.Success", "成功"), localizer.GetString("ServerSettings.LogoutSuccess", "已退出当前服务器登录"));
         NavigationService.Instance.GoBack();
     }
 
@@ -345,7 +345,7 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
         var localizer = Services.Localization.LocalizationManager.Instance;
         var result = await Services.Notifications.DialogService.ShowMessageAsync(
             localizer.GetString("ServerSettings.LogoutAllTitle", "退出全部会话"),
-            localizer.GetString("ServerSettings.LogoutAllDescription", "结束当前账号在该服务器上的全部登录会话。"),
+            localizer.GetString("ServerSettings.LogoutAllConfirm", "结束当前账号在该服务器上的全部登录会话。"),
             localizer.GetString("ServerSettings.LogoutAllTitle", "退出全部会话"),
             localizer.GetString("Dialog.Cancel", "取消"));
 
@@ -357,11 +357,11 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
         var success = await _agentSessions.LogoutAllAsync(_serverId);
         if (!success)
         {
-            Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("Dialog.Error", "错误"), "退出全部会话失败");
+            Services.Notifications.NotificationService.Instance.ShowError(localizer.GetString("Dialog.Error", "错误"), localizer.GetString("ServerSettings.LogoutAllFailed", "退出全部会话失败"));
             return;
         }
 
-        Services.Notifications.NotificationService.Instance.ShowSuccess(localizer.GetString("Dialog.Success", "成功"), "已退出全部会话，请重新登录");
+        Services.Notifications.NotificationService.Instance.ShowSuccess(localizer.GetString("Dialog.Success", "成功"), localizer.GetString("ServerSettings.LogoutAllSuccess", "已退出全部会话，请重新登录"));
         NavigationService.Instance.GoBack();
     }
 
@@ -372,7 +372,7 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
         {
             Services.Notifications.NotificationService.Instance.ShowWarning(
                 Services.Localization.LocalizationManager.Instance.GetString("Dialog.Warning", "警告"),
-                "当前账号没有账户管理权限");
+                Services.Localization.LocalizationManager.Instance.GetString("ServerSettings.AccountManagementDenied", "当前账号没有账户管理权限"));
             return;
         }
 
@@ -390,7 +390,7 @@ public partial class ServerSettingViewModel : PageViewModelBase<ServerSettingNav
         {
             Services.Notifications.NotificationService.Instance.ShowWarning(
                 Services.Localization.LocalizationManager.Instance.GetString("Dialog.Warning", "警告"),
-                "当前账号没有远程设备分组管理权限");
+                Services.Localization.LocalizationManager.Instance.GetString("ServerSettings.RemoteDeviceGroupsDenied", "当前账号没有远程设备分组管理权限"));
             return;
         }
 
@@ -444,7 +444,8 @@ public partial class AgentServerIceServerViewModel(AgentServerIceServerConfig mo
 
     public string Kind => Model.Kind;
 
-    public string DisplayTitle => $"{Model.Kind} ICE 服务器";
+    public string DisplayTitle => string.Format(
+        Services.Localization.LocalizationManager.Instance.GetString("ServerSettings.IceServerTitle", "{0} ICE 服务器"), Model.Kind);
 
     public string Address
     {

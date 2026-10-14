@@ -112,7 +112,7 @@
                                                           VerticalAlignment="Top"/>
                                             </Grid>
 
-                                            <TextBlock Text="{i18n:Tr ServerSettings.RoleSelection, DefaultText='角色归属'}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{i18n:Tr ServerSettings.UserRoles, DefaultText='角色归属'}" FontWeight="SemiBold"/>
                                             <ItemsControl ItemsSource="{Binding RoleOptions}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate x:DataType="vm:SelectableRoleOptionViewModel">

@@ -675,7 +675,7 @@ public partial class RemoteDeviceGroupCardViewModel(
         ? LocalizationManager.Instance.GetString("ServerRemoteDeviceGroupsPage.ManageAuthorization", "管理授权")
         : LocalizationManager.Instance.GetString("DeviceGroupsPage.Manage", "管理");
     public string EmptyDescription => LocalizationManager.Instance.GetString("ServerRemoteDeviceGroupsPage.EmptyDescription", "暂无描述");
-    public string SystemHint => LocalizationManager.Instance.GetString("ServerRemoteDeviceGroupsPage.SystemGroupHint", "系统全量范围组，不可改名、删除，也不会作为普通业务分组显示在首页。");
+    public string SystemHint => LocalizationManager.Instance.GetString("ServerRemoteDeviceGroupsPage.SystemHint", "系统全量范围组，不可改名、删除，也不会作为普通业务分组显示在首页。");
 
     [ObservableProperty]
     public partial bool IsVisible { get; set; } = true;
@@ -746,7 +746,9 @@ public partial class RemoteGroupRoleSelectionItemViewModel(AgentRoleDto model, b
 {
     public AgentRoleDto Model { get; } = model;
     public string Name => Model.Name;
-    public string Description => string.IsNullOrWhiteSpace(Model.Description) ? "暂无描述" : Model.Description;
+    public string Description => string.IsNullOrWhiteSpace(Model.Description)
+        ? LocalizationManager.Instance.GetString("ServerRemoteDeviceGroupsPage.EmptyDescription", "暂无描述")
+        : Model.Description;
 
     [ObservableProperty]
     public partial bool IsSelected { get; set; } = isSelected;
@@ -762,7 +764,9 @@ public partial class RemoteGroupUserSelectionItemViewModel(AgentAccountUserDto m
 {
     public AgentAccountUserDto Model { get; } = model;
     public string Name => Model.Username;
-    public string RoleSummary => Model.Roles.Count == 0 ? "未分配角色" : string.Join(" / ", Model.Roles.Select(item => item.Name));
+    public string RoleSummary => Model.Roles.Count == 0
+        ? LocalizationManager.Instance.GetString("ServerRemoteDeviceGroupsPage.NoRolesAssigned", "未分配角色")
+        : string.Join(" / ", Model.Roles.Select(item => item.Name));
 
     [ObservableProperty]
     public partial bool IsSelected { get; set; } = isSelected;

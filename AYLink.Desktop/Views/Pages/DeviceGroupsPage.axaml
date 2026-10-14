@@ -107,7 +107,7 @@
                                            Text="{i18n:Tr DeviceGroupsPage.GroupList, DefaultText='分组列表'}"
                                            FontWeight="SemiBold"/>
                                 <TextBlock Grid.Column="1"
-                                           Text="{Binding FilteredGroupCount, StringFormat='共 {0} 个分组'}"
+                                           Text="{i18n:TrF DeviceGroupsPage.GroupCount, Argument={Binding FilteredGroupCount}, DefaultText='共 {0} 个分组'}"
                                            Opacity="0.65"/>
                             </Grid>
 
@@ -229,7 +229,7 @@
                                 <Grid ColumnDefinitions="*,Auto">
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="{i18n:Tr DeviceGroupsPage.Devices, DefaultText='设备'}" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{Binding SelectedDeviceCount, StringFormat='已选择 {0} 项'}" Opacity="0.65" FontSize="12"/>
+                                        <TextBlock Text="{i18n:TrF DeviceGroupsPage.SelectedCount, Argument={Binding SelectedDeviceCount}, DefaultText='已选择 {0} 项'}" Opacity="0.65" FontSize="12"/>
                                     </StackPanel>
                                 </Grid>
 

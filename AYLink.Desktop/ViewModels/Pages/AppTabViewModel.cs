@@ -565,7 +565,7 @@ public partial class AppTabViewModel : TabItemViewModelBase
             await _remoteAppService.DownloadAsync(app.PackageName, savePath);
             _notifications.ShowSuccess(
                 localizer.GetString("AppTab.CopySuccessTitle", "已完成"),
-                $"APK 已下载到 {savePath}");
+                string.Format(localizer.GetString("AppTab.ApkDownloadedMessage", "APK 已下载到 {0}"), savePath));
         }
         catch (Exception ex)
         {
