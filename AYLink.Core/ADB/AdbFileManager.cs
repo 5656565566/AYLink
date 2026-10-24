@@ -65,6 +65,7 @@ public class AdbFileManager(AdbClient client, DeviceData device)
         catch (Exception ex)
         {
             Debug.WriteLine($"列出目录 '{remotePath}' 时出错: {ex.Message}");
+            throw;
         }
         return items;
     }
@@ -127,17 +128,16 @@ public class AdbFileManager(AdbClient client, DeviceData device)
     {
         try
         {
-            string command = $"mv \"{oldPath}\" \"{newPath}\"";
+            var source = QuoteShellPath(oldPath);
+            var target = QuoteShellPath(newPath);
+            string command = $"if [ -e {target} ] || [ -L {target} ]; then printf '1\\n'; else mv -- {source} {target} 2>&1; printf '\\n%d\\n' $?; fi";
             var receiver = new ConsoleOutputReceiver();
 
             await _client.ExecuteShellCommandAsync(_device, command, receiver, cancellationToken);
 
             string output = receiver.ToString();
 
-            if (!string.IsNullOrWhiteSpace(output) &&
-                (output.Contains("fail", StringComparison.OrdinalIgnoreCase) ||
-                 output.Contains("denied", StringComparison.OrdinalIgnoreCase) ||
-                 output.Contains("No such file or directory", StringComparison.OrdinalIgnoreCase)))
+            if (!int.TryParse(output.Trim().Split('\n')[^1], out var exitCode) || exitCode != 0)
             {
                 Debug.WriteLine($"移动文件 '{oldPath}' 到 '{newPath}' 时出错: {output}");
                 return false;
@@ -152,6 +152,8 @@ public class AdbFileManager(AdbClient client, DeviceData device)
         }
     }
 
+    public static string QuoteShellPath(string path) => "'" + path.Replace("'", "'\\''") + "'";
+
     /// <summary>
     /// 在设备上异步删除文件或目录
     /// </summary>
@@ -162,7 +164,7 @@ public class AdbFileManager(AdbClient client, DeviceData device)
     {
         try
         {
-            string command = $"rm -rf \"{path}\"";
+            string command = $"rm -rf -- {QuoteShellPath(path)}";
             var receiver = new ConsoleOutputReceiver();
 
             await _client.ExecuteShellCommandAsync(_device, command, receiver, cancellationToken);
