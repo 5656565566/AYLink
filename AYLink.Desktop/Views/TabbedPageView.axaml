@@ -28,13 +28,7 @@
                                         ContentTemplate="{CompiledBinding $parent[local:TabbedPageView].TabContentTemplate}"
                                         IsClosable="{CompiledBinding IsClosable}"
                                         HorizontalContentAlignment="Stretch"
-                                        VerticalContentAlignment="Stretch">
-                            
-                            <ui:FATabViewItem.Background>
-                                <SolidColorBrush Color="{DynamicResource SolidBackgroundFillColorBase}" Opacity="0.85"/>
-                            </ui:FATabViewItem.Background>
-                            
-                        </ui:FATabViewItem>
+                                        VerticalContentAlignment="Stretch"/>
                         
                     </DataTemplate>
                 </ui:FATabView.TabItemTemplate>
@@ -53,9 +47,6 @@
                                 IsClosable="False"
                                 HorizontalContentAlignment="Stretch"
                                 VerticalContentAlignment="Stretch">
-                    <ui:FATabViewItem.Background>
-                        <SolidColorBrush Color="{DynamicResource SolidBackgroundFillColorBase}" Opacity="0.85"/>
-                    </ui:FATabViewItem.Background>
                     <ui:FATabViewItem.Content>
                         <StackPanel HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
@@ -75,15 +66,15 @@
             </ui:FATabView>
         </Grid>
 
-        <Grid Grid.Row="1" IsVisible="{CompiledBinding $parent[local:TabbedPageView].ShowStatusBar}">
-            
-            <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="0,1,0,0">
-                <Border.Background>
-                    <SolidColorBrush Color="{DynamicResource SolidBackgroundFillColorBase}" Opacity="0.3"/>
-                </Border.Background>
-            </Border>
-
+        <Grid Grid.Row="1" IsVisible="{CompiledBinding $parent[local:TabbedPageView].ShowStatusBar}"
+              Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
+            <!-- 深色底栏向上补齐凹圆角，与内容区的 8px 外圆角衔接 -->
+            <Path Width="8" Height="8" Margin="0,-8,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
+                  Fill="{DynamicResource SolidBackgroundFillColorBaseBrush}" IsHitTestVisible="False"
+                  Data="M0,0 A8,8 0 0 0 8,8 L0,8 Z"/>
+            <Path Width="8" Height="8" Margin="0,-8,0,0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                  Fill="{DynamicResource SolidBackgroundFillColorBaseBrush}" IsHitTestVisible="False"
+                  Data="M8,0 A8,8 0 0 1 0,8 L8,8 Z"/>
             <Border Padding="12,4">
                 <ContentPresenter Content="{CompiledBinding #PART_TabView.SelectedItem}"
                                   ContentTemplate="{CompiledBinding $parent[local:TabbedPageView].StatusBarTemplate}"

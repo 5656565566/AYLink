@@ -15,11 +15,10 @@
     <UserControl.Resources>
         <!-- 标签页内容模板 -->
         <DataTemplate x:Key="TaskTabContentTemplate" x:DataType="vm:TaskTabViewModel">
-            <Grid RowDefinitions="Auto,*">
+            <Grid RowDefinitions="Auto,*" Background="{DynamicResource TabViewItemHeaderBackgroundSelected}">
                 <!-- 顶部 CommandBar -->
                 <ui:FACommandBar Grid.Row="0"
-                               DefaultLabelPosition="Right"
-                               Background="Transparent">
+                               DefaultLabelPosition="Right">
                     
                     <!-- 左侧：搜索与筛选条件 -->
                     <ui:FACommandBar.Content>
@@ -87,11 +86,11 @@
 
                 <!-- 主内容区域：始终显示表头 + DataGrid -->
                 <Border Grid.Row="1"
-                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
                         BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
-                        Margin="6,12,6,0"
+                        Margin="6,12,6,6"
                         Padding="0">
                     <Grid RowDefinitions="Auto,*">
                         <!-- 表头 -->

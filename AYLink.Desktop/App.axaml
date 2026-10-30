@@ -14,6 +14,29 @@
 
     <Application.Styles>
         <sty:FluentAvaloniaTheme />
+        <Styles>
+            <!-- 选中标签与工具栏共用底色 与下方内容区域区分 -->
+            <Styles.Resources>
+                <ResourceDictionary>
+                    <ResourceDictionary.ThemeDictionaries>
+                        <ResourceDictionary x:Key="Dark">
+                            <SolidColorBrush x:Key="TabViewItemHeaderBackgroundSelected" Color="#303030" />
+                            <SolidColorBrush x:Key="TabViewSelectedItemBorderBrush" Color="Transparent" />
+                        </ResourceDictionary>
+                        <ResourceDictionary x:Key="Light">
+                            <SolidColorBrush x:Key="TabViewItemHeaderBackgroundSelected" Color="White" />
+                            <SolidColorBrush x:Key="TabViewSelectedItemBorderBrush" Color="Transparent" />
+                        </ResourceDictionary>
+                    </ResourceDictionary.ThemeDictionaries>
+                </ResourceDictionary>
+            </Styles.Resources>
+            <Style Selector="ui|FATabView ui|FACommandBar">
+                <Setter Property="Background" Value="{DynamicResource TabViewItemHeaderBackgroundSelected}" />
+            </Style>
+            <Style Selector="ui|FATabViewItem:selected /template/ Path#LeftRadiusRenderArc, ui|FATabViewItem:selected /template/ Path#RightRadiusRenderArc">
+                <Setter Property="Fill" Value="Transparent" />
+            </Style>
+        </Styles>
     </Application.Styles>
 
     <Application.Resources>
@@ -36,7 +59,7 @@
             </Style>
         </ControlTheme>
 
-        <!-- 重写 TabView 的 ControlTheme 实现内容区域透明 并为标签栏添加半透明底色 -->
+        <!-- 内容区域保持透明 标签栏独立显示底色 -->
         <ControlTheme x:Key="{x:Type ui:FATabView}" TargetType="ui:FATabView">
             <Setter Property="VerticalAlignment" Value="Top" />
             <Setter Property="Padding" Value="2,8,2,0" />
@@ -46,8 +69,7 @@
                 <ControlTemplate>
                     <Grid RowDefinitions="Auto,*">
                         <Grid Name="TabContainerGrid" Background="{TemplateBinding Background}">
-                            <!-- 半透明底色 增加标签页头部的可读性 -->
-                            <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.3" Grid.ColumnSpan="4" />
+                            <Border Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}" Grid.ColumnSpan="4" />
 
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" MinWidth="2" />

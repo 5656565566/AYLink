@@ -42,11 +42,7 @@
                                         ContentTemplate="{CompiledBinding $parent[local:DetachedTabWindow].DefaultContentTemplate}"
                                         IsClosable="True"
                                         HorizontalContentAlignment="Stretch"
-                                        VerticalContentAlignment="Stretch">
-                            <ui:FATabViewItem.Background>
-                                <SolidColorBrush Color="{DynamicResource SolidBackgroundFillColorBase}" Opacity="0.85"/>
-                            </ui:FATabViewItem.Background>
-                        </ui:FATabViewItem>
+                                        VerticalContentAlignment="Stretch"/>
                     </DataTemplate>
                 </ui:FATabView.TabItemTemplate>
             </ui:FATabView>

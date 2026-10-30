@@ -13,11 +13,10 @@
 
     <UserControl.Resources>
         <DataTemplate x:Key="AppTabContentTemplate" x:DataType="vm:AppTabViewModel">
-            <Grid RowDefinitions="Auto,*">
+            <Grid RowDefinitions="Auto,*" Background="{DynamicResource TabViewItemHeaderBackgroundSelected}">
                 <!-- 顶部 CommandBar -->
                 <ui:FACommandBar Grid.Row="0"
-                               DefaultLabelPosition="Right"
-                               Background="Transparent">
+                               DefaultLabelPosition="Right">
 
                     <!-- 左侧：搜索 -->
                     <ui:FACommandBar.Content>
@@ -63,11 +62,11 @@
 
                 <!-- 主内容区域：始终显示表头 + DataGrid -->
                 <Border Grid.Row="1"
-                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
                         BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
-                        Margin="12,12,12,0"
+                        Margin="12"
                         Padding="0">
                     <Grid RowDefinitions="Auto,*">
                         <!-- 表头 -->
