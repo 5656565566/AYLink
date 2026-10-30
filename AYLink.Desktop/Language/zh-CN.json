@@ -599,7 +599,8 @@
     "SessionStartFailed": "会话启动失败: {0}"
   },
   "TabbedPageView": {
-    "EmptyTabTitle": "空标签页"
+    "EmptyTabTitle": "空标签页",
+    "TransferFailed": "标签页转移失败，已保留在原窗口"
   },
   "TaskPage": {
     "CancelTask": "取消任务",

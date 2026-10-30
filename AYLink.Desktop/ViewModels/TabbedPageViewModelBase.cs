@@ -128,6 +128,7 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
     {
         if (tab is not TTab typedTab) return false;
         if (!Tabs.Contains(typedTab)) return false;
+        var index = Tabs.IndexOf(typedTab);
 
         typedTab.OnCloseRequested -= OnTabCloseRequested;
         if (typedTab is ITabLifecycleAware lifecycleAware)
@@ -142,7 +143,8 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
         }
         else
         {
-            SelectedTab ??= Tabs.LastOrDefault();
+            if (SelectedTab == typedTab || SelectedTab == null)
+                SelectedTab = Tabs[Math.Min(index, Tabs.Count - 1)];
         }
 
         return true;
@@ -153,7 +155,7 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
     /// </summary>
     public bool AttachTab(TabItemViewModelBase tab, int index = -1)
     {
-        if (tab is not TTab typedTab) return false;
+        if (tab is not TTab typedTab || Tabs.Contains(typedTab)) return false;
 
         typedTab.OnCloseRequested += OnTabCloseRequested;
         if (typedTab is ITabLifecycleAware lifecycleAware)
@@ -166,6 +168,22 @@ public abstract partial class TabbedPageViewModelBase<TTab> : PageViewModelBase,
             Tabs.Add(typedTab);
 
         SelectedTab = typedTab;
+        return true;
+    }
+
+    /// <summary>
+    /// 原子重排，保持标签实例、选中项和宿主生命周期不变
+    /// </summary>
+    public bool MoveTab(TabItemViewModelBase tab, int index)
+    {
+        if (tab is not TTab typedTab || !tab.IsClosable || index < 0 || index >= Tabs.Count) return false;
+        var oldIndex = Tabs.IndexOf(typedTab);
+        if (oldIndex < 0) return false;
+        for (var i = Math.Min(oldIndex, index); i <= Math.Max(oldIndex, index); i++)
+        {
+            if (!Tabs[i].IsClosable) return false;
+        }
+        if (oldIndex != index) Tabs.Move(oldIndex, index);
         return true;
     }
 

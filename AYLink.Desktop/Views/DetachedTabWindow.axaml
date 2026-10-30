@@ -33,7 +33,8 @@
                          Background="Transparent"
                          VerticalAlignment="Stretch"
                          HorizontalAlignment="Stretch"
-                         CanReorderTabs="True"
+                         CanReorderTabs="False"
+                         CanDragTabs="False"
                          IsAddTabButtonVisible="False">
                 <ui:FATabView.TabItemTemplate>
                     <DataTemplate x:DataType="vm:TabItemViewModelBase">

@@ -13,4 +13,5 @@ public interface ITabbedPageViewModel : INotifyPropertyChanged
 
     bool DetachTab(TabItemViewModelBase tab);
     bool AttachTab(TabItemViewModelBase tab, int index = -1);
+    bool MoveTab(TabItemViewModelBase tab, int index);
 }

@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
 using AYLink.Desktop.ViewModels;
 using FluentAvalonia.UI.Controls;
@@ -60,17 +59,7 @@ public partial class DetachedTabWindow : Window
     /// </summary>
     private const double TitleBarHeight = 40;
 
-    #region 拖拽回主窗口相关字段
-
-    private FATabViewItem? _draggingTabItem;
-    private TabItemViewModelBase? _draggingTabVm;
-    private Point _dragStartPoint;
-    private bool _isDragTracking;
-    private bool _isTearingOff;
-    private const double TearOffThresholdX = 50;
-    private const double TearOffThresholdY = 100;
-
-    #endregion
+    private readonly TabDragBehavior _tabDrag;
 
     public DetachedTabWindow()
     {
@@ -87,10 +76,7 @@ public partial class DetachedTabWindow : Window
         // 窗口拖拽支持
         AddHandler(PointerPressedEvent, OnWindowPointerPressed, RoutingStrategies.Tunnel);
 
-        // 标签页拖回支持
-        AddHandler(PointerPressedEvent, OnTabAreaPointerPressed, RoutingStrategies.Tunnel);
-        AddHandler(PointerMovedEvent, OnTabAreaPointerMoved, RoutingStrategies.Tunnel);
-        AddHandler(PointerReleasedEvent, OnTabAreaPointerReleased, RoutingStrategies.Tunnel);
+        _tabDrag = new TabDragBehavior(this, PART_TabView, GetDragHost);
 
         Closed += OnWindowClosed;
     }
@@ -160,8 +146,17 @@ public partial class DetachedTabWindow : Window
     /// </summary>
     public void AddTab(TabItemViewModelBase tabVm, IDataTemplate? contentTemplate = null)
     {
+        AttachTab(tabVm, Tabs.Count, contentTemplate);
+    }
+
+    private bool AttachTab(TabItemViewModelBase tabVm, int index, IDataTemplate? contentTemplate)
+    {
+        if (Tabs.Contains(tabVm)) return false;
+
         // 订阅关闭事件
         tabVm.OnCloseRequested += OnTabCloseRequested;
+        if (tabVm is ITabLifecycleAware lifecycleAware)
+            lifecycleAware.OnAttachedToHost();
 
         // 注册此 ViewModel 类型的内容模板
         if (contentTemplate != null)
@@ -170,8 +165,9 @@ public partial class DetachedTabWindow : Window
             DefaultContentTemplate ??= contentTemplate;
         }
 
-        Tabs.Add(tabVm);
+        Tabs.Insert(index, tabVm);
         PART_TabView.SelectedItem = tabVm;
+        return true;
     }
 
     /// <summary>
@@ -179,16 +175,45 @@ public partial class DetachedTabWindow : Window
     /// </summary>
     public bool RemoveTab(TabItemViewModelBase tabVm)
     {
-        tabVm.OnCloseRequested -= OnTabCloseRequested;
-        var result = Tabs.Remove(tabVm);
-
-        if (Tabs.Count == 0)
-        {
-            Close();
-        }
-
+        var result = DetachTab(tabVm);
+        if (result) CloseIfEmpty();
         return result;
     }
+
+    private bool DetachTab(TabItemViewModelBase tabVm)
+    {
+        var index = Tabs.IndexOf(tabVm);
+        if (index < 0) return false;
+
+        tabVm.OnCloseRequested -= OnTabCloseRequested;
+        if (tabVm is ITabLifecycleAware lifecycleAware)
+            lifecycleAware.OnDetachedFromHost();
+        Tabs.RemoveAt(index);
+        if (Tabs.Count > 0 && (PART_TabView.SelectedItem == tabVm || PART_TabView.SelectedItem == null))
+            PART_TabView.SelectedItem = Tabs[Math.Min(index, Tabs.Count - 1)];
+        return true;
+    }
+
+    private void CloseIfEmpty()
+    {
+        if (Tabs.Count == 0)
+            Close();
+    }
+
+    private bool MoveTab(TabItemViewModelBase tabVm, int index)
+    {
+        var oldIndex = Tabs.IndexOf(tabVm);
+        if (oldIndex < 0 || index < 0 || index >= Tabs.Count || !tabVm.IsClosable) return false;
+        for (var i = Math.Min(oldIndex, index); i <= Math.Max(oldIndex, index); i++)
+        {
+            if (!Tabs[i].IsClosable) return false;
+        }
+        if (oldIndex != index) Tabs.Move(oldIndex, index);
+        return true;
+    }
+
+    internal TabDragHost GetDragHost() => new(this, Tabs, SourcePageKey, DefaultContentTemplate, PART_TabView,
+        MoveTab, DetachTab, AttachTab, CloseIfEmpty);
 
     private void TabView_TabCloseRequested(FATabView _, FATabViewTabCloseRequestedEventArgs args)
     {
@@ -204,8 +229,7 @@ public partial class DetachedTabWindow : Window
 
     private async void OnTabCloseRequested(TabItemViewModelBase tab)
     {
-        tab.OnCloseRequested -= OnTabCloseRequested;
-        Tabs.Remove(tab);
+        if (!DetachTab(tab)) return;
         await TabShutdownHelper.StopAndDisposeAsync(tab);
 
         if (Tabs.Count == 0)
@@ -233,6 +257,8 @@ public partial class DetachedTabWindow : Window
             tab.OnCloseRequested -= OnTabCloseRequested;
             try
             {
+                if (tab is ITabLifecycleAware lifecycleAware)
+                    lifecycleAware.OnDetachedFromHost();
                 await TabShutdownHelper.StopAndDisposeAsync(tab);
             }
             catch (Exception ex)
@@ -241,187 +267,6 @@ public partial class DetachedTabWindow : Window
             }
         }
     }
-
-    #region 拖回主窗口逻辑
-
-    /// <summary>
-    /// 在 TabView 标签栏区域检测鼠标按下
-    /// </summary>
-    private void OnTabAreaPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
-
-        var tabItem = FindAncestor<FATabViewItem>(e.Source as Visual);
-        if (tabItem == null) return;
-
-        if (IsClickOnButton(e.Source as Visual, tabItem)) return;
-
-        var tabVm = GetTabViewModel(tabItem);
-        if (tabVm == null) return;
-
-        // 固定的标签页（不可关闭）不允许拖拽
-        if (!tabVm.IsClosable) return;
-
-        _draggingTabItem = tabItem;
-        _draggingTabVm = tabVm;
-        _dragStartPoint = e.GetPosition(PART_TabView);
-        _isDragTracking = true;
-        _isTearingOff = false;
-    }
-
-    private void OnTabAreaPointerMoved(object? sender, PointerEventArgs e)
-    {
-        if (!_isDragTracking || _draggingTabItem == null || _draggingTabVm == null) return;
-
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
-        {
-            ResetDragState();
-            return;
-        }
-
-        var currentPos = e.GetPosition(PART_TabView);
-        var diff = currentPos - _dragStartPoint;
-
-        bool shouldTearOff = Math.Abs(diff.X) > TearOffThresholdX || Math.Abs(diff.Y) > TearOffThresholdY;
-
-        if (shouldTearOff && !_isTearingOff)
-        {
-            _isTearingOff = true;
-        }
-        else if (!shouldTearOff && _isTearingOff)
-        {
-            _isTearingOff = false;
-        }
-    }
-
-    /// <summary>
-    /// 鼠标释放时尝试拖到目标窗口（主窗口或其他子窗口）
-    /// </summary>
-    private void OnTabAreaPointerReleased(object? sender, PointerReleasedEventArgs e)
-    {
-        if (!_isDragTracking) return;
-
-        if (_isTearingOff && _draggingTabVm != null)
-        {
-            TryDragToTarget(e);
-        }
-
-        ResetDragState();
-    }
-
-    /// <summary>
-    /// 尝试将标签页拖到目标窗口（主窗口或其他子窗口）
-    /// </summary>
-    private void TryDragToTarget(PointerReleasedEventArgs e)
-    {
-        if (_draggingTabVm == null || string.IsNullOrEmpty(SourcePageKey)) return;
-
-        var tabVm = _draggingTabVm;
-        var sourcePageKey = SourcePageKey;
-        var contentTemplate = DefaultContentTemplate;
-
-        // 获取鼠标在屏幕上的位置
-        var screenPoint = e.GetPosition(this);
-        var screenPixelPoint = new PixelPoint(
-            (int)(Position.X + screenPoint.X),
-            (int)(Position.Y + screenPoint.Y));
-
-        // 优先检查是否拖到其他子窗口
-        var targetDetachedWindow = DetachedTabWindowManager.Instance.FindWindowUnderPoint(screenPixelPoint, this);
-        if (targetDetachedWindow != null && targetDetachedWindow.SourcePageKey == sourcePageKey)
-        {
-            // 拖到同类型的其他子窗口
-            Dispatcher.UIThread.Post(() =>
-            {
-                RemoveTab(tabVm);
-                targetDetachedWindow.AddTab(tabVm, contentTemplate);
-            }, DispatcherPriority.Background);
-            return;
-        }
-
-        // 检查是否拖到主窗口
-        var mainWindow = (Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)
-            ?.MainWindow;
-        if (mainWindow == null) return;
-
-        var mainWindowBounds = new PixelRect(
-            mainWindow.Position,
-            PixelSize.FromSize(mainWindow.Bounds.Size, mainWindow.RenderScaling));
-
-        if (!mainWindowBounds.Contains(screenPixelPoint)) return;
-
-        // 延迟执行以避免与 FluentAvalonia 重排冲突
-        Dispatcher.UIThread.Post(() =>
-        {
-            // 查找主窗口 ViewModel
-            if (mainWindow.DataContext is not MainWindowViewModel mainVm) return;
-
-            // 通过反射获取对应页面的 ViewModel
-            var pagesField = mainVm.GetType().GetField("_pages",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (pagesField?.GetValue(mainVm) is not System.Collections.Generic.Dictionary<string, PageViewModelBase> pages) return;
-
-            if (!pages.TryGetValue(sourcePageKey, out var targetPageVm)) return;
-
-            // 尝试 AttachTab（类型匹配由 AttachTab 内部检查）
-            var attachMethod = targetPageVm.GetType().GetMethod("AttachTab");
-            if (attachMethod == null) return;
-
-            // 先从子窗口中移除标签页
-            RemoveTab(tabVm);
-
-            // 再附加到主窗口的页面
-            var result = attachMethod.Invoke(targetPageVm, [tabVm, -1]);
-            if (result is not true)
-            {
-                // 附加失败，重新添加回子窗口
-                AddTab(tabVm, contentTemplate);
-                return;
-            }
-
-            // 导航到对应页面
-            Services.NavigationService.Instance.NavigateTo(sourcePageKey);
-        }, DispatcherPriority.Background);
-    }
-
-    private void ResetDragState()
-    {
-        _draggingTabItem = null;
-        _draggingTabVm = null;
-        _isDragTracking = false;
-        _isTearingOff = false;
-    }
-
-    private static TabItemViewModelBase? GetTabViewModel(FATabViewItem tabItem)
-    {
-        if (tabItem.Content is TabItemViewModelBase vm) return vm;
-        if (tabItem.DataContext is TabItemViewModelBase vm2) return vm2;
-        return null;
-    }
-
-    private static T? FindAncestor<T>(Visual? visual) where T : Visual
-    {
-        var current = visual;
-        while (current != null)
-        {
-            if (current is T target) return target;
-            current = current.GetVisualParent() as Visual;
-        }
-        return null;
-    }
-
-    private static bool IsClickOnButton(Visual? source, FATabViewItem tabItem)
-    {
-        var current = source as Control;
-        while (current != null && current != tabItem)
-        {
-            if (current is Button) return true;
-            current = current.Parent as Control;
-        }
-        return false;
-    }
-
-    #endregion
 
     #region 窗口标题栏拖拽
 

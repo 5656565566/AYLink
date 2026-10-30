@@ -599,7 +599,8 @@
     "SessionStartFailed": "Failed to start session: {0}"
   },
   "TabbedPageView": {
-    "EmptyTabTitle": "Empty Tab"
+    "EmptyTabTitle": "Empty Tab",
+    "TransferFailed": "Could not move the tab. It remains in the original window."
   },
   "TaskPage": {
     "CancelTask": "Cancel Task",
