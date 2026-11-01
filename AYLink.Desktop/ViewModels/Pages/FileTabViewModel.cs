@@ -1,21 +1,44 @@
 using AdvancedSharpAdbClient.DeviceCommands;
+using AYLink.Core.ADB;
 using AYLink.Core.Devices;
 using AYLink.Core.Models;
+using AYLink.Desktop.Models;
 using AYLink.Desktop.Services.Notifications;
 using AYLink.Desktop.Services.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace AYLink.Desktop.ViewModels.Pages;
 
 public partial class FileTabViewModel : TabItemViewModelBase
 {
-    public FilePaneViewModel LeftPane { get; } = new();
-    public FilePaneViewModel RightPane { get; } = new();
+    public FilePaneViewModel LeftPane { get; }
+    public FilePaneViewModel RightPane { get; }
     public string? RemoteDeviceId { get; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsLeftPaneVisible), nameof(IsRightPaneVisible), nameof(IsSingleLeft), nameof(IsSingleRight))]
+    public partial bool IsDualPane { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsLeftPaneVisible), nameof(IsRightPaneVisible), nameof(IsSingleLeft), nameof(IsSingleRight))]
+    public partial bool IsRightActive { get; set; }
+
+    public bool IsLeftPaneVisible => IsDualPane || !IsRightActive;
+    public bool IsRightPaneVisible => IsDualPane || IsRightActive;
+    public bool IsSingleLeft => !IsDualPane && !IsRightActive;
+    public bool IsSingleRight => !IsDualPane && IsRightActive;
+
+    public void ActivatePane(FilePaneViewModel pane) => IsRightActive = ReferenceEquals(pane, RightPane);
 
     public FileTabViewModel(DeviceModel? device = null)
     {
+        LeftPane = new();
+        RightPane = new();
         Device = device;
         
         if (device != null)
@@ -23,6 +46,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
             Title = device.Name;
             LeftPane.SelectLocalHome();
             RightPane.SelectDevice(device);
+            IsRightActive = true;
         }
         else
         {
@@ -34,10 +58,63 @@ public partial class FileTabViewModel : TabItemViewModelBase
 
     public FileTabViewModel(DeviceDescriptor remoteDevice, string serverId, string? initialPath = null)
     {
+        LeftPane = new();
+        RightPane = new();
         RemoteDeviceId = remoteDevice.Id;
         Title = remoteDevice.Name;
         LeftPane.SelectLocalHome();
         RightPane.SelectRemoteDevice(remoteDevice, serverId, initialPath);
+        IsRightActive = true;
+    }
+
+    public FileTabViewModel(FileTabViewModel source)
+    {
+        LeftPane = new(source.LeftPane);
+        RightPane = new(source.RightPane);
+        Title = source.Title;
+        Device = source.Device;
+        RemoteDeviceId = source.RemoteDeviceId;
+        IsDualPane = source.IsDualPane;
+        IsRightActive = source.IsRightActive;
+    }
+
+    public FileTabViewModel CreateDirectoryTab(FilePaneViewModel pane, FileSystemModel directory)
+    {
+        var tab = new FileTabViewModel(this) { Title = directory.Name, IsDualPane = false };
+        var target = ReferenceEquals(pane, LeftPane) ? tab.LeftPane : tab.RightPane;
+        tab.ActivatePane(target);
+        target.SetLocation(pane.SelectedSource, pane.GetEntryPath(directory));
+        return tab;
+    }
+
+    public bool CanTransfer(FilePaneViewModel source, FileSystemModel file)
+    {
+        var target = ReferenceEquals(source, LeftPane) ? RightPane : LeftPane;
+        return IsDualPane && source.CanOperate(file) && target.HasCurrentListing && !file.IsDirectory &&
+            !(source.SelectedSource!.IsLocal && target.SelectedSource!.IsRemoteAgent) &&
+            !(source.SelectedSource!.IsRemoteAgent && !target.SelectedSource!.IsLocal) &&
+            !(target.SelectedSource!.IsRemoteAgent && !source.SelectedSource!.IsLocal);
+    }
+
+    public async Task TransferFilesAsync(FilePaneViewModel pane, IReadOnlyList<FileSystemModel> files)
+    {
+        if (files.Count == 0 || files.Any(file => !CanTransfer(pane, file))) return;
+        var source = pane.SelectedSource!;
+        var targetPane = ReferenceEquals(pane, LeftPane) ? RightPane : LeftPane;
+        var target = targetPane.SelectedSource!;
+        var directory = targetPane.CurrentPath;
+        var paths = files.Select(file => (File: file, Source: pane.GetEntryPath(file), Target: targetPane.GetEntryPath(file))).ToArray();
+        foreach (var entry in paths) await CopyFileAsync(source, entry.Source, target, entry.Target, entry.File);
+        if (ReferenceEquals(target, targetPane.SelectedSource) && targetPane.CurrentPath == directory)
+            await targetPane.LoadFilesAsync();
+    }
+
+    public async Task DownloadFilesToLocalAsync(FilePaneViewModel pane, IReadOnlyList<FileSystemModel> files, string directory)
+    {
+        if (files.Count == 0 || pane.SelectedSource?.IsLocal != false || files.Any(file => !pane.CanOperate(file) || file.IsDirectory)) return;
+        var source = pane.SelectedSource;
+        var paths = files.Select(file => (File: file, Source: pane.GetEntryPath(file), Target: System.IO.Path.Combine(directory, file.Name))).ToArray();
+        foreach (var entry in paths) await CopyFileAsync(source, entry.Source, new FileSource(), entry.Target, entry.File);
     }
 
     /// <summary>
@@ -65,7 +142,10 @@ public partial class FileTabViewModel : TabItemViewModelBase
     /// </summary>
     private async System.Threading.Tasks.Task TransferFileAsync(FilePaneViewModel sourcePane, FilePaneViewModel targetPane, FileSystemModel file)
     {
-        if (sourcePane.SelectedSource == null || targetPane.SelectedSource == null) return;
+        if (!sourcePane.CanOperate(file) || !targetPane.HasCurrentListing) return;
+        var source = sourcePane.SelectedSource!;
+        var target = targetPane.SelectedSource!;
+        var targetDirectory = targetPane.CurrentPath;
         if (file.IsDirectory)
         {
             var localizer = Services.Localization.LocalizationManager.Instance;
@@ -75,13 +155,21 @@ public partial class FileTabViewModel : TabItemViewModelBase
             return;
         }
 
-        string sourcePath = sourcePane.SelectedSource.IsLocal
-            ? System.IO.Path.Combine(sourcePane.CurrentPath, file.Name)
-            : (sourcePane.CurrentPath.EndsWith("/") ? $"{sourcePane.CurrentPath}{file.Name}" : $"{sourcePane.CurrentPath}/{file.Name}");
+        string sourcePath = sourcePane.GetEntryPath(file);
+        string targetPath = targetPane.GetEntryPath(file);
 
-        string targetPath = targetPane.SelectedSource.IsLocal
-            ? System.IO.Path.Combine(targetPane.CurrentPath, file.Name)
-            : (targetPane.CurrentPath.EndsWith("/") ? $"{targetPane.CurrentPath}{file.Name}" : $"{targetPane.CurrentPath}/{file.Name}");
+        await CopyFileAsync(source, sourcePath, target, targetPath, file, targetPane, targetDirectory);
+    }
+
+    public async System.Threading.Tasks.Task DownloadToLocalAsync(FilePaneViewModel pane, FileSystemModel file, string path)
+    {
+        if (!pane.CanOperate(file) || file.IsDirectory || pane.SelectedSource!.IsLocal) return;
+        await CopyFileAsync(pane.SelectedSource, pane.GetEntryPath(file), new FileSource(), path, file);
+    }
+
+    private async System.Threading.Tasks.Task CopyFileAsync(FileSource source, string sourcePath, FileSource target,
+        string targetPath, FileSystemModel file, FilePaneViewModel? targetPane = null, string? targetDirectory = null)
+    {
 
         var localizer2 = Services.Localization.LocalizationManager.Instance;
         string title = localizer2.GetString("FilePage.TransferringTitle", "传输中");
@@ -114,7 +202,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
                 taskService.Update(managedTask, p);
             });
 
-            if (sourcePane.SelectedSource.IsLocal && targetPane.SelectedSource.IsLocal)
+            if (source.IsLocal && target.IsLocal)
             {
                 // 本地到本地
                 await System.Threading.Tasks.Task.Run(() => System.IO.File.Copy(sourcePath, targetPath, true));
@@ -125,10 +213,10 @@ public partial class FileTabViewModel : TabItemViewModelBase
                 });
                 taskService.Update(managedTask, 100);
             }
-            else if (sourcePane.SelectedSource.IsLocal && !targetPane.SelectedSource.IsLocal)
+            else if (source.IsLocal && !target.IsLocal)
             {
                 // 本地到设备 (上传)
-                if (targetPane.SelectedSource.IsRemoteAgent)
+                if (target.IsRemoteAgent)
                 {
                     NotificationService.Instance.ShowWarning(
                         localizer2.GetString("FilePage.NotSupportedTitle", "不支持"),
@@ -139,24 +227,24 @@ public partial class FileTabViewModel : TabItemViewModelBase
                 }
                 else
                 {
-                    await targetPane.SelectedSource.Device!.FileManager.UploadFileAsync(sourcePath, targetPath, progress);
+                    await target.Device!.FileManager.UploadFileAsync(sourcePath, targetPath, progress);
                 }
             }
-            else if (!sourcePane.SelectedSource.IsLocal && targetPane.SelectedSource.IsLocal)
+            else if (!source.IsLocal && target.IsLocal)
             {
                 // 设备到本地 (下载)
-                if (sourcePane.SelectedSource.IsRemoteAgent)
+                if (source.IsRemoteAgent)
                 {
-                    await sourcePane.SelectedSource.AgentFileManager!.DownloadFileAsync(sourcePath, targetPath, progress);
+                    await source.AgentFileManager!.DownloadFileAsync(sourcePath, targetPath, progress);
                 }
                 else
                 {
-                    await sourcePane.SelectedSource.Device!.FileManager.DownloadFileAsync(sourcePath, targetPath, progress);
+                    await source.Device!.FileManager.DownloadFileAsync(sourcePath, targetPath, progress);
                 }
             }
             else
             {
-                if (sourcePane.SelectedSource.IsRemoteAgent || targetPane.SelectedSource.IsRemoteAgent)
+                if (source.IsRemoteAgent || target.IsRemoteAgent)
                 {
                     NotificationService.Instance.ShowWarning(
                         localizer2.GetString("FilePage.NotSupportedTitle", "不支持"),
@@ -167,13 +255,13 @@ public partial class FileTabViewModel : TabItemViewModelBase
                 }
 
                 // 设备到设备
-                if (sourcePane.SelectedSource.Device!.Serial == targetPane.SelectedSource.Device!.Serial)
+                if (source.Device!.Serial == target.Device!.Serial)
                 {
                     // 同一设备 使用 shell cp
                     var receiver = new AdvancedSharpAdbClient.Receivers.ConsoleOutputReceiver();
-                    await sourcePane.SelectedSource.Device!.AdbClient!.ExecuteShellCommandAsync(
-                        sourcePane.SelectedSource.Device!.DeviceData,
-                        $"cp \"{sourcePath}\" \"{targetPath}\"",
+                    await source.Device!.AdbClient!.ExecuteShellCommandAsync(
+                        source.Device!.DeviceData,
+                        $"cp -- {AdbFileManager.QuoteShellPath(sourcePath)} {AdbFileManager.QuoteShellPath(targetPath)}",
                         receiver,
                         default);
                     toastManager.Update(toast, currentToast =>
@@ -195,7 +283,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
                         currentToast.IsIndeterminate = false;
                     });
                     taskService.Update(managedTask, 0, msg1);
-                    await sourcePane.SelectedSource.Device!.FileManager.DownloadFileAsync(sourcePath, tempFile, new System.Progress<double>(p =>
+                    await source.Device!.FileManager.DownloadFileAsync(sourcePath, tempFile, new System.Progress<double>(p =>
                     {
                         toastManager.Update(toast, currentToast =>
                         {
@@ -213,7 +301,7 @@ public partial class FileTabViewModel : TabItemViewModelBase
                         currentToast.IsIndeterminate = false;
                     });
                     taskService.Update(managedTask, 50, msg2);
-                    await targetPane.SelectedSource.Device!.FileManager.UploadFileAsync(tempFile, targetPath, new System.Progress<double>(p =>
+                    await target.Device!.FileManager.UploadFileAsync(tempFile, targetPath, new System.Progress<double>(p =>
                     {
                         toastManager.Update(toast, currentToast =>
                         {
@@ -233,7 +321,8 @@ public partial class FileTabViewModel : TabItemViewModelBase
             NotificationService.Instance.ShowSuccess(
                 localizer2.GetString("FilePage.TransferCompleteTitle", "传输完成"),
                 successMsg);
-            await targetPane.LoadFilesAsync();
+            if (targetPane != null && ReferenceEquals(target, targetPane.SelectedSource) && targetPane.CurrentPath == targetDirectory)
+                await targetPane.LoadFilesAsync();
         }
         catch (System.Exception ex)
         {

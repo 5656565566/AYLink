@@ -1,0 +1,158 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AYLink.Desktop.ViewModels.Pages"
+             xmlns:models="using:AYLink.Core.Models"
+             xmlns:localModels="using:AYLink.Desktop.Models"
+             xmlns:views="using:AYLink.Desktop.Views.Pages"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:i18n="using:AYLink.Desktop.Services.Localization"
+             xmlns:converters="using:AYLink.Desktop.Converters"
+             x:Class="AYLink.Desktop.Views.Pages.FilePaneView"
+             x:Name="PaneView">
+    <UserControl.Resources>
+        <converters:FileDisplayConverter x:Key="FileDisplay"/>
+        <ItemsPanelTemplate x:Key="DetailsPanel"><VirtualizingStackPanel/></ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="WrapPanel"><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+        <DataTemplate x:Key="DetailsTemplate" x:DataType="models:FileSystemModel">
+            <Grid ColumnDefinitions="*,Auto,72" Height="36" Margin="8,0,2,0">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" VerticalAlignment="Center">
+                    <ui:FASymbolIcon Width="16" Height="16" FontSize="16">
+                        <ui:FASymbolIcon.Symbol><MultiBinding Converter="{StaticResource FileDisplay}" ConverterParameter="Icon"><Binding/></MultiBinding></ui:FASymbolIcon.Symbol>
+                    </ui:FASymbolIcon>
+                    <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip.Tip="{Binding Name}"/>
+                </Grid>
+                <TextBlock Grid.Column="1" Width="70" FontSize="12" VerticalAlignment="Center"
+                           IsVisible="{Binding !$parent[views:FilePaneView].IsCompact}" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                    <TextBlock.Text><MultiBinding Converter="{StaticResource FileDisplay}" ConverterParameter="Type">
+                        <Binding/>
+                        <Binding Source="{x:Static i18n:Locator.Localizer}" Path="Strings[FilePage.TypeFolder]"/>
+                        <Binding Source="{x:Static i18n:Locator.Localizer}" Path="Strings[FilePage.TypeFile]"/>
+                    </MultiBinding></TextBlock.Text>
+                </TextBlock>
+                <TextBlock Grid.Column="2" FontSize="12" TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,7,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                    <TextBlock.Text><MultiBinding Converter="{StaticResource FileDisplay}" ConverterParameter="Size"><Binding/></MultiBinding></TextBlock.Text>
+                </TextBlock>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="ListTemplate" x:DataType="models:FileSystemModel">
+            <Grid Width="200" Height="36" Margin="4,0">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" VerticalAlignment="Center" Margin="5,0">
+                    <ui:FASymbolIcon Width="16" Height="16" FontSize="16">
+                        <ui:FASymbolIcon.Symbol><MultiBinding Converter="{StaticResource FileDisplay}" ConverterParameter="Icon"><Binding/></MultiBinding></ui:FASymbolIcon.Symbol>
+                    </ui:FASymbolIcon>
+                    <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip.Tip="{Binding Name}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="IconsTemplate" x:DataType="models:FileSystemModel">
+            <Grid Width="{Binding $parent[views:FilePaneView].Pane.IconTileWidth}" Height="{Binding $parent[views:FilePaneView].Pane.IconTileHeight}" Margin="3">
+                <StackPanel Spacing="8" VerticalAlignment="Center" Margin="5">
+                    <ui:FASymbolIcon Width="{Binding $parent[views:FilePaneView].Pane.IconSize}" Height="{Binding $parent[views:FilePaneView].Pane.IconSize}"
+                                     FontSize="{Binding $parent[views:FilePaneView].Pane.IconSize}" HorizontalAlignment="Center">
+                        <ui:FASymbolIcon.Symbol><MultiBinding Converter="{StaticResource FileDisplay}" ConverterParameter="Icon"><Binding/></MultiBinding></ui:FASymbolIcon.Symbol>
+                    </ui:FASymbolIcon>
+                    <TextBlock Text="{Binding Name}" TextAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2" ToolTip.Tip="{Binding Name}"/>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+    <UserControl.Styles>
+        <Style Selector="Button.file-icon"><Setter Property="Width" Value="30"/><Setter Property="MinHeight" Value="30"/><Setter Property="Padding" Value="5"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/></Style>
+        <Style Selector="ListBox.file-list ListBoxItem"><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0"/><Setter Property="MinHeight" Value="36"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style>
+        <!-- Fluent 的模板额外留有 2px 边距；去掉后，36px 行高不会被撑成 40px。 -->
+        <Style Selector="ListBox.file-list ListBoxItem /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Margin" Value="0"/></Style>
+    </UserControl.Styles>
+    <Grid DataContext="{Binding Pane, ElementName=PaneView}" x:DataType="vm:FilePaneViewModel"
+          RowDefinitions="Auto,Auto,*,Auto" Background="Transparent" Margin="4">
+        <Border Margin="6,4,6,5" Padding="2" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" CornerRadius="4">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto,Auto">
+                <Button Classes="file-icon" Command="{Binding GoUpCommand}" IsEnabled="{Binding CanNavigateUp}" ToolTip.Tip="{i18n:Tr FilePage.Up, DefaultText='返回上级'}"><ui:FASymbolIcon Symbol="Up"/></Button>
+                <ScrollViewer Grid.Column="1" x:Name="BreadcrumbScroll" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                <ItemsControl x:Name="BreadcrumbBar" ItemsSource="{Binding Breadcrumbs}" VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate><DataTemplate x:DataType="localModels:FilePathSegment">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="{Binding Name}" Click="Breadcrumb_Click" Padding="4" Background="Transparent" BorderThickness="0" ToolTip.Tip="{Binding Path}"/>
+                            <ui:FASymbolIcon Symbol="ChevronRight" FontSize="10"/>
+                        </StackPanel>
+                    </DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+                </ScrollViewer>
+                <TextBox Grid.Column="1" x:Name="PathInput" IsVisible="False" KeyDown="PathInput_KeyDown" LostFocus="PathInput_LostFocus" MinWidth="0" Padding="4"/>
+                <Button Grid.Column="2" x:Name="EditPathButton" Classes="file-icon" Click="EditPath_Click" ToolTip.Tip="{i18n:Tr FilePage.EditPath, DefaultText='编辑路径'}"><ui:FASymbolIcon Symbol="Edit"/></Button>
+                <Button Grid.Column="3" Classes="file-icon" Command="{Binding RefreshCommand}" ToolTip.Tip="{i18n:Tr FilePage.Refresh, DefaultText='刷新当前目录'}"><ui:FASymbolIcon Symbol="Refresh"/></Button>
+                <Button Grid.Column="4" x:Name="SearchButton" Classes="file-icon" ToolTip.Tip="{i18n:Tr FilePage.Search, DefaultText='搜索当前目录'}">
+                    <ui:FASymbolIcon Symbol="Find"/>
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedRight" Opened="SearchFlyout_Opened">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="4" Width="260"
+                                  DataContext="{Binding Pane, ElementName=PaneView}" x:DataType="vm:FilePaneViewModel">
+                                <TextBox x:Name="SearchInput" Text="{Binding SearchText}" PlaceholderText="{i18n:Tr FilePage.Search, DefaultText='搜索当前目录'}"/>
+                                <Button Grid.Column="1" Classes="file-icon" Click="ClearSearch_Click" ToolTip.Tip="{i18n:Tr FilePage.ClearSearch, DefaultText='清除搜索'}"><ui:FASymbolIcon Symbol="Cancel"/></Button>
+                            </Grid>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+                <Button Grid.Column="5" x:Name="ViewButton" Classes="file-icon" Click="ViewMenu_Click" ToolTip.Tip="{i18n:Tr FilePage.View, DefaultText='文件视图'}"><ui:FASymbolIcon Symbol="List"/></Button>
+                <Button Grid.Column="6" Classes="file-icon" Click="SortMenu_Click" ToolTip.Tip="{i18n:Tr FilePage.Sort, DefaultText='排序方式'}"><ui:FASymbolIcon Symbol="Sort"/></Button>
+                <Border Grid.Column="7" IsVisible="{Binding ShowLayoutToggle, ElementName=PaneView}" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Margin="4,0,0,0" Padding="5,0,0,0">
+                    <StackPanel x:Name="LayoutToggle" Orientation="Horizontal" Spacing="1">
+                        <RadioButton Theme="{StaticResource {x:Type ToggleButton}}" Width="30" MinHeight="30" Padding="5" IsChecked="{Binding !Tab.IsDualPane, ElementName=PaneView, Mode=OneWay}" Click="SinglePane_Click"
+                                     ToolTip.Tip="{i18n:Tr FilePage.SinglePane, DefaultText='单栏浏览'}"><ui:FASymbolIcon Symbol="Document"/></RadioButton>
+                        <RadioButton Theme="{StaticResource {x:Type ToggleButton}}" Width="30" MinHeight="30" Padding="5" IsChecked="{Binding Tab.IsDualPane, ElementName=PaneView, Mode=OneWay}" Click="DualPane_Click"
+                                     ToolTip.Tip="{i18n:Tr FilePage.DualPane, DefaultText='双栏协作'}"><ui:FASymbolIcon Symbol="DockLeft"/></RadioButton>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+        <Grid Grid.Row="1" x:Name="DetailsHeader" ColumnDefinitions="*,Auto,72" Margin="8,0,2,0" Height="32">
+            <Button x:Name="NameSortButton" Click="NameSort_Click" HorizontalAlignment="Left" Padding="4" Background="Transparent" BorderThickness="0">
+                <StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="{i18n:Tr FilePage.Name, DefaultText='名称'}"/>
+                    <Grid Width="12" Height="12" VerticalAlignment="Center"><StackPanel IsVisible="{Binding IsNameSort}"><ui:FASymbolIcon Symbol="ChevronUp" FontSize="10" IsVisible="{Binding !SortDescending}"/><ui:FASymbolIcon Symbol="ChevronDown" FontSize="10" IsVisible="{Binding SortDescending}"/></StackPanel></Grid>
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="1" x:Name="TypeSortButton" Click="TypeSort_Click" Width="70" IsVisible="{Binding !IsCompact, ElementName=PaneView}" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Padding="0" Background="Transparent" BorderThickness="0">
+                <StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="{i18n:Tr FilePage.Type, DefaultText='类型'}"/>
+                    <Grid Width="12" Height="12" VerticalAlignment="Center"><StackPanel IsVisible="{Binding IsTypeSort}"><ui:FASymbolIcon Symbol="ChevronUp" FontSize="10" IsVisible="{Binding !SortDescending}"/><ui:FASymbolIcon Symbol="ChevronDown" FontSize="10" IsVisible="{Binding SortDescending}"/></StackPanel></Grid>
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="2" x:Name="SizeSortButton" Click="SizeSort_Click" HorizontalAlignment="Right" Padding="0" Margin="0,0,7,0" Background="Transparent" BorderThickness="0">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Grid Width="12" Height="12" VerticalAlignment="Center"><StackPanel IsVisible="{Binding IsSizeSort}"><ui:FASymbolIcon Symbol="ChevronUp" FontSize="10" IsVisible="{Binding !SortDescending}"/><ui:FASymbolIcon Symbol="ChevronDown" FontSize="10" IsVisible="{Binding SortDescending}"/></StackPanel></Grid>
+                    <TextBlock Text="{i18n:Tr FilePage.Size, DefaultText='大小'}"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+        <Grid Grid.Row="2">
+            <ListBox x:Name="FilesList" Classes="file-list" ItemsSource="{Binding VisibleFiles}" SelectedItems="{Binding SelectedFiles}" SelectionMode="Multiple"
+                     IsEnabled="{Binding HasCurrentListing}" Background="Transparent" BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" DragDrop.AllowDrop="True" DoubleTapped="Files_DoubleTapped"/>
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" IsVisible="{Binding IsEmpty}" Margin="10">
+                <ui:FASymbolIcon Symbol="Folder" FontSize="32" HorizontalAlignment="Center"/>
+                <TextBlock Text="{i18n:Tr FilePage.EmptyDirectory, DefaultText='当前目录为空'}" IsVisible="{Binding !HasFilter}" HorizontalAlignment="Center"/>
+                <TextBlock Text="{i18n:Tr FilePage.NoMatches, DefaultText='没有匹配的文件'}" IsVisible="{Binding HasFilter}" HorizontalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" IsVisible="{Binding HasError}" Margin="12">
+                <TextBlock Text="{i18n:Tr FilePage.ReadError, DefaultText='无法读取当前目录'}" HorizontalAlignment="Center"/>
+                <TextBlock Text="{Binding LoadError}" TextWrapping="Wrap" MaxWidth="300" TextAlignment="Center"/>
+                <Button Content="{i18n:Tr FilePage.Retry, DefaultText='重试'}" Command="{Binding LoadFilesCommand}" HorizontalAlignment="Center"/>
+            </StackPanel>
+            <ProgressBar IsIndeterminate="True" Height="3" VerticalAlignment="Top" IsVisible="{Binding IsLoading}"/>
+        </Grid>
+        <Border Grid.Row="3" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Padding="7,7">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                <StackPanel>
+                    <TextBlock Text="{i18n:TrF FilePage.ItemCount, Argument={Binding ItemCount}}" IsVisible="{Binding !HasFilter}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock IsVisible="{Binding HasFilter}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                        <TextBlock.Text><MultiBinding Converter="{StaticResource FileDisplay}" ConverterParameter="Count">
+                            <Binding Source="{x:Static i18n:Locator.Localizer}" Path="Strings[FilePage.FilteredCount]"/>
+                            <Binding Path="VisibleCount"/><Binding Path="ItemCount"/>
+                        </MultiBinding></TextBlock.Text>
+                    </TextBlock>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding SelectedName}" IsVisible="{Binding !HasMultipleSelection}" TextTrimming="CharacterEllipsis" HorizontalAlignment="Right" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock Grid.Column="1" Text="{i18n:TrF FilePage.SelectedCount, Argument={Binding SelectedCount}}" IsVisible="{Binding HasMultipleSelection}" HorizontalAlignment="Right" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

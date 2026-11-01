@@ -16,8 +16,7 @@ public partial class FilePageViewModel : TabbedPageViewModelBase<FileTabViewMode
     public override string Title => Services.Localization.LocalizationManager.Instance.GetString("FilePage.Title", "文件管理");
     public override string EmptyStateIcon => "Document";
     public override string EmptyStateTitle => Services.Localization.LocalizationManager.Instance.GetString("FilePage.EmptyStateTitle", "无标签页");
-    public override string EmptyStateDescription => Services.Localization.LocalizationManager.Instance.GetString("FilePage.EmptyStateDescription", "点击 + 创建新标签页");
-    public override bool IsAddTabButtonVisible => true;
+    public override string EmptyStateDescription => Services.Localization.LocalizationManager.Instance.GetString("FilePage.EmptyStateDescription", "请从设备入口打开文件管理");
 
     public FilePageViewModel()
     {
@@ -30,6 +29,12 @@ public partial class FilePageViewModel : TabbedPageViewModelBase<FileTabViewMode
     }
 
     protected override FileTabViewModel CreateTab(DeviceModel device) => new(device);
+
+    public void OpenDirectoryInNewTab(FileTabViewModel owner, FilePaneViewModel pane, FileSystemModel directory)
+    {
+        if (!pane.CanOperate(directory) || !directory.IsDirectory) return;
+        RegisterTab(owner.CreateDirectoryTab(pane, directory));
+    }
 
     public override void OnNavigatedTo(object? parameter = null)
     {
