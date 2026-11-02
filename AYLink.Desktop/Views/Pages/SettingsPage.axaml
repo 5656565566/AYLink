@@ -205,13 +205,13 @@
 
             <ui:FASettingsExpander Header="FFmpeg">
                 <ui:FASettingsExpander.Footer>
-                    <TextBlock Text="8.0.0" Opacity="0.7" VerticalAlignment="Center"/>
+                    <TextBlock Text="9.0.2" Opacity="0.7" VerticalAlignment="Center"/>
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
 
             <ui:FASettingsExpander Header="scrcpy-server">
                 <ui:FASettingsExpander.Footer>
-                    <TextBlock Text="3.3.4" Opacity="0.7" VerticalAlignment="Center"/>
+                    <TextBlock Text="4.1.0" Opacity="0.7" VerticalAlignment="Center"/>
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
 

@@ -14,7 +14,7 @@ public class ServerOptions
     /// <summary>
     /// 服务端必须知道与之通信的客户端版本 以确保协议兼容
     /// </summary>
-    public string ClientVersion { get; set; } = "4.0";
+    public string ClientVersion { get; set; } = "4.1";
 
     /// <summary>
     /// 服务端连接ID (Session ID) 用于区分连接到同一个服务端的多个客户端

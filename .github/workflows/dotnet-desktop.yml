@@ -51,13 +51,13 @@ jobs:
       - name: Download scrcpy-server
         run: |
           mkdir -p ./publish_output/Scrcpy
-          curl -L -o ./publish_output/Scrcpy/scrcpy-server https://github.com/Genymobile/scrcpy/releases/download/v4.0/scrcpy-server-v4.0
+          curl -L -o ./publish_output/Scrcpy/scrcpy-server https://github.com/Genymobile/scrcpy/releases/download/v4.1/scrcpy-server-v4.1
         shell: bash
 
       - name: Download and extract FFmpeg (Windows x64)
         if: matrix.rid == 'win-x64'
         run: |
-          curl -fL -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n9.0-latest-win64-lgpl-shared-9.0.zip
+          curl -fL -o ffmpeg.zip https://iris-download.home56.top/ffmpeg-n9.0.2-aylink-win64-lgpl-shared.zip
           7z e ffmpeg.zip -o./publish_output -r swscale-10.dll swresample-7.dll avutil-61.dll avcodec-63.dll
           rm ffmpeg.zip
         shell: bash
@@ -65,7 +65,7 @@ jobs:
       - name: Download and extract FFmpeg (Windows arm64)
         if: matrix.rid == 'win-arm64'
         run: |
-          curl -fL -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n9.0-latest-winarm64-lgpl-shared-9.0.zip
+          curl -fL -o ffmpeg.zip https://iris-download.home56.top/ffmpeg-n9.0.2-aylink-winarm64-lgpl-shared.zip
           7z e ffmpeg.zip -o./publish_output -r swscale-10.dll swresample-7.dll avutil-61.dll avcodec-63.dll
           rm ffmpeg.zip
         shell: bash
@@ -78,6 +78,13 @@ jobs:
           7z e platform-tools.zip -o./publish_output/ADB platform-tools/adb.exe platform-tools/AdbWinApi.dll platform-tools/AdbWinUsbApi.dll
           rm platform-tools.zip
         shell: bash
+
+      - name: Remove PDB files from release output
+        shell: pwsh
+        run: |
+          Get-ChildItem -LiteralPath ./publish_output -Recurse -File |
+            Where-Object { $_.Extension -ieq '.pdb' } |
+            ForEach-Object { Remove-Item -LiteralPath $_.FullName -Force }
 
       - name: Archive production artifacts (Windows)
         if: runner.os == 'Windows'
